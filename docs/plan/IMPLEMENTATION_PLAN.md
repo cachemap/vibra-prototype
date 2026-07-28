@@ -1,6 +1,7 @@
 # Vibra Prototype Implementation Plan
 
 Source model: `docs/domain-model/MODEL.md`  
+Design system: `docs/plan/DESIGN_SYSTEM.md`  
 Purpose: build a self-contained local/Vercel demo app for designing sound and haptic feedback systems across web and mobile platforms.
 
 ## North Star
@@ -306,7 +307,7 @@ Acceptance:
 
 ## Visual Direction
 
-Use `design-screenshots/` as the UI reference library:
+Use `docs/plan/DESIGN_SYSTEM.md` as the implementation authority for UI tokens, component rules, screen rules, and visual QA. Use `design-screenshots/` as the screenshot reference library behind that system:
 
 - `color-palette.png` for Tailwind tokens.
 - `buttons-and-tabbed-interface.png` for buttons, icon buttons, tabs, checkbox, inputs, and selected states.
@@ -317,7 +318,7 @@ Use `design-screenshots/` as the UI reference library:
 - `collision-matrix.png` and `matrix-cells.png` for matrix states and behavior pills.
 - `overlay-popups-*.png` for dialogs, popovers, picker panels, filter menus, QR/share states, and create flows.
 
-Keep the UI quiet, dense, and tool-like. Use white/near-white surfaces, thin dividers, compact tables, small controls, predictable sidebars, and restrained purple accents. Avoid landing-page composition.
+Keep the UI quiet, dense, and tool-like. Use Gray 25/50/100 surfaces, thin dividers, compact tables, small controls, predictable sidebars, and restrained purple accents. Avoid landing-page composition.
 
 ## Verification Strategy
 

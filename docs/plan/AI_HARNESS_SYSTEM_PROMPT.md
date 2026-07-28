@@ -9,6 +9,7 @@ Before making changes, read these files:
 - `docs/domain-model/MODEL.md`
 - `docs/plan/IMPLEMENTATION_PLAN.md`
 - `docs/plan/IMPLEMENTATION_CHECKLIST.md`
+- `docs/plan/DESIGN_SYSTEM.md`
 - The latest files in `docs/adr/`, if any
 - The latest file in `docs/memory/`, if any
 - Relevant source files for the next unchecked checklist group

@@ -1,7 +1,8 @@
 # Vibra Prototype Implementation Checklist
 
 Source plan: `docs/plan/IMPLEMENTATION_PLAN.md`  
-Source model: `docs/domain-model/MODEL.md`
+Source model: `docs/domain-model/MODEL.md`  
+Design system: `docs/plan/DESIGN_SYSTEM.md`
 
 ## How To Work This Checklist
 
@@ -28,7 +29,9 @@ Goal: make future implementation work repeatable and safe.
 - [ ] Add `docs/adr/0001-prototype-architecture.md` covering client-first Next.js, IndexedDB/Dexie, seed-first demo data, and deferred backend concerns.
 - [ ] Add `docs/memory/0001-initial-planning.md` summarizing the plan, current repo state, and next implementation step.
 - [ ] Add `docs/plan/AI_HARNESS_SYSTEM_PROMPT.md`.
+- [ ] Add `docs/plan/DESIGN_SYSTEM.md`.
 - [ ] Confirm `docs/plan/IMPLEMENTATION_PLAN.md` points to `docs/domain-model/MODEL.md`.
+- [ ] Confirm `docs/plan/IMPLEMENTATION_PLAN.md` points to `docs/plan/DESIGN_SYSTEM.md`.
 - [ ] Confirm this checklist is organized into bounded implementation chunks.
 
 Phase gate:
