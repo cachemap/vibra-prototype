@@ -45,7 +45,8 @@ Goal: create a runnable app with the routes and shell needed for vertical slices
 
 ### 1.1 App Scaffold
 
-- [ ] Identify the package manager used by the repo, or choose npm if none exists.
+- [ ] Use pnpm as the package manager.
+- [ ] Add `packageManager` metadata for pnpm in `package.json`.
 - [ ] Scaffold or configure Next.js App Router.
 - [ ] Enable TypeScript strict mode.
 - [ ] Configure Tailwind CSS.
@@ -58,7 +59,22 @@ Goal: create a runnable app with the routes and shell needed for vertical slices
 - [ ] Install/configure Playwright.
 - [ ] Add scripts for `dev`, `build`, `typecheck`, `lint`, `test`, and `test:e2e`.
 
-### 1.2 Route Shell
+### 1.2 Component Primitive Foundation
+
+- [ ] Create `components/primitives/`.
+- [ ] Define a primitive styling approach that keeps most Tailwind utility stacks out of feature screens.
+- [ ] Build initial `Button` primitive.
+- [ ] Build initial `IconButton` primitive using lucide icons.
+- [ ] Build initial `TextInput` primitive.
+- [ ] Build initial `Select` primitive.
+- [ ] Build initial `Tabs` primitive.
+- [ ] Build initial `Dialog` or `Popover` primitive.
+- [ ] Build initial `Table` primitives for dense rows/cells.
+- [ ] Build `Breadcrumbs`.
+- [ ] Build `EmptyState`, `ErrorState`, and `LoadingState`.
+- [ ] Use primitives in route placeholders instead of one-off Tailwind-heavy markup.
+
+### 1.3 Route Shell
 
 - [ ] Create `app/layout.tsx`.
 - [ ] Create `app/page.tsx` that redirects or links directly into `/projects`.
@@ -73,10 +89,11 @@ Goal: create a runnable app with the routes and shell needed for vertical slices
 
 Phase gate:
 
-- [ ] `npm run dev` starts.
+- [ ] `pnpm dev` starts.
 - [ ] Core routes render without crashing.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm run lint` passes, or lint setup status is documented.
+- [ ] Core primitives render in the route shell.
+- [ ] `pnpm typecheck` passes.
+- [ ] `pnpm lint` passes, or lint setup status is documented.
 
 ## Phase 2: Domain Kernel
 
@@ -139,8 +156,8 @@ Phase gate:
 - [ ] Unit tests cover trigger uniqueness and playback offset rules.
 - [ ] Unit tests cover asset eligibility.
 - [ ] Unit tests cover matrix membership and target rules.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm test` passes for domain tests.
+- [ ] `pnpm typecheck` passes.
+- [ ] `pnpm test` passes for domain tests.
 
 ## Phase 3: IndexedDB Persistence And Seed Data
 
@@ -221,7 +238,7 @@ Phase gate:
 - [ ] Demo reset/reseed works.
 - [ ] Query hooks load project tree, project workspace, device workspace, asset libraries, collision matrix, and share links.
 - [ ] Repository tests cover dependent creation flows.
-- [ ] `npm test` passes for repository tests.
+- [ ] `pnpm test` passes for repository tests.
 
 ## Phase 4: Projects Vertical Slice
 
@@ -389,22 +406,20 @@ Goal: make the prototype feel polished enough for stakeholder review.
 ### 9.1 Primitive Visual System
 
 - [ ] Define Tailwind color tokens from `color-palette.png`.
-- [ ] Build `Button`.
-- [ ] Build `IconButton`.
-- [ ] Build `TextInput`.
-- [ ] Build `Select`.
+- [ ] Harden `Button` against all screenshot states.
+- [ ] Harden `IconButton` against all screenshot states.
+- [ ] Harden `TextInput` against all screenshot states.
+- [ ] Harden `Select` against all screenshot states.
 - [ ] Build `Checkbox`.
 - [ ] Build `Switch`.
-- [ ] Build `Tabs`.
-- [ ] Build `Dialog`.
-- [ ] Build `Popover`.
+- [ ] Harden `Tabs` against all screenshot states.
+- [ ] Harden `Dialog` against all screenshot states.
+- [ ] Harden `Popover` against all screenshot states.
 - [ ] Build `Tooltip`.
 - [ ] Build `Menu`.
-- [ ] Build `Table`.
-- [ ] Build `Breadcrumbs`.
-- [ ] Build `EmptyState`.
-- [ ] Build `ErrorState`.
-- [ ] Build `LoadingState`.
+- [ ] Harden `Table` against all screenshot states.
+- [ ] Harden `Breadcrumbs` against all screenshot states.
+- [ ] Harden `EmptyState`, `ErrorState`, and `LoadingState`.
 - [ ] Use lucide icons in icon buttons and row actions.
 
 ### 9.2 Screen Polish

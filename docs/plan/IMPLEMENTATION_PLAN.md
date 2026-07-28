@@ -55,6 +55,7 @@ Prototype defaults for open questions:
 
 Use a simple, modern frontend stack:
 
+- pnpm as the package manager
 - Next.js App Router
 - TypeScript strict mode
 - Tailwind CSS
@@ -118,7 +119,7 @@ The split is intentionally boring:
 - `domain/` defines types, schemas, rules, and errors with no React or Dexie imports.
 - `data/` owns IndexedDB tables, seeding, reset, and repository implementations.
 - `features/` owns query hooks, commands, view models, and feature UI.
-- `components/primitives/` owns reusable controls shaped by the screenshots.
+- `components/primitives/` owns reusable controls shaped by the screenshots. Build this library early and keep Tailwind-heavy styling quarantined here so repeated screens compose from stable primitives instead of copying long utility class lists across feature files.
 - `docs/adr/` records important implementation decisions.
 - `docs/memory/` records handoff notes for future implementation agents.
 
@@ -191,7 +192,7 @@ For every implementation chunk:
 7. Run the smallest useful verification set.
 8. Commit the completed slice.
 
-Do not wait until the end to integrate screens. Walking skeleton first, then domain/data, then demo workflows.
+Do not wait until the end to integrate screens. Walking skeleton first, primitive library foundation, then domain/data, then demo workflows.
 
 ## Build Phases
 
@@ -207,11 +208,19 @@ Acceptance:
 
 ### Phase 1: Walking Skeleton
 
-Scaffold the Next.js app, install dependencies, configure Tailwind, add TanStack Query, and create all core routes with placeholder workspace UI.
+Scaffold the Next.js app with pnpm, install dependencies, configure Tailwind, add TanStack Query, build the first component primitives, and create all core routes with placeholder workspace UI.
+
+Primitive-first direction:
+
+- Establish `components/primitives/` before building real screens.
+- Create the shared buttons, inputs, selects, tabs, dialogs/popovers, table rows, breadcrumbs, empty/error/loading states, and icon-action patterns needed by the first routes.
+- Keep most Tailwind utility stacks inside primitives and small layout helpers. Feature screens should primarily compose primitives with data and behavior, so visual changes can be made once instead of repeated across many files.
+- When a screen needs a new visual pattern, prefer adding or extending a primitive before embedding a one-off bundle of Tailwind classes in the screen.
 
 Acceptance:
 
-- `npm run dev` starts.
+- `pnpm dev` starts.
+- Core primitive examples or route placeholders prove the primitive library renders.
 - `/`, `/projects`, `/projects/[projectId]`, `/libraries`, and `/share/[shareToken]` render.
 - Typecheck and lint pass.
 
@@ -332,10 +341,10 @@ Use tests where they protect domain correctness and demo reliability:
 Each chunk should run the smallest relevant command set, usually one or more of:
 
 ```bash
-npm run typecheck
-npm run lint
-npm test
-npm run test:e2e
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm test:e2e
 ```
 
 ## Documentation Strategy
