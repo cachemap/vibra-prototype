@@ -5,21 +5,14 @@ import { Fragment, FormEvent, useMemo, useState } from "react";
 import {
   ArrowRight,
   BookOpen,
-  ChevronDown,
-  CornerDownLeft,
   Edit3,
   FileAudio,
   FolderPlus,
-  Grid2X2,
   Link2,
   MoreVertical,
-  Move,
-  Pause,
   Plus,
   Search,
-  SlidersHorizontal,
   Smartphone,
-  Timer,
   Trash2,
   Waves
 } from "lucide-react";
@@ -49,7 +42,6 @@ import {
 import {
   asEntityId,
   eventTypes,
-  resolutionBehaviorNames,
   type Asset,
   type AssetId,
   type AssetLibraryFolder,
@@ -85,14 +77,9 @@ import {
   useAssetLibraryTreeQuery,
   useImportAssetLibraryMutation,
   useProjectWorkspaceQuery,
-  useDeleteCollisionMatrixEntryMutation,
-  useDeselectCollisionMatrixColumnMutation,
-  useDeselectCollisionMatrixRowMutation,
-  useSelectCollisionMatrixColumnMutation,
-  useSelectCollisionMatrixRowMutation,
   useUpdateCollectionMutation,
   useUpdateDeviceMutation,
-  useUpsertCollisionMatrixEntryMutation
+  useDeleteCollisionMatrixEntryMutation
 } from "@/features/projects/queries";
 import {
   type AudioPreviewItem
@@ -102,11 +89,9 @@ import {
   AudioPreviewProvider,
   useAudioPreviewActions
 } from "@/features/projects/audio-preview-context";
-import {
-  MatrixAxisFilter,
-  type MatrixAxis,
-  type MatrixFilterCollection
-} from "@/features/projects/matrix-axis-filter";
+import { MatrixTab } from "@/features/matrix/matrix-tab";
+import type { MatrixAxis } from "@/features/matrix/matrix-axis-filter";
+import type { MatrixFilterAnchor } from "@/features/matrix/matrix-axis-filter-anchor";
 import {
   CreateAssetDialog,
   CreateAssetFolderDialog
@@ -138,55 +123,6 @@ import { useShareLink } from "@/features/sharing/use-share-link";
 
 const formatDeviceMeta = (summary: DeviceSummary) =>
   summary.device.isEnabled ? summary.platform.name : "Excluded";
-
-const matrixRowHeaderWidth = "168px";
-
-const behaviorCopy: Record<ResolutionBehaviorName, string> = {
-  Preempt: "Incoming stops the playing one and takes over.",
-  Suppress: "Incoming does not play. The playing one continues.",
-  Queue: "Incoming waits and plays when the current one finishes.",
-  "Co-play": "Both play at full level.",
-  "Not possible": "These two cannot occur at the same time."
-};
-
-const behaviorIconFor = (behavior: ResolutionBehaviorName) => {
-  if (behavior === "Preempt") {
-    return CornerDownLeft;
-  }
-
-  if (behavior === "Suppress") {
-    return ArrowRight;
-  }
-
-  if (behavior === "Queue") {
-    return Timer;
-  }
-
-  if (behavior === "Co-play") {
-    return Move;
-  }
-
-  return Pause;
-};
-
-const behaviorCellClass = (entry: CollisionMatrixEntry | undefined, selected: boolean) => {
-  if (selected) {
-    return "bg-gray-200 text-gray-700";
-  }
-
-  if (!entry) {
-    return "text-gray-500";
-  }
-
-  return "text-gray-700";
-};
-
-const behaviorBubbleClass = (entry: CollisionMatrixEntry | undefined, selected: boolean) =>
-  selected
-    ? "border-gray-300 bg-gray-25 text-gray-700"
-    : entry?.resolutionBehavior.behaviorName === "Not possible"
-      ? "border-gray-200 bg-gray-100 text-gray-500"
-      : "border-gray-200 bg-gray-25 text-gray-700";
 
 type DeleteTarget =
   | { kind: "project"; id: ProjectId; name: string }
@@ -357,9 +293,7 @@ function ProjectWorkspace() {
   const [selectedMatrixIncomingEventId, setSelectedMatrixIncomingEventId] = useState<EventId | null>(null);
   const [matrixBehavior, setMatrixBehavior] = useState<ResolutionBehaviorName>("Preempt");
   const [matrixTargetEventId, setMatrixTargetEventId] = useState("");
-  const [matrixFilterAnchor, setMatrixFilterAnchor] = useState<
-    "playingAxis" | "incomingAxis" | "toolbar" | null
-  >(null);
+  const [matrixFilterAnchor, setMatrixFilterAnchor] = useState<MatrixFilterAnchor | null>(null);
   const [matrixFilterAxis, setMatrixFilterAxis] = useState<MatrixAxis>("playing");
   const feedback = useFeedbackMessage();
   const { clearFeedback, runWithFeedback } = useFeedbackActions();
@@ -419,11 +353,6 @@ function ProjectWorkspace() {
   const updateCollection = useUpdateCollectionMutation();
   const createEvent = useCreateEventMutation();
   const importAssetLibrary = useImportAssetLibraryMutation();
-  const selectMatrixRow = useSelectCollisionMatrixRowMutation();
-  const selectMatrixColumn = useSelectCollisionMatrixColumnMutation();
-  const deselectMatrixRow = useDeselectCollisionMatrixRowMutation();
-  const deselectMatrixColumn = useDeselectCollisionMatrixColumnMutation();
-  const upsertMatrixEntry = useUpsertCollisionMatrixEntryMutation();
   const deleteMatrixEntry = useDeleteCollisionMatrixEntryMutation();
   const audioPreview = useAudioPreviewActions();
   const shareController = useShareLink({
@@ -510,63 +439,6 @@ function ProjectWorkspace() {
   }, [selectedProjectAssetFolder]);
   const selectedProjectAssetFolderItemCount =
     (selectedProjectAssetFolder?.childFolders.length ?? 0) + (selectedProjectAssetFolder?.assets.length ?? 0);
-  const matrixEvents = useMemo(
-    () =>
-      (deviceWorkspaceQuery.data?.collections ?? []).flatMap((collection) =>
-        collection.events.map((event) => event.event)
-      ),
-    [deviceWorkspaceQuery.data?.collections]
-  );
-  const matrixEventById = useMemo(
-    () => new Map(matrixEvents.map((event) => [event.id, event])),
-    [matrixEvents]
-  );
-  const matrixFilterCollections = useMemo<MatrixFilterCollection[]>(
-    () =>
-      (deviceWorkspaceQuery.data?.collections ?? []).map((collection) => ({
-        id: collection.collection.id,
-        name: collection.collection.name,
-        events: collection.events.map((event) => ({ id: event.event.id, name: event.event.name }))
-      })),
-    [deviceWorkspaceQuery.data?.collections]
-  );
-  const matrixRowEventIds = useMemo(
-    () => new Set((deviceWorkspaceQuery.data?.matrixRows ?? []).map((row) => row.eventId)),
-    [deviceWorkspaceQuery.data?.matrixRows]
-  );
-  const matrixColumnEventIds = useMemo(
-    () => new Set((deviceWorkspaceQuery.data?.matrixColumns ?? []).map((column) => column.eventId)),
-    [deviceWorkspaceQuery.data?.matrixColumns]
-  );
-  const selectedMatrixEntry = useMemo(
-    () =>
-      (deviceWorkspaceQuery.data?.matrixEntries ?? []).find(
-        (entry) =>
-          entry.playingEventId === selectedMatrixPlayingEventId &&
-          entry.incomingEventId === selectedMatrixIncomingEventId
-      ),
-    [
-      deviceWorkspaceQuery.data?.matrixEntries,
-      selectedMatrixIncomingEventId,
-      selectedMatrixPlayingEventId
-    ]
-  );
-  const matrixCoverage = useMemo(() => {
-    const rowCount = deviceWorkspaceQuery.data?.matrixRows.length ?? 0;
-    const columnCount = deviceWorkspaceQuery.data?.matrixColumns.length ?? 0;
-    const possibleCells = rowCount * columnCount;
-
-    if (!possibleCells) {
-      return 0;
-    }
-
-    return Math.round(((deviceWorkspaceQuery.data?.matrixEntries.length ?? 0) / possibleCells) * 100);
-  }, [
-    deviceWorkspaceQuery.data?.matrixColumns,
-    deviceWorkspaceQuery.data?.matrixEntries,
-    deviceWorkspaceQuery.data?.matrixRows
-  ]);
-
   const goToDevice = (deviceId: DeviceId) => {
     router.push(`/projects/${projectId}${hrefWithParams("", searchParams, { device: deviceId, collection: null })}`);
   };
@@ -692,18 +564,12 @@ function ProjectWorkspace() {
     });
   };
 
-  const openClearMatrixEntry = () => {
-    if (!selectedMatrixEntry) {
-      return;
-    }
-
+  const openClearMatrixEntry = (entry: CollisionMatrixEntry, name: string) => {
     clearFeedback();
     setDeleteTarget({
       kind: "matrixEntry",
-      id: selectedMatrixEntry.id,
-      name: `${matrixEventById.get(selectedMatrixEntry.playingEventId)?.name ?? "Playing event"} x ${
-        matrixEventById.get(selectedMatrixEntry.incomingEventId)?.name ?? "incoming event"
-      }`
+      id: entry.id,
+      name
     });
   };
 
@@ -1011,139 +877,6 @@ function ProjectWorkspace() {
         return `Deleted device ${deleteTarget.name}.`;
       },
       onSuccess: (message) => message
-    });
-  };
-
-  const renderMatrixAxisFilter = () => (
-    <MatrixAxisFilter
-      activeAxis={matrixFilterAxis}
-      collections={matrixFilterCollections}
-      incomingEventIds={matrixColumnEventIds}
-      onChangeAxis={setMatrixFilterAxis}
-      onClose={() => setMatrixFilterAnchor(null)}
-      onToggleEvents={(axis, eventIds, nextSelected) =>
-        void handleToggleMatrixAxisEvents(axis, eventIds, nextSelected)
-      }
-      pending={
-        selectMatrixRow.isPending ||
-        selectMatrixColumn.isPending ||
-        deselectMatrixRow.isPending ||
-        deselectMatrixColumn.isPending
-      }
-      playingEventIds={matrixRowEventIds}
-    />
-  );
-
-  const openMatrixFilter = (anchor: "playingAxis" | "incomingAxis" | "toolbar", axis: MatrixAxis) => {
-    clearFeedback();
-    setMatrixFilterAxis(axis);
-    setMatrixFilterAnchor((current) => (current === anchor ? null : anchor));
-  };
-
-  const handleToggleMatrixAxisEvents = async (
-    axis: MatrixAxis,
-    eventIds: readonly EventId[],
-    nextSelected: boolean
-  ) => {
-    const matrixId = deviceWorkspaceQuery.data?.collisionMatrix.id;
-
-    if (!matrixId) {
-      return;
-    }
-
-    const selectedEventIds = axis === "playing" ? matrixRowEventIds : matrixColumnEventIds;
-    const changingEventIds = eventIds.filter(
-      (eventId) => selectedEventIds.has(eventId) !== nextSelected
-    );
-
-    if (changingEventIds.length === 0) {
-      return;
-    }
-
-    await runWithFeedback({
-      work: async () => {
-        for (const eventId of changingEventIds) {
-          if (nextSelected && axis === "playing") {
-            await selectMatrixRow.mutateAsync({ matrixId, eventId });
-          } else if (nextSelected) {
-            await selectMatrixColumn.mutateAsync({ matrixId, eventId });
-          } else if (axis === "playing") {
-            await deselectMatrixRow.mutateAsync({ matrixId, eventId });
-          } else {
-            await deselectMatrixColumn.mutateAsync({ matrixId, eventId });
-          }
-        }
-
-        if (!nextSelected) {
-          if (
-            axis === "playing" &&
-            selectedMatrixPlayingEventId &&
-            changingEventIds.includes(selectedMatrixPlayingEventId)
-          ) {
-            setSelectedMatrixPlayingEventId(null);
-            setMatrixTargetEventId("");
-          }
-
-          if (
-            axis === "incoming" &&
-            selectedMatrixIncomingEventId &&
-            changingEventIds.includes(selectedMatrixIncomingEventId)
-          ) {
-            setSelectedMatrixIncomingEventId(null);
-            setMatrixTargetEventId("");
-          }
-        }
-
-        const axisLabel = axis === "playing" ? "playing rows" : "incoming columns";
-        const changedLabel =
-          changingEventIds.length === 1
-            ? (matrixEventById.get(changingEventIds[0])?.name ?? "1 event")
-            : `${changingEventIds.length} events`;
-
-        return nextSelected
-          ? `Added ${changedLabel} to ${axisLabel}.`
-          : `Removed ${changedLabel} from ${axisLabel}.`;
-      },
-      onSuccess: (message) => message
-    });
-  };
-
-  const handleSelectMatrixCell = (playingEventId: EventId, incomingEventId: EventId) => {
-    const entry = (deviceWorkspaceQuery.data?.matrixEntries ?? []).find(
-      (candidate) =>
-        candidate.playingEventId === playingEventId && candidate.incomingEventId === incomingEventId
-    );
-
-    setSelectedMatrixPlayingEventId(playingEventId);
-    setSelectedMatrixIncomingEventId(incomingEventId);
-    setMatrixBehavior(entry?.resolutionBehavior.behaviorName ?? "Preempt");
-    setMatrixTargetEventId(entry?.resolutionBehavior.targetEventId ?? "");
-  };
-
-  const handleSaveMatrixEntry = async () => {
-    const matrixId = deviceWorkspaceQuery.data?.collisionMatrix.id;
-
-    if (!matrixId || !selectedMatrixPlayingEventId || !selectedMatrixIncomingEventId) {
-      return;
-    }
-
-    const targetEventId = matrixBehavior === "Suppress" ? matrixTargetEventId : matrixTargetEventId || "";
-
-    await runWithFeedback({
-      work: () =>
-        upsertMatrixEntry.mutateAsync({
-          matrixId,
-          playingEventId: selectedMatrixPlayingEventId,
-          incomingEventId: selectedMatrixIncomingEventId,
-          resolutionBehavior: {
-            behaviorName: matrixBehavior,
-            targetEventId: targetEventId ? asEntityId<EventId>(targetEventId) : null
-          }
-        }),
-      onSuccess: (entry) =>
-        `Set ${matrixEventById.get(entry.playingEventId)?.name ?? "playing event"} x ${
-          matrixEventById.get(entry.incomingEventId)?.name ?? "incoming event"
-        } to ${entry.resolutionBehavior.behaviorName}.`
     });
   };
 
@@ -1520,299 +1253,32 @@ function ProjectWorkspace() {
               ) : (
                 <section className="grid gap-3">
                   {activeWorkspaceTab === "matrix" ? (
-                    <div className="grid gap-4">
-                      <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <Grid2X2 className="size-4 text-gray-500" />
-                            Collision Matrix
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            Candidates come from events on {selectedDevice.device.name}. Coverage is {matrixCoverage}%.
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            disabled={!selectedMatrixEntry}
-                            leftIcon={<Link2 className="size-4" />}
-                            onClick={() => {
-                              if (!selectedMatrixEntry) {
-                                return;
-                              }
-
-                              void shareController.openShareDialog(
-                                {
-                                  kind: "collisionMatrixEntry",
-                                  collisionMatrixEntryId: selectedMatrixEntry.id
-                                },
-                                `${matrixEventById.get(selectedMatrixEntry.playingEventId)?.name ?? "Playing event"} x ${
-                                  matrixEventById.get(selectedMatrixEntry.incomingEventId)?.name ?? "incoming event"
-                                }`
-                              );
-                            }}
-                          >
-                            Share entry
-                          </Button>
-                          <div className="relative">
-                            <Button
-                              aria-expanded={matrixFilterAnchor === "toolbar"}
-                              leftIcon={<SlidersHorizontal className="size-4" />}
-                              onClick={() => openMatrixFilter("toolbar", matrixFilterAxis)}
-                            >
-                              Filters
-                            </Button>
-                            <div className="absolute right-0 top-10 z-40">
-                              {matrixFilterAnchor === "toolbar" ? renderMatrixAxisFilter() : null}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid min-w-0 gap-4">
-                          <div className="grid gap-3 border-y border-gray-300 bg-gray-50 px-3 py-3">
-                            <div>
-                              <h4 className="text-sm font-semibold text-gray-700">Resolution Behavior</h4>
-                              <p className="text-xs text-gray-500">
-                                {selectedMatrixPlayingEventId && selectedMatrixIncomingEventId
-                                  ? `${matrixEventById.get(selectedMatrixPlayingEventId)?.name ?? "Playing event"} when ${
-                                      matrixEventById.get(selectedMatrixIncomingEventId)?.name ?? "incoming event"
-                                    } arrives.`
-                                  : "Choose a playing row and incoming column before saving."}
-                              </p>
-                            </div>
-
-                            <div className="grid gap-2 sm:grid-cols-[1fr_1fr]">
-                              <div className="grid gap-1 border-l border-gray-300 bg-gray-25 px-3 py-2">
-                                <span className="text-xs font-medium text-gray-500">Playing</span>
-                                <span className="truncate text-sm font-semibold text-gray-700">
-                                  {selectedMatrixPlayingEventId
-                                    ? (matrixEventById.get(selectedMatrixPlayingEventId)?.name ?? "Playing event")
-                                    : "No row selected"}
-                                </span>
-                              </div>
-                              <div className="grid gap-1 border-l border-gray-300 bg-gray-25 px-3 py-2">
-                                <span className="text-xs font-medium text-gray-500">Incoming</span>
-                                <span className="truncate text-sm font-semibold text-gray-700">
-                                  {selectedMatrixIncomingEventId
-                                    ? (matrixEventById.get(selectedMatrixIncomingEventId)?.name ?? "Incoming event")
-                                    : "No column selected"}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-                              <Select
-                                id="matrix-behavior"
-                                label="Behavior"
-                                onChange={(event) => {
-                                  const nextBehavior = event.currentTarget.value as ResolutionBehaviorName;
-                                  setMatrixBehavior(nextBehavior);
-                                  if (nextBehavior !== "Suppress") {
-                                    setMatrixTargetEventId("");
-                                  }
-                                }}
-                                value={matrixBehavior}
-                              >
-                                {resolutionBehaviorNames.map((behavior) => (
-                                  <option key={behavior} value={behavior}>
-                                    {behavior}
-                                  </option>
-                                ))}
-                              </Select>
-                              <Select
-                                disabled={matrixBehavior !== "Suppress"}
-                                id="matrix-target"
-                                label="Target"
-                                onChange={(event) => setMatrixTargetEventId(event.currentTarget.value)}
-                                value={matrixTargetEventId}
-                              >
-                                <option value="">No target</option>
-                                {selectedMatrixPlayingEventId ? (
-                                  <option value={selectedMatrixPlayingEventId}>
-                                    Playing / {matrixEventById.get(selectedMatrixPlayingEventId)?.name}
-                                  </option>
-                                ) : null}
-                                {selectedMatrixIncomingEventId ? (
-                                  <option value={selectedMatrixIncomingEventId}>
-                                    Incoming / {matrixEventById.get(selectedMatrixIncomingEventId)?.name}
-                                  </option>
-                                ) : null}
-                              </Select>
-                              <div className="flex items-end gap-2">
-                                <Button
-                                  disabled={!selectedMatrixEntry}
-                                  leftIcon={<Trash2 className="size-4" />}
-                                  onClick={openClearMatrixEntry}
-                                  variant="destructive"
-                                >
-                                  Clear rule
-                                </Button>
-                                <Button
-                                  disabled={!selectedMatrixPlayingEventId || !selectedMatrixIncomingEventId}
-                                  onClick={() => void handleSaveMatrixEntry()}
-                                  variant="primary"
-                                >
-                                  Save rule
-                                </Button>
-                              </div>
-                            </div>
-                            <p className="text-sm text-gray-600">{behaviorCopy[matrixBehavior]}</p>
-                          </div>
-
-                          <div
-                            className="grid max-h-[calc(100vh-580px)] min-h-[200px] grid-rows-[auto_1fr] border-y border-gray-300 bg-gray-50"
-                            data-testid="collision-matrix-grid"
-                          >
-                            <div
-                              className="grid items-center border-b border-gray-200 bg-gray-100"
-                              style={{ gridTemplateColumns: `${matrixRowHeaderWidth} 1fr` }}
-                            >
-                              <div className="relative flex h-12 items-center border-r border-gray-200 px-2">
-                                <Button
-                                  aria-expanded={matrixFilterAnchor === "playingAxis"}
-                                  onClick={() => openMatrixFilter("playingAxis", "playing")}
-                                  rightIcon={<ChevronDown className="size-4" />}
-                                >
-                                  Playing
-                                </Button>
-                                <div className="absolute left-2 top-12 z-40">
-                                  {matrixFilterAnchor === "playingAxis" ? renderMatrixAxisFilter() : null}
-                                </div>
-                              </div>
-                              <div className="relative flex h-12 min-w-0 items-center justify-center px-2">
-                                <Button
-                                  aria-expanded={matrixFilterAnchor === "incomingAxis"}
-                                  onClick={() => openMatrixFilter("incomingAxis", "incoming")}
-                                  rightIcon={<ChevronDown className="size-4" />}
-                                >
-                                  Incoming
-                                </Button>
-                                <div className="absolute left-1/2 top-12 z-40 -translate-x-1/2">
-                                  {matrixFilterAnchor === "incomingAxis" ? renderMatrixAxisFilter() : null}
-                                </div>
-                              </div>
-                            </div>
-
-                            {(deviceWorkspaceQuery.data?.matrixRows.length ?? 0) > 0 &&
-                            (deviceWorkspaceQuery.data?.matrixColumns.length ?? 0) > 0 ? (
-                              <div className="grid min-h-0 overflow-hidden">
-                                <div className="grid min-h-0">
-                                  <div className="min-h-0 overflow-auto overscroll-x-contain">
-                                    <div
-                                      className="grid min-w-full content-start"
-                                      style={{
-                                        gridTemplateColumns: `${matrixRowHeaderWidth} repeat(${deviceWorkspaceQuery.data?.matrixColumns.length ?? 0}, minmax(119px, 1fr))`
-                                      }}
-                                    >
-                                      <div className="sticky left-0 top-0 z-30 h-10 border border-gray-200 bg-gray-100 shadow-[1px_0_0_#E9EAEB]" />
-                                    {(deviceWorkspaceQuery.data?.matrixColumns ?? []).map((column) => (
-                                      <button
-                                        className={`sticky top-0 z-20 flex h-10 items-center justify-center border border-gray-200 px-2 text-center text-xs font-semibold ${
-                                          selectedMatrixIncomingEventId === column.eventId
-                                            ? "bg-gray-200 text-gray-700"
-                                            : "bg-gray-100 text-gray-600"
-                                        }`}
-                                        key={column.eventId}
-                                        onClick={() => setSelectedMatrixIncomingEventId(column.eventId)}
-                                        type="button"
-                                      >
-                                        <span className="line-clamp-2">
-                                          {matrixEventById.get(column.eventId)?.name}
-                                        </span>
-                                      </button>
-                                    ))}
-                                    {(deviceWorkspaceQuery.data?.matrixRows ?? []).map((row) => (
-                                      <Fragment key={row.eventId}>
-                                        <button
-                                          className={`sticky left-0 z-10 h-10 border border-gray-200 px-2 text-left text-xs font-semibold shadow-[1px_0_0_#E9EAEB] ${
-                                            selectedMatrixPlayingEventId === row.eventId
-                                              ? "bg-gray-200 text-gray-700"
-                                              : "bg-gray-100 text-gray-600"
-                                          }`}
-                                          onClick={() => setSelectedMatrixPlayingEventId(row.eventId)}
-                                          type="button"
-                                        >
-                                          <span className="block truncate">{matrixEventById.get(row.eventId)?.name}</span>
-                                        </button>
-                                        {(deviceWorkspaceQuery.data?.matrixColumns ?? []).map((column) => {
-                                          const entry = (deviceWorkspaceQuery.data?.matrixEntries ?? []).find(
-                                            (candidate) =>
-                                              candidate.playingEventId === row.eventId &&
-                                              candidate.incomingEventId === column.eventId
-                                          );
-                                          const selected =
-                                            selectedMatrixPlayingEventId === row.eventId &&
-                                            selectedMatrixIncomingEventId === column.eventId;
-                                          const highlighted =
-                                            selected ||
-                                            selectedMatrixPlayingEventId === row.eventId ||
-                                            selectedMatrixIncomingEventId === column.eventId;
-                                          const BehaviorIcon = entry
-                                            ? behaviorIconFor(entry.resolutionBehavior.behaviorName)
-                                            : null;
-
-                                          return (
-                                            <button
-                                              aria-label={
-                                                entry
-                                                  ? `${entry.resolutionBehavior.behaviorName}: ${
-                                                      matrixEventById.get(row.eventId)?.name ?? "playing event"
-                                                    } when ${
-                                                      matrixEventById.get(column.eventId)?.name ?? "incoming event"
-                                                    } arrives`
-                                                  : `Unset: ${matrixEventById.get(row.eventId)?.name ?? "playing event"} when ${
-                                                      matrixEventById.get(column.eventId)?.name ?? "incoming event"
-                                                    } arrives`
-                                              }
-                                              className={`flex h-10 w-full items-center justify-center border border-gray-200 px-1.5 text-xs font-medium tabular-nums ${
-                                                highlighted ? "bg-gray-200" : "bg-gray-25"
-                                              } ${behaviorCellClass(entry, selected)}`}
-                                              key={`${row.eventId}-${column.eventId}`}
-                                              onClick={() => handleSelectMatrixCell(row.eventId, column.eventId)}
-                                              type="button"
-                                            >
-                                              {entry && BehaviorIcon ? (
-                                                <span
-                                                  className={`inline-flex h-6 max-w-full items-center gap-1 rounded-lg border px-2 ${behaviorBubbleClass(
-                                                    entry,
-                                                    selected
-                                                  )}`}
-                                                  title={behaviorCopy[entry.resolutionBehavior.behaviorName]}
-                                                >
-                                                  <BehaviorIcon
-                                                    aria-hidden="true"
-                                                    className="size-3.5 shrink-0"
-                                                    strokeWidth={1.8}
-                                                  />
-                                                  <span className="truncate">
-                                                    {entry.resolutionBehavior.behaviorName === "Not possible"
-                                                      ? "N/A"
-                                                      : entry.resolutionBehavior.behaviorName}
-                                                  </span>
-                                                </span>
-                                              ) : (
-                                                <span className="text-gray-500" title="Unset">
-                                                  -
-                                                </span>
-                                              )}
-                                            </button>
-                                          );
-                                        })}
-                                      </Fragment>
-                                    ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <EmptyState
-                                title="Select matrix rows and columns"
-                                description="Add at least one playing row and incoming column to expose matrix cells."
-                              />
-                            )}
-                          </div>
-                      </div>
-                    </div>
+                    <MatrixTab
+                      deviceId={selectedDevice.device.id}
+                      deviceName={selectedDevice.device.name}
+                      matrixBehavior={matrixBehavior}
+                      matrixFilterAnchor={matrixFilterAnchor}
+                      matrixFilterAxis={matrixFilterAxis}
+                      matrixTargetEventId={matrixTargetEventId}
+                      onClearEntry={openClearMatrixEntry}
+                      onShareEntry={(entry, label) =>
+                        void shareController.openShareDialog(
+                          {
+                            kind: "collisionMatrixEntry",
+                            collisionMatrixEntryId: entry.id
+                          },
+                          label
+                        )
+                      }
+                      selectedIncomingEventId={selectedMatrixIncomingEventId}
+                      selectedPlayingEventId={selectedMatrixPlayingEventId}
+                      setMatrixBehavior={setMatrixBehavior}
+                      setMatrixFilterAnchor={setMatrixFilterAnchor}
+                      setMatrixFilterAxis={setMatrixFilterAxis}
+                      setMatrixTargetEventId={setMatrixTargetEventId}
+                      setSelectedIncomingEventId={setSelectedMatrixIncomingEventId}
+                      setSelectedPlayingEventId={setSelectedMatrixPlayingEventId}
+                    />
                   ) : activeWorkspaceTab === "assets" ? (
                     <div className="grid gap-4" data-testid="project-asset-libraries">
                       <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-3">
@@ -2277,8 +1743,6 @@ function ProjectWorkspace() {
             deleteEvent.isPending ||
             deleteAssetLibraryFolder.isPending ||
             deleteAsset.isPending ||
-            deselectMatrixRow.isPending ||
-            deselectMatrixColumn.isPending ||
             deleteMatrixEntry.isPending
           }
           onCancel={() => setDeleteTarget(null)}

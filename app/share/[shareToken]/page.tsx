@@ -30,14 +30,7 @@ import {
 import { messageForError, shareErrorFallback } from "@/lib/errors";
 import { formatSeconds } from "@/lib/format";
 import { pluralSuffix } from "@/lib/plural";
-
-const behaviorCopy = {
-  Preempt: "Incoming stops the playing event and takes over.",
-  Queue: "Incoming waits until the playing event finishes.",
-  "Co-play": "Both events play together at full level.",
-  Suppress: "One event is suppressed while the other continues.",
-  "Not possible": "These two events cannot occur at the same time."
-} as const;
+import { shareBehaviorCopy } from "@/features/matrix/behavior";
 
 export default function SharePage() {
   const { shareToken } = useParams<{ shareToken: string }>();
@@ -324,7 +317,7 @@ export default function SharePage() {
               {target.entry.resolutionBehavior.behaviorName}
             </span>
             <span className="text-sm text-gray-600">
-              {behaviorCopy[target.entry.resolutionBehavior.behaviorName]}
+              {shareBehaviorCopy[target.entry.resolutionBehavior.behaviorName]}
             </span>
           </div>
           <p className="text-sm text-gray-600">

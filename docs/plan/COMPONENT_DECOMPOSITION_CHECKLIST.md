@@ -200,14 +200,14 @@ Stage gate:
 
 Goal: deepest JSX in the repo. Two test ids ride along. **Keep the 6 matrix state fields on the page** and thread them as props — they move into the context in Stage 8.
 
-- [ ] `features/matrix/behavior.ts` — `behaviorCopy`, `behaviorIconFor`, `behaviorCellClass`, `behaviorBubbleClass`. Replaces project detail 171-226 and the share-page `behaviorCopy` duplicate (41-47). Return the icon component reference so the file stays `.ts`.
-- [ ] Move `features/projects/matrix-axis-filter.tsx` to `features/matrix/`; update the one import site. `data-testid="matrix-axis-filter"` unchanged.
-- [ ] `MatrixAxisFilterAnchor` replaces the `renderMatrixAxisFilter` render function (1122-1140), used at all three anchors (1701, 1815, 1827).
-- [ ] `features/matrix/matrix-tab.tsx` — orchestrator replacing 1658-1951; calls `useDeviceWorkspaceQuery(deviceId)` itself.
-- [ ] `features/matrix/matrix-toolbar.tsx` — header row, coverage stat, toolbar anchor.
-- [ ] `features/matrix/matrix-grid.tsx` — **`data-testid="collision-matrix-grid"` stays on the same element** (1800). Calls the 6 matrix mutations itself.
-- [ ] Replace the per-cell `.find` with a precomputed `Map` keyed `` `${playingEventId}:${incomingEventId}` ``; the same lookup exists at 565-569, 1220-1223, and 1874-1878.
-- [ ] `features/matrix/matrix-resolution-panel.tsx` — selected-cell detail and behavior picker; calls the upsert and delete entry mutations.
+- [x] `features/matrix/behavior.ts` — `behaviorCopy`, `behaviorIconFor`, `behaviorCellClass`, `behaviorBubbleClass`. Replaces project detail 171-226 and the share-page `behaviorCopy` duplicate (41-47). Return the icon component reference so the file stays `.ts`.
+- [x] Move `features/projects/matrix-axis-filter.tsx` to `features/matrix/`; update the one import site. `data-testid="matrix-axis-filter"` unchanged.
+- [x] `MatrixAxisFilterAnchor` replaces the `renderMatrixAxisFilter` render function (1122-1140), used at all three anchors (1701, 1815, 1827).
+- [x] `features/matrix/matrix-tab.tsx` — orchestrator replacing 1658-1951; calls `useDeviceWorkspaceQuery(deviceId)` itself.
+- [x] `features/matrix/matrix-toolbar.tsx` — header row, coverage stat, toolbar anchor.
+- [x] `features/matrix/matrix-grid.tsx` — **`data-testid="collision-matrix-grid"` stays on the same element** (1800). Calls the 6 matrix mutations itself.
+- [x] Replace the per-cell `.find` with a precomputed `Map` keyed `` `${playingEventId}:${incomingEventId}` ``; the same lookup exists at 565-569, 1220-1223, and 1874-1878.
+- [x] `features/matrix/matrix-resolution-panel.tsx` — selected-cell detail and behavior picker; calls the upsert and delete entry mutations.
 
 Stage gate:
 
