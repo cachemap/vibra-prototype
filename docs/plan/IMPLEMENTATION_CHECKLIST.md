@@ -564,7 +564,7 @@ One commit per stage, each independently green against all four gates plus the s
 - [x] 12.12 Decompose the libraries page plus shared `features/assets/*`.
 - [x] 12.13 Decompose the projects list page.
 - [x] 12.14 Decompose the share preview page.
-- [ ] 12.15 Cleanup: remove `useCollisionMatrixQuery` and `useSharingLinkQuery`; confirm line-count targets.
+- [~] 12.15 Cleanup: remove `useCollisionMatrixQuery` and `useSharingLinkQuery`; confirm line-count targets.
 
 Phase gate:
 

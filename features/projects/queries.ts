@@ -103,18 +103,6 @@ export const useDeviceWorkspaceQuery = (deviceId: DeviceId | null) =>
     }
   });
 
-export const useCollisionMatrixQuery = (matrixId: CollisionMatrixId) =>
-  useQuery({
-    queryKey: projectQueryKeys.collisionMatrix(matrixId),
-    queryFn: async () => unwrapQueryResult(await projectRepository.loadCollisionMatrix(matrixId))
-  });
-
-export const useSharingLinkQuery = (shareToken: string) =>
-  useQuery({
-    queryKey: projectQueryKeys.shareLink(shareToken),
-    queryFn: async () => unwrapQueryResult(await projectRepository.lookupSharingLink(shareToken))
-  });
-
 export const useSharingLinkPreviewQuery = (shareToken: string) =>
   useQuery({
     queryKey: [...projectQueryKeys.shareLink(shareToken), "preview"] as const,

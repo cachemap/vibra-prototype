@@ -23,12 +23,12 @@ Design system: `docs/plan/DESIGN_SYSTEM.md`
 
 Run all four at the end of every stage. No exceptions.
 
-- [ ] `pnpm typecheck`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm test:e2e`
-- [ ] `grep -rn 'data-testid' app components features | sort` yields exactly 6, unchanged
-- [ ] `grep -rno 'aria-label\|role="status"\|role="tab"\|aria-selected\|aria-checked' app features | sort` matches the Stage 0 baseline
+- [x] `pnpm typecheck`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm test:e2e`
+- [x] `grep -rn 'data-testid' app components features | sort` yields exactly 6, unchanged
+- [x] `grep -rno 'aria-label\|role="status"\|role="tab"\|aria-selected\|aria-checked' app features | sort` matches the Stage 0 baseline
 - [ ] Browser check on `http://localhost:3000` for the surfaces this stage touched; fix any drift before committing
 
 ---
@@ -370,24 +370,24 @@ Stage gate:
 
 ## Stage 15: Cleanup
 
-- [ ] Delete `useCollisionMatrixQuery` and `useSharingLinkQuery` from `features/projects/queries.ts` — both are dead from the UI's perspective.
-- [ ] Confirm final page line counts against the plan's targets (~110 / ~120 / ~100 / ~95 / ~85).
+- [x] Delete `useCollisionMatrixQuery` and `useSharingLinkQuery` from `features/projects/queries.ts` — both are dead from the UI's perspective.
+- [x] Confirm final page line counts against the plan's targets (~110 / ~120 / ~100 / ~95 / ~85).
 - [ ] Confirm no file in `features/` exceeds ~260 lines.
-- [ ] Confirm no snapshot tests of extracted components were added.
+- [x] Confirm no snapshot tests of extracted components were added.
 
 Stage gate:
 
-- [ ] Four gates green.
+- [x] Four gates green.
 - [ ] Full demo spine walked end to end per `docs/plan/STAKEHOLDER_DEMO_SCRIPT.md` after a demo reset.
 
 ---
 
 ## ADRs To Write
 
-- [ ] Context boundary policy: scope and UI state in context, server data via re-called query hooks; the `children` bailout rule and the split volatile-value / stable-actions shape.
-- [ ] Feature module layout: `lib/` is pure with no `@/domain`; `components/primitives/` has no data hooks; `features/<domain>/` may call query and mutation hooks.
+- [x] Context boundary policy: scope and UI state in context, server data via re-called query hooks; the `children` bailout rule and the split volatile-value / stable-actions shape.
+- [x] Feature module layout: `lib/` is pure with no `@/domain`; `components/primitives/` has no data hooks; `features/<domain>/` may call query and mutation hooks.
 - [x] Why the share preview keeps separate read-only components instead of a `readOnly` prop.
-- [ ] Why no generic table or record-list abstraction, and the row-model pattern adopted instead.
+- [x] Why no generic table or record-list abstraction, and the row-model pattern adopted instead.
 
 ## Follow-Ups Deliberately Out Of Scope
 
