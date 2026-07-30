@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -22,9 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${figtree.variable} font-sans antialiased`}>
-        <Providers>
-          <WorkspaceShell>{children}</WorkspaceShell>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

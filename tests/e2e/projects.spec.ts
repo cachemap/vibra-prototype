@@ -722,6 +722,8 @@ test("generates and opens share links", async ({ page }) => {
   expect(eventSharePath).toMatch(/^\/share\/share_/);
   await page.goto(eventSharePath ?? "/share/missing");
   await expect(page.getByRole("heading", { name: "Save Card" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Workspace sections" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Reset demo" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Open mobile preview" })).toHaveCount(0);
   await expect(page.getByRole("columnheader", { name: "URL" })).toHaveCount(0);
   await expect(page.getByText("Playback Preview")).toBeVisible();
