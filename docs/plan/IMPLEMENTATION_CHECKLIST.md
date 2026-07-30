@@ -558,8 +558,8 @@ One commit per stage, each independently green against all four gates plus the s
 - [x] 12.6 Add the feedback and audio-preview contexts; `runWithFeedback` replaces ~25 try/catch blocks.
 - [x] 12.7 Extract `features/matrix/`, keeping the 6 matrix fields on the page as props.
 - [x] 12.8 Extract the workspace scope context, header, sidebar, and tab bar; move the matrix fields into the context.
-- [ ] 12.9 Extract the assets and events tabs plus their row models.
-- [ ] 12.10 Extract the workspace dialogs and delete confirm; the project page reaches ~110 lines.
+- [x] 12.9 Extract the assets and events tabs plus their row models.
+- [x] 12.10 Extract the workspace dialogs and delete confirm; the project page reaches ~110 lines.
 - [ ] 12.11 Decompose the event detail page; memoize `timelineLanes`.
 - [ ] 12.12 Decompose the libraries page plus shared `features/assets/*`.
 - [ ] 12.13 Decompose the projects list page.

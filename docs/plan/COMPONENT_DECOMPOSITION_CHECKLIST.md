@@ -271,12 +271,12 @@ Stage gate:
 
 Goal: bring the project page to ~110 lines.
 
-- [ ] `features/project-workspace/delete-target.ts` — the `DeleteTarget` union, `deleteActionLabelFor` (227-238), and `cascadeSummaryFor` / `deleteBodyCopyFor` as **`switch` statements**, replacing the 18-line nested ternary chain (2467-2485) and the `startsWith("matrix")` sniff (2487).
-- [ ] `tests/delete-target-copy.test.ts` — table test **transcribed from the current source**, asserting byte-identical strings for all 8 discriminants. Write this **before** deleting the ternary chain.
-- [ ] `features/project-workspace/workspace-dialogs.tsx` — the **single** `<DialogOverlay align="end" open={request !== null}>` containing `ShareLinkDialog` plus six `FormDialog`s. One overlay node, not eight.
-- [ ] Move each dialog's form state (360-367) into its own small component inside this file, matching the `asset-authoring-dialogs.tsx` convention; each calls its own mutation.
-- [ ] `features/project-workspace/workspace-delete-confirm.tsx` — replaces 2450-2489 using `delete-target.ts` and the 9 `isPending` flags.
-- [ ] Reduce `app/projects/[projectId]/page.tsx` to the provider stack plus three early returns. Target ~110 lines.
+- [x] `features/project-workspace/delete-target.ts` — the `DeleteTarget` union, `deleteActionLabelFor` (227-238), and `cascadeSummaryFor` / `deleteBodyCopyFor` as **`switch` statements**, replacing the 18-line nested ternary chain (2467-2485) and the `startsWith("matrix")` sniff (2487).
+- [x] `tests/delete-target-copy.test.ts` — table test **transcribed from the current source**, asserting byte-identical strings for all 8 discriminants. Write this **before** deleting the ternary chain.
+- [x] `features/project-workspace/workspace-dialogs.tsx` — the **single** `<DialogOverlay align="end" open={request !== null}>` containing `ShareLinkDialog` plus six `FormDialog`s. One overlay node, not eight.
+- [x] Move each dialog's form state (360-367) into its own small component inside this file, matching the `asset-authoring-dialogs.tsx` convention; each calls its own mutation.
+- [x] `features/project-workspace/workspace-delete-confirm.tsx` — replaces 2450-2489 using `delete-target.ts` and the 9 `isPending` flags.
+- [x] Reduce `app/projects/[projectId]/page.tsx` to the provider stack plus three early returns. Target ~110 lines.
 
 Stage gate:
 

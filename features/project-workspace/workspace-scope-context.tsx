@@ -15,11 +15,9 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   asEntityId,
-  type AssetId,
   type AssetLibraryFolderId,
   type AssetLibraryId,
   type CollectionId,
-  type CollisionMatrixEntryId,
   type DeviceId,
   type EventId,
   type ProjectId,
@@ -31,6 +29,7 @@ import { useFeedbackActions } from "@/features/feedback/feedback-context";
 import { hrefWithParams } from "@/lib/search-params";
 import type { MatrixAxis } from "@/features/matrix/matrix-axis-filter";
 import type { MatrixFilterAnchor } from "@/features/matrix/matrix-axis-filter-anchor";
+import type { DeleteTarget } from "./delete-target";
 
 export type ProjectWorkspaceTab = "events" | "assets" | "matrix";
 
@@ -43,15 +42,6 @@ export type ProjectDialogRequest =
   | "asset"
   | "libraryImport"
   | "share";
-
-export type DeleteTarget =
-  | { kind: "project"; id: ProjectId; name: string }
-  | { kind: "device"; id: DeviceId; name: string }
-  | { kind: "collection"; id: CollectionId; name: string }
-  | { kind: "event"; id: EventId; name: string }
-  | { counts: { assets: number; folders: number }; kind: "assetFolder"; id: AssetLibraryFolderId; name: string }
-  | { kind: "asset"; id: AssetId; name: string }
-  | { kind: "matrixEntry"; id: CollisionMatrixEntryId; name: string };
 
 type MatrixSelection = {
   matrixBehavior: ResolutionBehaviorName;
