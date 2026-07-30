@@ -56,25 +56,25 @@ Goal: add the shared utility layer without touching a single call site. Additive
 
 ### 1.1 Files
 
-- [ ] `lib/errors.ts` — `messageForError(error, fallback)` with `fallback` as a **required** second parameter, plus named constants `workspaceErrorFallback`, `libraryErrorFallback`, `projectsErrorFallback`, `shareErrorFallback`.
-- [ ] Transcribe all five current fallback strings character-for-character from `app/libraries/page.tsx:74-80`, `app/projects/page.tsx:141-147`, `app/share/[shareToken]/page.tsx:31-37`, `app/projects/[projectId]/page.tsx:130-136`, `app/projects/[projectId]/events/[eventId]/page.tsx:73-79`. Note which are already identical.
-- [ ] `lib/format.ts` — `formatSeconds`, `formatAssetDate` (`{ day, month }`), `formatProjectDate` (`{ day, month, year, timeZone: "UTC" }`). Two named functions, **not** a variant parameter. Comment each with its current call site.
-- [ ] `lib/plural.ts` — `pluralSuffix(count)`, `countLabel(count, singular, plural?)`. No `<Pluralize>` component.
-- [ ] `lib/tree.ts` — `TreeShape<TNode>`, `flattenTree`, `findTreeNode`, `pathToTreeNode`. Generic, no `@/domain` import.
-- [ ] `lib/search-params.ts` — `hrefWithParams(basePath, current, updates)` where a `null` value deletes the key.
-- [ ] `lib/flash-message.ts` — `"use client"`; `hrefWithFlashMessage`, `readAndClearFlashMessage`, `writeFlashMessage` over `"vibra.projects.feedback"`. Keep the `typeof window === "undefined"` guard.
-- [ ] Confirm `lib/` has no `@/domain` imports except `errors.ts`.
+- [x] `lib/errors.ts` — `messageForError(error, fallback)` with `fallback` as a **required** second parameter, plus named constants `workspaceErrorFallback`, `libraryErrorFallback`, `projectsErrorFallback`, `shareErrorFallback`.
+- [x] Transcribe all five current fallback strings character-for-character from `app/libraries/page.tsx:74-80`, `app/projects/page.tsx:141-147`, `app/share/[shareToken]/page.tsx:31-37`, `app/projects/[projectId]/page.tsx:130-136`, `app/projects/[projectId]/events/[eventId]/page.tsx:73-79`. Note which are already identical.
+- [x] `lib/format.ts` — `formatSeconds`, `formatAssetDate` (`{ day, month }`), `formatProjectDate` (`{ day, month, year, timeZone: "UTC" }`). Two named functions, **not** a variant parameter. Comment each with its current call site.
+- [x] `lib/plural.ts` — `pluralSuffix(count)`, `countLabel(count, singular, plural?)`. No `<Pluralize>` component.
+- [x] `lib/tree.ts` — `TreeShape<TNode>`, `flattenTree`, `findTreeNode`, `pathToTreeNode`. Generic, no `@/domain` import.
+- [x] `lib/search-params.ts` — `hrefWithParams(basePath, current, updates)` where a `null` value deletes the key.
+- [x] `lib/flash-message.ts` — `"use client"`; `hrefWithFlashMessage`, `readAndClearFlashMessage`, `writeFlashMessage` over `"vibra.projects.feedback"`. Keep the `typeof window === "undefined"` guard.
+- [x] Confirm `lib/` has no `@/domain` imports except `errors.ts`.
 
 ### 1.2 Tests
 
-- [ ] `tests/lib-tree.test.ts` — flatten, find, path, and the missing-id case.
-- [ ] `tests/lib-format.test.ts` — assert `formatAssetDate` and `formatProjectDate` produce the strings the current pages produce.
-- [ ] `tests/lib-errors.test.ts` — `AppError` path and fallback path.
-- [ ] Add a test asserting `hrefWithParams` output is byte-identical to the current `searchParamsFor` and `folderHrefFor` for the null and non-null cases.
+- [x] `tests/lib-tree.test.ts` — flatten, find, path, and the missing-id case.
+- [x] `tests/lib-format.test.ts` — assert `formatAssetDate` and `formatProjectDate` produce the strings the current pages produce.
+- [x] `tests/lib-errors.test.ts` — `AppError` path and fallback path.
+- [x] Add a test asserting `hrefWithParams` output is byte-identical to the current `searchParamsFor` and `folderHrefFor` for the null and non-null cases.
 
 Stage gate:
 
-- [ ] Four gates green. No page file changed in this stage.
+- [x] Four gates green. No page file changed in this stage.
 
 ---
 

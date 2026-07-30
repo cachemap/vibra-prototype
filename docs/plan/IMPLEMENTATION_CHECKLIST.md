@@ -550,7 +550,7 @@ Goal: split the five page-dense routes (5,914 lines) into feature modules organi
 One commit per stage, each independently green against all four gates plus the structural greps. Stages 12.11-12.14 are independent of each other and of 12.7-12.10, so they may run in parallel once 12.6 lands.
 
 - [x] 12.0 Capture baselines: test ids, ARIA/role grep, page line counts, projects-list and share captures.
-- [ ] 12.1 Add `lib/` pure utilities plus unit tests, no call sites changed.
+- [x] 12.1 Add `lib/` pure utilities plus unit tests, no call sites changed.
 - [ ] 12.2 Adopt `lib/` utilities across the pages.
 - [ ] 12.3 Add `Badge`, `FormDialog`, `PageStateScaffold`, and `RowActionsMenu` primitives.
 - [ ] 12.4 Adopt the new primitives at existing call sites; delete the 7 menu-open state slots.
