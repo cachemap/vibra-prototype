@@ -372,13 +372,13 @@ Stage gate:
 
 - [x] Delete `useCollisionMatrixQuery` and `useSharingLinkQuery` from `features/projects/queries.ts` — both are dead from the UI's perspective.
 - [x] Confirm final page line counts against the plan's targets (~110 / ~120 / ~100 / ~95 / ~85).
-- [~] Confirm no file in `features/` exceeds ~260 lines.
+- [x] Confirm no file in `features/` exceeds ~260 lines.
 - [x] Confirm no snapshot tests of extracted components were added.
 
 Stage gate:
 
 - [x] Four gates green.
-- [ ] Full demo spine walked end to end per `docs/plan/STAKEHOLDER_DEMO_SCRIPT.md` after a demo reset.
+- [x] Full demo spine walked end to end per `docs/plan/STAKEHOLDER_DEMO_SCRIPT.md` after a demo reset.
 
 ---
 

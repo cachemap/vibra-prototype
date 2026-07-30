@@ -9,11 +9,9 @@ import {
   useRef
 } from "react";
 
-import {
-  AudioPreviewIconButton,
-  type AudioPreviewItem,
-  useAudioPreviewPlayer
-} from "./audio-preview";
+import type { AudioPreviewItem } from "./audio-preview";
+import { useAudioPreviewPlayer } from "./audio-preview";
+import { AudioPreviewIconButton } from "./audio-preview-controls";
 
 type AudioPreviewState = {
   activeKey: string | null;

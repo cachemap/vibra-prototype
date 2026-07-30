@@ -564,15 +564,15 @@ One commit per stage, each independently green against all four gates plus the s
 - [x] 12.12 Decompose the libraries page plus shared `features/assets/*`.
 - [x] 12.13 Decompose the projects list page.
 - [x] 12.14 Decompose the share preview page.
-- [~] 12.15 Cleanup: remove `useCollisionMatrixQuery` and `useSharingLinkQuery`; confirm line-count targets.
+- [x] 12.15 Cleanup: remove `useCollisionMatrixQuery` and `useSharingLinkQuery`; confirm line-count targets.
 
 Phase gate:
 
-- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm test:e2e` green.
-- [ ] `data-testid` grep still yields exactly 6 results, unchanged.
-- [ ] ARIA/role grep matches the 12.0 baseline.
+- [x] `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm test:e2e` green.
+- [x] `data-testid` grep still yields exactly 6 results, unchanged.
+- [x] ARIA/role grep matches the 12.0 baseline.
 - [ ] Visual captures diff clean against the 12.0 and `docs/plan/visual-audit-captures/` baselines.
-- [ ] Matrix cell selection survives tab switches; schedule playback animates without stutter; both flash-message channels work.
-- [ ] No page over ~120 lines and no file in `features/` over ~260 lines.
-- [ ] The four ADRs from the detailed plan are written.
-- [ ] Out-of-scope follow-ups are recorded, not implemented.
+- [x] Matrix cell selection survives tab switches; schedule playback animates without stutter; both flash-message channels work.
+- [x] No page over ~120 lines and no file in `features/` over ~260 lines.
+- [x] The four ADRs from the detailed plan are written.
+- [x] Out-of-scope follow-ups are recorded, not implemented.

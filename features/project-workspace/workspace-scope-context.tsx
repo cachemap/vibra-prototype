@@ -1,17 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  type Dispatch,
-  type ReactNode,
-  type SetStateAction,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   asEntityId,
@@ -20,9 +9,9 @@ import {
   type CollectionId,
   type DeviceId,
   type EventId,
-  type ProjectId,
   type ResolutionBehaviorName
 } from "@/domain";
+import type { ProjectId } from "@/domain";
 import type { DeviceSummary } from "@/data/repositories/project-repository";
 import { useAssetLibraryTreeQuery, useProjectWorkspaceQuery } from "@/features/projects/queries";
 import { useFeedbackActions } from "@/features/feedback/feedback-context";
@@ -30,57 +19,32 @@ import { hrefWithParams } from "@/lib/search-params";
 import type { MatrixAxis } from "@/features/matrix/matrix-axis-filter";
 import type { MatrixFilterAnchor } from "@/features/matrix/matrix-axis-filter-anchor";
 import type { DeleteTarget } from "./delete-target";
+import type {
+  MatrixSelection,
+  ProjectDialogRequest,
+  ProjectWorkspaceActions,
+  ProjectWorkspaceSelection,
+  ProjectWorkspaceTab
+} from "./workspace-scope-types";
+import {
+  ActionsContext,
+  DeleteContext,
+  DialogContext,
+  SelectionContext
+} from "./workspace-scope-hooks";
 
-export type ProjectWorkspaceTab = "events" | "assets" | "matrix";
-
-export type ProjectDialogRequest =
-  | "device"
-  | "collection"
-  | "editCollection"
-  | "event"
-  | "assetFolder"
-  | "asset"
-  | "libraryImport"
-  | "share";
-
-type MatrixSelection = {
-  matrixBehavior: ResolutionBehaviorName;
-  matrixFilterAnchor: MatrixFilterAnchor | null;
-  matrixFilterAxis: MatrixAxis;
-  matrixIncomingEventId: EventId | null;
-  matrixPlayingEventId: EventId | null;
-  matrixTargetEventId: string;
-};
-
-export type ProjectWorkspaceSelection = MatrixSelection & {
-  activeAssetFolderId: AssetLibraryFolderId | null;
-  activeAssetLibraryId: AssetLibraryId | null;
-  activeTab: ProjectWorkspaceTab;
-  collectionId: CollectionId | null;
-  deviceId: DeviceId | null;
-  projectId: ProjectId;
-  searchTerm: string;
-};
-
-export type ProjectWorkspaceActions = {
-  goToCollection: (collectionId: CollectionId) => void;
-  goToDevice: (deviceId: DeviceId | null) => void;
-  goToEvent: (eventId: EventId) => void;
-  openDialog: (request: ProjectDialogRequest) => void;
-  requestDelete: (target: DeleteTarget) => void;
-  selectAssetFolder: (folderId: AssetLibraryFolderId | null) => void;
-  selectAssetLibrary: (libraryId: AssetLibraryId) => void;
-  setActiveTab: (tab: ProjectWorkspaceTab) => void;
-  setDeleteTarget: Dispatch<SetStateAction<DeleteTarget | null>>;
-  setDialogRequest: Dispatch<SetStateAction<ProjectDialogRequest | null>>;
-  setMatrixSelection: (next: Partial<MatrixSelection>) => void;
-  setSearchTerm: (term: string) => void;
-};
-
-const SelectionContext = createContext<ProjectWorkspaceSelection | null>(null);
-const ActionsContext = createContext<ProjectWorkspaceActions | null>(null);
-const DialogContext = createContext<ProjectDialogRequest | null>(null);
-const DeleteContext = createContext<DeleteTarget | null>(null);
+export type {
+  ProjectDialogRequest,
+  ProjectWorkspaceActions,
+  ProjectWorkspaceSelection,
+  ProjectWorkspaceTab
+} from "./workspace-scope-types";
+export {
+  useProjectDeleteTarget,
+  useProjectDialogRequest,
+  useProjectWorkspaceActions,
+  useProjectWorkspaceSelection
+} from "./workspace-scope-hooks";
 
 type ProjectWorkspaceScopeProviderProps = {
   children: ReactNode;
@@ -279,32 +243,4 @@ export function ProjectWorkspaceScopeProvider({ children, projectId }: ProjectWo
       </ActionsContext.Provider>
     </SelectionContext.Provider>
   );
-}
-
-export function useProjectWorkspaceSelection() {
-  const value = useContext(SelectionContext);
-
-  if (!value) {
-    throw new Error("useProjectWorkspaceSelection must be used within ProjectWorkspaceScopeProvider.");
-  }
-
-  return value;
-}
-
-export function useProjectWorkspaceActions() {
-  const value = useContext(ActionsContext);
-
-  if (!value) {
-    throw new Error("useProjectWorkspaceActions must be used within ProjectWorkspaceScopeProvider.");
-  }
-
-  return value;
-}
-
-export function useProjectDialogRequest() {
-  return useContext(DialogContext);
-}
-
-export function useProjectDeleteTarget() {
-  return useContext(DeleteContext);
 }

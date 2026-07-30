@@ -7,11 +7,13 @@ import { EmptyState, Timeline, type TimelineLane } from "@/components/primitives
 import type { SharingLinkPreviewAggregate } from "@/data/repositories/project-repository";
 import { timelineTailSeconds } from "@/features/events/event-derivations";
 import {
-  AudioPreviewIconButton,
-  TimelinePreviewControls,
   playableAudioItems,
   type AudioPreviewItem
 } from "@/features/projects/audio-preview";
+import {
+  AudioPreviewIconButton,
+  TimelinePreviewControls
+} from "@/features/projects/audio-preview-controls";
 import {
   useAudioPreviewActions,
   useAudioPreviewState
