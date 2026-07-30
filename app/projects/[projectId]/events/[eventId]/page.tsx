@@ -55,9 +55,19 @@ import {
   useUpdateTriggerPlaybackMutation
 } from "@/features/projects/queries";
 import {
-  useAudioPreviewPlayer,
   type AudioPreviewItem
 } from "@/features/projects/audio-preview";
+import {
+  AudioPreviewProvider,
+  useAudioPreviewActions,
+  useAudioPreviewState
+} from "@/features/projects/audio-preview-context";
+import {
+  FeedbackProvider,
+  FeedbackText,
+  useFeedbackActions,
+  useFeedbackMessage
+} from "@/features/feedback/feedback-context";
 import { eventWorkspaceErrorFallback, messageForError } from "@/lib/errors";
 import { hrefWithFlashMessage } from "@/lib/flash-message";
 import { formatSeconds } from "@/lib/format";
@@ -85,6 +95,16 @@ type DeleteTarget =
     };
 
 export default function EventDetailPage() {
+  return (
+    <FeedbackProvider errorFallback={eventWorkspaceErrorFallback}>
+      <AudioPreviewProvider>
+        <EventDetailWorkspace />
+      </AudioPreviewProvider>
+    </FeedbackProvider>
+  );
+}
+
+function EventDetailWorkspace() {
   const { projectId: projectIdParam, eventId: eventIdParam } = useParams<{
     projectId: string;
     eventId: string;
@@ -107,7 +127,8 @@ export default function EventDetailPage() {
   const [selectedPlaybackId, setSelectedPlaybackId] = useState<TriggerPlaybackId | null>(null);
   const [playbackAssetId, setPlaybackAssetId] = useState("");
   const [playbackOffset, setPlaybackOffset] = useState("0");
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const feedback = useFeedbackMessage();
+  const { clearFeedback, runWithFeedback } = useFeedbackActions();
   const [deleteEventIsOpen, setDeleteEventIsOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
@@ -134,11 +155,10 @@ export default function EventDetailPage() {
   const createTriggerPlayback = useCreateTriggerPlaybackMutation();
   const updateTriggerPlayback = useUpdateTriggerPlaybackMutation();
   const deleteTriggerPlayback = useDeleteTriggerPlaybackMutation();
-  const audioPreview = useAudioPreviewPlayer();
+  const audioPreview = useAudioPreviewActions();
+  const audioPreviewState = useAudioPreviewState();
   const shareController = useShareLink({
-    errorFallback: eventWorkspaceErrorFallback,
-    setDialog: (nextDialog) => setDialog(nextDialog),
-    setFeedback
+    setDialog: (nextDialog) => setDialog(nextDialog)
   });
 
   const located = useMemo(
@@ -229,7 +249,7 @@ export default function EventDetailPage() {
         label={`Delete interaction ${triggerName}`}
         onClick={() => {
           audioPreview.stopSchedule(eventTrigger.id);
-          setFeedback(null);
+          clearFeedback();
           setDeleteTarget({
             eventTriggerId: eventTrigger.id,
             label: eventTrigger.label || triggerName,
@@ -259,7 +279,7 @@ export default function EventDetailPage() {
                 label={`Delete playback ${asset?.name ?? playback.assetId}`}
                 onClick={() => {
                   audioPreview.stopSchedule(eventTrigger.id);
-                  setFeedback(null);
+                  clearFeedback();
                   setDeleteTarget({
                     assetName: asset?.name ?? playback.assetId,
                     startOffset: playback.startOffset,
@@ -354,12 +374,12 @@ export default function EventDetailPage() {
   const openEditEvent = () => {
     setEventName(selectedEvent?.event.name ?? "");
     setEventType(selectedEvent?.event.eventType ?? "Button");
-    setFeedback(null);
+    clearFeedback();
     setDialog("editEvent");
   };
 
   const openDeleteEvent = () => {
-    setFeedback(null);
+    clearFeedback();
     setDeleteEventIsOpen(true);
   };
 
@@ -367,7 +387,7 @@ export default function EventDetailPage() {
     setTriggerId(availableTriggers[0]?.id ?? "");
     setTriggerLabel("");
     setTriggerEnabled(true);
-    setFeedback(null);
+    clearFeedback();
     setDialog("trigger");
   };
 
@@ -376,7 +396,7 @@ export default function EventDetailPage() {
     setSelectedPlaybackId(null);
     setPlaybackAssetId(deviceWorkspaceQuery.data?.playbackAssets[0]?.id ?? "");
     setPlaybackOffset("0");
-    setFeedback(null);
+    clearFeedback();
     setDialog("playback");
   };
 
@@ -388,7 +408,7 @@ export default function EventDetailPage() {
     setSelectedPlaybackId(playbackId);
     setPlaybackAssetId(playback?.assetId ?? deviceWorkspaceQuery.data?.playbackAssets[0]?.id ?? "");
     setPlaybackOffset(String(playback?.startOffset ?? 0));
-    setFeedback(null);
+    clearFeedback();
     setDialog("editPlayback");
   };
 
@@ -399,20 +419,19 @@ export default function EventDetailPage() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const updated = await updateEvent.mutateAsync({
+          eventId: selectedEvent.event.id,
+          name: eventName,
+          eventType
+        });
 
-    try {
-      const updated = await updateEvent.mutateAsync({
-        eventId: selectedEvent.event.id,
-        name: eventName,
-        eventType
-      });
-
-      setDialog(null);
-      setFeedback(`Updated ${updated.name}.`);
-    } catch (error) {
-      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
-    }
+        setDialog(null);
+        return updated;
+      },
+      onSuccess: (updated) => `Updated ${updated.name}.`
+    });
   };
 
   const handleCreateTrigger = async (formEvent: FormEvent<HTMLFormElement>) => {
@@ -422,22 +441,21 @@ export default function EventDetailPage() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const created = await createEventTrigger.mutateAsync({
+          eventId: selectedEvent.event.id,
+          triggerId: asEntityId<TriggerId>(triggerId),
+          label: triggerLabel || null,
+          isEnabled: triggerEnabled
+        });
+        const trigger = triggerById.get(created.triggerId);
 
-    try {
-      const created = await createEventTrigger.mutateAsync({
-        eventId: selectedEvent.event.id,
-        triggerId: asEntityId<TriggerId>(triggerId),
-        label: triggerLabel || null,
-        isEnabled: triggerEnabled
-      });
-      const trigger = triggerById.get(created.triggerId);
-
-      setDialog(null);
-      setFeedback(`Added ${trigger?.name ?? "interaction"} to ${selectedEvent.event.name}.`);
-    } catch (error) {
-      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
-    }
+        setDialog(null);
+        return { triggerName: trigger?.name ?? "interaction" };
+      },
+      onSuccess: ({ triggerName }) => `Added ${triggerName} to ${selectedEvent.event.name}.`
+    });
   };
 
   const handleCreatePlayback = async (formEvent: FormEvent<HTMLFormElement>) => {
@@ -447,21 +465,21 @@ export default function EventDetailPage() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const created = await createTriggerPlayback.mutateAsync({
+          eventTriggerId: selectedEventTriggerId,
+          assetId: asEntityId<AssetId>(playbackAssetId),
+          startOffset: Number(playbackOffset)
+        });
+        const asset = assetById.get(created.assetId);
 
-    try {
-      const created = await createTriggerPlayback.mutateAsync({
-        eventTriggerId: selectedEventTriggerId,
-        assetId: asEntityId<AssetId>(playbackAssetId),
-        startOffset: Number(playbackOffset)
-      });
-      const asset = assetById.get(created.assetId);
-
-      setDialog(null);
-      setFeedback(`Scheduled ${asset?.name ?? "asset"} at ${formatSeconds(created.startOffset)}.`);
-    } catch (error) {
-      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
-    }
+        setDialog(null);
+        return { assetName: asset?.name ?? "asset", startOffset: created.startOffset };
+      },
+      onSuccess: ({ assetName, startOffset }) =>
+        `Scheduled ${assetName} at ${formatSeconds(startOffset)}.`
+    });
   };
 
   const handleEditPlayback = async (formEvent: FormEvent<HTMLFormElement>) => {
@@ -471,32 +489,29 @@ export default function EventDetailPage() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const updated = await updateTriggerPlayback.mutateAsync({
+          triggerPlaybackId: selectedPlaybackId,
+          assetId: asEntityId<AssetId>(playbackAssetId),
+          startOffset: Number(playbackOffset)
+        });
+        const asset = assetById.get(updated.assetId);
 
-    try {
-      const updated = await updateTriggerPlayback.mutateAsync({
-        triggerPlaybackId: selectedPlaybackId,
-        assetId: asEntityId<AssetId>(playbackAssetId),
-        startOffset: Number(playbackOffset)
-      });
-      const asset = assetById.get(updated.assetId);
-
-      setDialog(null);
-      setFeedback(`Updated ${asset?.name ?? "asset"} at ${formatSeconds(updated.startOffset)}.`);
-    } catch (error) {
-      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
-    }
+        setDialog(null);
+        return { assetName: asset?.name ?? "asset", startOffset: updated.startOffset };
+      },
+      onSuccess: ({ assetName, startOffset }) =>
+        `Updated ${assetName} at ${formatSeconds(startOffset)}.`
+    });
   };
 
   const handleTriggerEnabledChange = async (eventTriggerId: EventTriggerId, isEnabled: boolean) => {
-    setFeedback(null);
-
-    try {
-      await updateEventTrigger.mutateAsync({ eventTriggerId, isEnabled });
-      setFeedback(isEnabled ? "Interaction enabled for preview." : "Interaction disabled for preview.");
-    } catch (error) {
-      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
-    }
+    await runWithFeedback({
+      work: () => updateEventTrigger.mutateAsync({ eventTriggerId, isEnabled }),
+      onSuccess: () =>
+        isEnabled ? "Interaction enabled for preview." : "Interaction disabled for preview."
+    });
   };
 
   const handleConfirmDeleteEvent = async () => {
@@ -504,15 +519,13 @@ export default function EventDetailPage() {
       return;
     }
 
-    setFeedback(null);
-
-    try {
-      await deleteEvent.mutateAsync(selectedEvent.event.id);
-      setDeleteEventIsOpen(false);
-      router.push(hrefWithFlashMessage(backHref, `Deleted event ${selectedEvent.event.name}.`));
-    } catch (error) {
-      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
-    }
+    await runWithFeedback({
+      work: async () => {
+        await deleteEvent.mutateAsync(selectedEvent.event.id);
+        setDeleteEventIsOpen(false);
+        router.push(hrefWithFlashMessage(backHref, `Deleted event ${selectedEvent.event.name}.`));
+      }
+    });
   };
 
   const handleConfirmDeleteTarget = async () => {
@@ -520,22 +533,21 @@ export default function EventDetailPage() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        if (deleteTarget.type === "eventTrigger") {
+          audioPreview.stopSchedule(deleteTarget.eventTriggerId);
+          await deleteEventTrigger.mutateAsync(deleteTarget.eventTriggerId);
+          setDeleteTarget(null);
+          return `Deleted interaction ${deleteTarget.label}.`;
+        }
 
-    try {
-      if (deleteTarget.type === "eventTrigger") {
-        audioPreview.stopSchedule(deleteTarget.eventTriggerId);
-        await deleteEventTrigger.mutateAsync(deleteTarget.eventTriggerId);
-        setFeedback(`Deleted interaction ${deleteTarget.label}.`);
-      } else {
         await deleteTriggerPlayback.mutateAsync(deleteTarget.triggerPlaybackId);
-        setFeedback(`Deleted playback ${deleteTarget.assetName}.`);
-      }
-
-      setDeleteTarget(null);
-    } catch (error) {
-      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
-    }
+        setDeleteTarget(null);
+        return `Deleted playback ${deleteTarget.assetName}.`;
+      },
+      onSuccess: (message) => message
+    });
   };
 
   if (workspaceQuery.isLoading || deviceWorkspaceQuery.isLoading) {
@@ -671,8 +683,8 @@ export default function EventDetailPage() {
               description="Bind an interaction such as onPress to schedule sound and haptic playbacks."
             />
           )}
-          {audioPreview.errorMessage ? (
-            <p className="text-sm text-gray-600">{audioPreview.errorMessage}</p>
+          {audioPreviewState.errorMessage ? (
+            <p className="text-sm text-gray-600">{audioPreviewState.errorMessage}</p>
           ) : null}
         </div>
 
@@ -768,7 +780,7 @@ export default function EventDetailPage() {
                 </option>
               ))}
             </Select>
-            {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
+            <FeedbackText />
         </FormDialog>
 
         <FormDialog
@@ -807,7 +819,7 @@ export default function EventDetailPage() {
               label="Enabled in preview"
               onChange={(formEvent) => setTriggerEnabled(formEvent.currentTarget.checked)}
             />
-            {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
+            <FeedbackText />
         </FormDialog>
 
         <FormDialog
@@ -868,7 +880,7 @@ export default function EventDetailPage() {
               type="number"
               value={playbackOffset}
             />
-            {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
+            <FeedbackText />
         </FormDialog>
       </DialogOverlay>
     </section>

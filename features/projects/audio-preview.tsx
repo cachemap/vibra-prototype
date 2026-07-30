@@ -198,6 +198,7 @@ export const useAudioPreviewPlayer = () => {
     isSchedulePlaying: (scheduleKey: string) => scheduleKey in playheadByScheduleKey,
     playItem,
     playSchedule,
+    playheadByScheduleKey,
     playheadFor: (scheduleKey: string) => playheadByScheduleKey[scheduleKey] ?? null,
     stop,
     stopSchedule

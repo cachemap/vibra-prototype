@@ -8,16 +8,14 @@ import {
   useDeleteSharingLinkMutation,
   useGenerateSharingLinkMutation
 } from "@/features/projects/queries";
-import { messageForError } from "@/lib/errors";
+import { useFeedbackActions } from "@/features/feedback/feedback-context";
 
 import { shareTokenFor } from "./share-token";
 
 type ShareLinkDialogState = "share" | null;
 
 type UseShareLinkOptions = {
-  errorFallback: string;
   setDialog: (dialog: ShareLinkDialogState) => void;
-  setFeedback: (message: string | null) => void;
 };
 
 export type ShareLinkController = {
@@ -32,19 +30,16 @@ export type ShareLinkController = {
   shareLinkPendingDelete: SharingLink | null;
 };
 
-export const useShareLink = ({
-  errorFallback,
-  setDialog,
-  setFeedback
-}: UseShareLinkOptions): ShareLinkController => {
+export const useShareLink = ({ setDialog }: UseShareLinkOptions): ShareLinkController => {
   const [shareLink, setShareLink] = useState<SharingLink | null>(null);
   const [shareLinkPendingDelete, setShareLinkPendingDelete] = useState<SharingLink | null>(null);
   const [shareLabel, setShareLabel] = useState("");
+  const { clearFeedback, reportError, setFeedback } = useFeedbackActions();
   const generateSharingLink = useGenerateSharingLinkMutation();
   const deleteSharingLink = useDeleteSharingLinkMutation();
 
   const openShareDialog = async (target: ShareTarget, label: string) => {
-    setFeedback(null);
+    clearFeedback();
     setShareLabel(label);
     setShareLink(null);
     setDialog("share");
@@ -58,7 +53,7 @@ export const useShareLink = ({
       setShareLink(generated);
       setFeedback(`Generated share link for ${label}.`);
     } catch (error) {
-      setFeedback(messageForError(error, errorFallback));
+      reportError(error);
     }
   };
 
@@ -83,7 +78,7 @@ export const useShareLink = ({
     }
 
     setDialog(null);
-    setFeedback(null);
+    clearFeedback();
     setShareLinkPendingDelete(shareLink);
   };
 
@@ -92,7 +87,7 @@ export const useShareLink = ({
       return;
     }
 
-    setFeedback(null);
+    clearFeedback();
 
     try {
       const deletedToken = shareTokenFor(shareLinkPendingDelete);
@@ -102,7 +97,7 @@ export const useShareLink = ({
       setShareLink(null);
       setFeedback(`Deleted share link /share/${deletedToken}.`);
     } catch (error) {
-      setFeedback(messageForError(error, errorFallback));
+      reportError(error);
     }
   };
 

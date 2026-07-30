@@ -45,6 +45,11 @@ import {
   useProjectTreeQuery
 } from "@/features/projects/queries";
 import {
+  FeedbackProvider,
+  useFeedbackActions,
+  useFeedbackMessage
+} from "@/features/feedback/feedback-context";
+import {
   asEntityId,
   eventTypes,
   groupDevicePresetsByFormFactor,
@@ -171,8 +176,18 @@ function MemberStack() {
 export default function ProjectsPage() {
   return (
     <Suspense fallback={<LoadingState title="Loading projects" />}>
-      <ProjectsWorkspace />
+      <ProjectsFeedbackScope />
     </Suspense>
+  );
+}
+
+function ProjectsFeedbackScope() {
+  const [initialMessage] = useState(() => readAndClearFlashMessage());
+
+  return (
+    <FeedbackProvider errorFallback={projectsErrorFallback} initialMessage={initialMessage}>
+      <ProjectsWorkspace />
+    </FeedbackProvider>
   );
 }
 
@@ -189,7 +204,8 @@ function ProjectsWorkspace() {
   const [selectedPresetIds, setSelectedPresetIds] = useState<string[]>([]);
   const [selectedStarterEventTypes, setSelectedStarterEventTypes] = useState<EventType[]>([]);
   const [starterEventSearch, setStarterEventSearch] = useState("");
-  const [feedback, setFeedback] = useState<string | null>(() => readAndClearFlashMessage());
+  const feedback = useFeedbackMessage();
+  const { clearFeedback, runWithFeedback } = useFeedbackActions();
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const treeQuery = useProjectTreeQuery(DEMO_USER_ID);
   const createFolder = useCreateProjectFolderMutation();
@@ -283,7 +299,7 @@ function ProjectsWorkspace() {
     setSelectedPresetIds([]);
     setSelectedStarterEventTypes([]);
     setStarterEventSearch("");
-    setFeedback(null);
+    clearFeedback();
     setDialog("project");
   };
 
@@ -306,56 +322,53 @@ function ProjectsWorkspace() {
   const handleCreateFolder = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const folder = await createFolder.mutateAsync({
+          parentFolderId: currentFolder?.folder.id ?? null,
+          createdByUserId: currentFolder ? undefined : DEMO_USER_ID,
+          name: folderName
+        });
 
-    try {
-      const folder = await createFolder.mutateAsync({
-        parentFolderId: currentFolder?.folder.id ?? null,
-        createdByUserId: currentFolder ? undefined : DEMO_USER_ID,
-        name: folderName
-      });
-
-      setFolderName("");
-      setDialog(null);
-      setFeedback(`Created folder ${folder.name}.`);
-      router.push(`/projects?folder=${folder.id}`);
-    } catch (error) {
-      setFeedback(messageForError(error, projectsErrorFallback));
-    }
+        setFolderName("");
+        setDialog(null);
+        router.push(`/projects?folder=${folder.id}`);
+        return folder;
+      },
+      onSuccess: (folder) => `Created folder ${folder.name}.`
+    });
   };
 
   const handleCreateProject = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const created: CreatedProjectAggregate = await createProject.mutateAsync({
+          folderId: currentFolder?.folder.id ?? null,
+          name: projectName,
+          devices: selectedPresets.map((preset) => ({
+            platformId: asEntityId<PlatformId>(platformIdByName.get(preset.platformName) ?? ""),
+            name: preset.deviceName
+          })),
+          starterEventTypes: selectedStarterEventTypes
+        });
 
-    try {
-      const created: CreatedProjectAggregate = await createProject.mutateAsync({
-        folderId: currentFolder?.folder.id ?? null,
-        name: projectName,
-        devices: selectedPresets.map((preset) => ({
-          platformId: asEntityId<PlatformId>(platformIdByName.get(preset.platformName) ?? ""),
-          name: preset.deviceName
-        })),
-        starterEventTypes: selectedStarterEventTypes
-      });
-
-      setProjectName("");
-      setSelectedPresetIds([]);
-      setSelectedStarterEventTypes([]);
-      setStarterEventSearch("");
-      setDialog(null);
-      setFeedback(
+        setProjectName("");
+        setSelectedPresetIds([]);
+        setSelectedStarterEventTypes([]);
+        setStarterEventSearch("");
+        setDialog(null);
+        router.push(
+          created.devices[0]
+            ? `/projects/${created.project.id}?device=${created.devices[0].device.id}`
+            : `/projects/${created.project.id}`
+        );
+        return created;
+      },
+      onSuccess: (created) =>
         `Created ${created.project.name} with ${created.defaultAssetLibrary.name} asset library.`
-      );
-      router.push(
-        created.devices[0]
-          ? `/projects/${created.project.id}?device=${created.devices[0].device.id}`
-          : `/projects/${created.project.id}`
-      );
-    } catch (error) {
-      setFeedback(messageForError(error, projectsErrorFallback));
-    }
+    });
   };
 
   const handleConfirmDelete = async () => {
@@ -363,21 +376,21 @@ function ProjectsWorkspace() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        if (deleteTarget.kind === "Folder") {
+          await deleteFolder.mutateAsync(deleteTarget.id as ProjectFolderId);
+          router.push(folderHrefFor(deleteTarget.parentFolderId));
+        } else {
+          await deleteProject.mutateAsync(deleteTarget.id as ProjectId);
+        }
 
-    try {
-      if (deleteTarget.kind === "Folder") {
-        await deleteFolder.mutateAsync(deleteTarget.id as ProjectFolderId);
-        router.push(folderHrefFor(deleteTarget.parentFolderId));
-      } else {
-        await deleteProject.mutateAsync(deleteTarget.id as ProjectId);
-      }
-
-      setFeedback(`Deleted ${deleteTarget.kind.toLowerCase()} ${deleteTarget.name}.`);
-      setDeleteTarget(null);
-    } catch (error) {
-      setFeedback(messageForError(error, projectsErrorFallback));
-    }
+        setDeleteTarget(null);
+        return deleteTarget;
+      },
+      onSuccess: (deletedTarget) =>
+        `Deleted ${deletedTarget.kind.toLowerCase()} ${deletedTarget.name}.`
+    });
   };
 
   const deleteIsPending = deleteFolder.isPending || deleteProject.isPending;

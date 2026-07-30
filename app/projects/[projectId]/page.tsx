@@ -95,10 +95,13 @@ import {
   useUpsertCollisionMatrixEntryMutation
 } from "@/features/projects/queries";
 import {
-  AudioPreviewIconButton,
-  useAudioPreviewPlayer,
   type AudioPreviewItem
 } from "@/features/projects/audio-preview";
+import {
+  AudioPreviewButton,
+  AudioPreviewProvider,
+  useAudioPreviewActions
+} from "@/features/projects/audio-preview-context";
 import {
   MatrixAxisFilter,
   type MatrixAxis,
@@ -113,6 +116,12 @@ import {
   DeviceGlyph,
   SelectableCard
 } from "@/components/primitives";
+import {
+  FeedbackProvider,
+  FeedbackText,
+  useFeedbackActions,
+  useFeedbackMessage
+} from "@/features/feedback/feedback-context";
 import {
   groupDevicePresetsByFormFactor,
   type DevicePreset
@@ -303,13 +312,24 @@ const pathForAssetFolder = (
 };
 
 export default function ProjectPage() {
+  const searchParams = useSearchParams();
+
+  return (
+    <FeedbackProvider errorFallback={workspaceErrorFallback} initialMessage={searchParams.get("feedback")}>
+      <AudioPreviewProvider>
+        <ProjectWorkspace />
+      </AudioPreviewProvider>
+    </FeedbackProvider>
+  );
+}
+
+function ProjectWorkspace() {
   const { projectId: projectIdParam } = useParams<{ projectId: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = asEntityId<ProjectId>(projectIdParam);
   const selectedDeviceParam = searchParams.get("device");
   const selectedCollectionParam = searchParams.get("collection");
-  const returnFeedback = searchParams.get("feedback");
   const [dialog, setDialog] = useState<
     | "device"
     | "collection"
@@ -341,7 +361,8 @@ export default function ProjectPage() {
     "playingAxis" | "incomingAxis" | "toolbar" | null
   >(null);
   const [matrixFilterAxis, setMatrixFilterAxis] = useState<MatrixAxis>("playing");
-  const [feedback, setFeedback] = useState<string | null>(returnFeedback);
+  const feedback = useFeedbackMessage();
+  const { clearFeedback, runWithFeedback } = useFeedbackActions();
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
   const workspaceQuery = useProjectWorkspaceQuery(projectId);
@@ -404,11 +425,9 @@ export default function ProjectPage() {
   const deselectMatrixColumn = useDeselectCollisionMatrixColumnMutation();
   const upsertMatrixEntry = useUpsertCollisionMatrixEntryMutation();
   const deleteMatrixEntry = useDeleteCollisionMatrixEntryMutation();
-  const audioPreview = useAudioPreviewPlayer();
+  const audioPreview = useAudioPreviewActions();
   const shareController = useShareLink({
-    errorFallback: workspaceErrorFallback,
-    setDialog: (nextDialog) => setDialog(nextDialog),
-    setFeedback
+    setDialog: (nextDialog) => setDialog(nextDialog)
   });
 
   const selectedCollection = useMemo(() => {
@@ -579,7 +598,7 @@ export default function ProjectPage() {
     setDevicePlatformId(workspaceQuery.data?.platforms[0]?.id ?? "");
     setDevicePresetId("");
     setDeviceEnabled(true);
-    setFeedback(null);
+    clearFeedback();
     setDialog("device");
   };
 
@@ -596,36 +615,36 @@ export default function ProjectPage() {
 
   const openCreateCollection = () => {
     setCollectionName("");
-    setFeedback(null);
+    clearFeedback();
     setDialog("collection");
   };
 
   const openEditCollection = () => {
     setCollectionName(selectedCollection?.collection.name ?? "");
-    setFeedback(null);
+    clearFeedback();
     setDialog("editCollection");
   };
 
   const openCreateEvent = () => {
     setEventName("");
     setEventType("Button");
-    setFeedback(null);
+    clearFeedback();
     setDialog("event");
   };
 
   const openImportLibrary = () => {
     setImportLibraryId(importCandidates[0]?.library.id ?? "");
-    setFeedback(null);
+    clearFeedback();
     setDialog("libraryImport");
   };
 
   const openCreateAssetFolder = () => {
-    setFeedback(null);
+    clearFeedback();
     setDialog("assetFolder");
   };
 
   const openCreateAsset = () => {
-    setFeedback(null);
+    clearFeedback();
     setDialog("asset");
   };
 
@@ -634,7 +653,7 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
+    clearFeedback();
     setDeleteTarget({
       kind: "project",
       id: workspaceQuery.data.project.id,
@@ -643,7 +662,7 @@ export default function ProjectPage() {
   };
 
   const openDeleteDevice = (summary: DeviceSummary) => {
-    setFeedback(null);
+    clearFeedback();
     setDeleteTarget({
       kind: "device",
       id: summary.device.id,
@@ -656,7 +675,7 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
+    clearFeedback();
     setDeleteTarget({
       kind: "collection",
       id: selectedCollection.collection.id,
@@ -665,7 +684,7 @@ export default function ProjectPage() {
   };
 
   const openDeleteEvent = (event: { id: EventId; name: string }) => {
-    setFeedback(null);
+    clearFeedback();
     setDeleteTarget({
       kind: "event",
       id: event.id,
@@ -678,7 +697,7 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
+    clearFeedback();
     setDeleteTarget({
       kind: "matrixEntry",
       id: selectedMatrixEntry.id,
@@ -689,7 +708,7 @@ export default function ProjectPage() {
   };
 
   const openDeleteProjectAssetFolder = (node: AssetLibraryFolderNode) => {
-    setFeedback(null);
+    clearFeedback();
     setDeleteTarget({
       counts: countAssetFolderDescendants(node),
       kind: "assetFolder",
@@ -699,7 +718,7 @@ export default function ProjectPage() {
   };
 
   const openDeleteProjectAsset = (asset: Asset) => {
-    setFeedback(null);
+    clearFeedback();
     setDeleteTarget({
       kind: "asset",
       id: asset.id,
@@ -716,24 +735,23 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const created = await createDevice.mutateAsync({
+          projectId,
+          platformId: asEntityId<PlatformId>(platformId),
+          name: deviceName,
+          isEnabled: deviceEnabled
+        });
 
-    try {
-      const created = await createDevice.mutateAsync({
-        projectId,
-        platformId: asEntityId<PlatformId>(platformId),
-        name: deviceName,
-        isEnabled: deviceEnabled
-      });
-
-      setDialog(null);
-      setDeviceName("");
-      setDevicePresetId("");
-      setFeedback(`Created ${created.device.name} with a new Collision Matrix.`);
-      goToDevice(created.device.id);
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
+        setDialog(null);
+        setDeviceName("");
+        setDevicePresetId("");
+        goToDevice(created.device.id);
+        return created;
+      },
+      onSuccess: (created) => `Created ${created.device.name} with a new Collision Matrix.`
+    });
   };
 
   const handleCreateCollection = async (event: FormEvent<HTMLFormElement>) => {
@@ -743,21 +761,20 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const collection = await createCollection.mutateAsync({
+          deviceId: selectedDevice.device.id,
+          name: collectionName
+        });
 
-    try {
-      const collection = await createCollection.mutateAsync({
-        deviceId: selectedDevice.device.id,
-        name: collectionName
-      });
-
-      setDialog(null);
-      setCollectionName("");
-      setFeedback(`Created ${collection.name} for ${selectedDevice.device.name}.`);
-      goToCollection(collection.id);
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
+        setDialog(null);
+        setCollectionName("");
+        goToCollection(collection.id);
+        return collection;
+      },
+      onSuccess: (collection) => `Created ${collection.name} for ${selectedDevice.device.name}.`
+    });
   };
 
   const handleEditCollection = async (event: FormEvent<HTMLFormElement>) => {
@@ -767,19 +784,18 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const collection = await updateCollection.mutateAsync({
+          collectionId: selectedCollection.collection.id,
+          name: collectionName
+        });
 
-    try {
-      const collection = await updateCollection.mutateAsync({
-        collectionId: selectedCollection.collection.id,
-        name: collectionName
-      });
-
-      setDialog(null);
-      setFeedback(`Renamed collection to ${collection.name}.`);
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
+        setDialog(null);
+        return collection;
+      },
+      onSuccess: (collection) => `Renamed collection to ${collection.name}.`
+    });
   };
 
   const handleCreateEvent = async (event: FormEvent<HTMLFormElement>) => {
@@ -789,22 +805,21 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const created = await createEvent.mutateAsync({
+          collectionId: selectedCollection.collection.id,
+          name: eventName,
+          eventType
+        });
 
-    try {
-      const created = await createEvent.mutateAsync({
-        collectionId: selectedCollection.collection.id,
-        name: eventName,
-        eventType
-      });
-
-      setDialog(null);
-      setEventName("");
-      setFeedback(`Created ${created.name} in ${selectedCollection.collection.name}.`);
-      goToEvent(created.id);
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
+        setDialog(null);
+        setEventName("");
+        goToEvent(created.id);
+        return created;
+      },
+      onSuccess: (created) => `Created ${created.name} in ${selectedCollection.collection.name}.`
+    });
   };
 
   const handleImportLibrary = async (event: FormEvent<HTMLFormElement>) => {
@@ -814,22 +829,21 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
+    await runWithFeedback({
+      work: async () => {
+        const imported = await importAssetLibrary.mutateAsync({
+          projectId,
+          assetLibraryId: asEntityId<AssetLibraryId>(importLibraryId)
+        });
+        const library = assetLibrariesQuery.data?.libraries.find(
+          (summary) => summary.library.id === imported.assetLibraryId
+        )?.library;
 
-    try {
-      const imported = await importAssetLibrary.mutateAsync({
-        projectId,
-        assetLibraryId: asEntityId<AssetLibraryId>(importLibraryId)
-      });
-      const library = assetLibrariesQuery.data?.libraries.find(
-        (summary) => summary.library.id === imported.assetLibraryId
-      )?.library;
-
-      setDialog(null);
-      setFeedback(`Imported ${library?.name ?? "asset library"} for playback selection.`);
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
+        setDialog(null);
+        return library?.name ?? "asset library";
+      },
+      onSuccess: (libraryName) => `Imported ${libraryName} for playback selection.`
+    });
   };
 
   const handleCreateAssetFolder = async ({ name, icon }: { name: string; icon: string }) => {
@@ -837,22 +851,24 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
+    const folder = await runWithFeedback({
+      work: async () => {
+        const createdFolder = await createAssetLibraryFolder.mutateAsync({
+          libraryId: selectedProjectAssetLibrary.library.id,
+          parentFolderId: selectedProjectAssetFolder.folder.id,
+          name,
+          icon
+        });
 
-    try {
-      const folder = await createAssetLibraryFolder.mutateAsync({
-        libraryId: selectedProjectAssetLibrary.library.id,
-        parentFolderId: selectedProjectAssetFolder.folder.id,
-        name,
-        icon
-      });
+        setDialog(null);
+        goToProjectAssetFolder(createdFolder.id);
+        return createdFolder;
+      },
+      onSuccess: (createdFolder) => `Created folder ${createdFolder.name}.`
+    });
 
-      setDialog(null);
-      setFeedback(`Created folder ${folder.name}.`);
-      goToProjectAssetFolder(folder.id);
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-      throw error;
+    if (!folder) {
+      throw new Error(workspaceErrorFallback);
     }
   };
 
@@ -868,20 +884,22 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
+    const asset = await runWithFeedback({
+      work: async () => {
+        const createdAsset = await createAsset.mutateAsync({
+          libraryId: selectedProjectAssetLibrary.library.id,
+          folderId: selectedProjectAssetFolder.folder.id,
+          ...input
+        });
 
-    try {
-      const asset = await createAsset.mutateAsync({
-        libraryId: selectedProjectAssetLibrary.library.id,
-        folderId: selectedProjectAssetFolder.folder.id,
-        ...input
-      });
+        setDialog(null);
+        return createdAsset;
+      },
+      onSuccess: (createdAsset) => `Uploaded ${createdAsset.mediaKind} asset ${createdAsset.name}.`
+    });
 
-      setDialog(null);
-      setFeedback(`Uploaded ${asset.mediaKind} asset ${asset.name}.`);
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-      throw error;
+    if (!asset) {
+      throw new Error(workspaceErrorFallback);
     }
   };
 
@@ -890,21 +908,17 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
-
-    try {
-      await updateDevice.mutateAsync({
-        deviceId: selectedDevice.device.id,
-        isEnabled
-      });
-      setFeedback(
+    await runWithFeedback({
+      work: () =>
+        updateDevice.mutateAsync({
+          deviceId: selectedDevice.device.id,
+          isEnabled
+        }),
+      onSuccess: () =>
         isEnabled
           ? `${selectedDevice.device.name} is included in playback and export.`
           : `${selectedDevice.device.name} is excluded from playback and export.`
-      );
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
+    });
   };
 
   const handleConfirmDelete = async () => {
@@ -912,15 +926,14 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
-
-    try {
-      if (deleteTarget.kind === "project") {
+    await runWithFeedback({
+      work: async () => {
+        if (deleteTarget.kind === "project") {
         await deleteProject.mutateAsync(deleteTarget.id);
         setDeleteTarget(null);
         writeFlashMessage(`Deleted project ${deleteTarget.name}.`);
         router.push("/projects");
-        return;
+        return null;
       }
 
       if (deleteTarget.kind === "collection") {
@@ -931,7 +944,6 @@ export default function ProjectPage() {
 
         await deleteCollection.mutateAsync(deleteTarget.id);
         setDeleteTarget(null);
-        setFeedback(`Deleted collection ${deleteTarget.name}.`);
 
         if (selectedCollection?.collection.id === deleteTarget.id) {
           router.push(
@@ -941,14 +953,13 @@ export default function ProjectPage() {
           );
         }
 
-        return;
+        return `Deleted collection ${deleteTarget.name}.`;
       }
 
       if (deleteTarget.kind === "event") {
         await deleteEvent.mutateAsync(deleteTarget.id);
         setDeleteTarget(null);
-        setFeedback(`Deleted event ${deleteTarget.name}.`);
-        return;
+        return `Deleted event ${deleteTarget.name}.`;
       }
 
       if (deleteTarget.kind === "assetFolder") {
@@ -958,21 +969,19 @@ export default function ProjectPage() {
 
         await deleteAssetLibraryFolder.mutateAsync(deleteTarget.id);
         setDeleteTarget(null);
-        setFeedback(`Deleted folder ${deleteTarget.name}.`);
 
         if (deletedPathContainedSelection) {
           setSelectedProjectAssetFolderId(null);
         }
 
-        return;
+        return `Deleted folder ${deleteTarget.name}.`;
       }
 
       if (deleteTarget.kind === "asset") {
         audioPreview.stop();
         await deleteAsset.mutateAsync(deleteTarget.id);
         setDeleteTarget(null);
-        setFeedback(`Deleted asset ${deleteTarget.name}.`);
-        return;
+        return `Deleted asset ${deleteTarget.name}.`;
       }
 
       if (deleteTarget.kind === "matrixEntry") {
@@ -980,8 +989,7 @@ export default function ProjectPage() {
         setDeleteTarget(null);
         setMatrixBehavior("Preempt");
         setMatrixTargetEventId("");
-        setFeedback(`Cleared matrix rule ${deleteTarget.name}.`);
-        return;
+        return `Cleared matrix rule ${deleteTarget.name}.`;
       }
 
       const remainingDevices = (workspaceQuery.data?.devices ?? []).filter(
@@ -991,7 +999,6 @@ export default function ProjectPage() {
 
       await deleteDevice.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setFeedback(`Deleted device ${deleteTarget.name}.`);
 
       if (selectedDevice?.device.id === deleteTarget.id) {
         router.push(
@@ -1001,9 +1008,10 @@ export default function ProjectPage() {
           })}`
         );
       }
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
+        return `Deleted device ${deleteTarget.name}.`;
+      },
+      onSuccess: (message) => message
+    });
   };
 
   const renderMatrixAxisFilter = () => (
@@ -1027,7 +1035,7 @@ export default function ProjectPage() {
   );
 
   const openMatrixFilter = (anchor: "playingAxis" | "incomingAxis" | "toolbar", axis: MatrixAxis) => {
-    setFeedback(null);
+    clearFeedback();
     setMatrixFilterAxis(axis);
     setMatrixFilterAnchor((current) => (current === anchor ? null : anchor));
   };
@@ -1052,55 +1060,52 @@ export default function ProjectPage() {
       return;
     }
 
-    setFeedback(null);
-
-    try {
-      for (const eventId of changingEventIds) {
-        if (nextSelected && axis === "playing") {
-          await selectMatrixRow.mutateAsync({ matrixId, eventId });
-        } else if (nextSelected) {
-          await selectMatrixColumn.mutateAsync({ matrixId, eventId });
-        } else if (axis === "playing") {
-          await deselectMatrixRow.mutateAsync({ matrixId, eventId });
-        } else {
-          await deselectMatrixColumn.mutateAsync({ matrixId, eventId });
-        }
-      }
-
-      if (!nextSelected) {
-        if (
-          axis === "playing" &&
-          selectedMatrixPlayingEventId &&
-          changingEventIds.includes(selectedMatrixPlayingEventId)
-        ) {
-          setSelectedMatrixPlayingEventId(null);
-          setMatrixTargetEventId("");
+    await runWithFeedback({
+      work: async () => {
+        for (const eventId of changingEventIds) {
+          if (nextSelected && axis === "playing") {
+            await selectMatrixRow.mutateAsync({ matrixId, eventId });
+          } else if (nextSelected) {
+            await selectMatrixColumn.mutateAsync({ matrixId, eventId });
+          } else if (axis === "playing") {
+            await deselectMatrixRow.mutateAsync({ matrixId, eventId });
+          } else {
+            await deselectMatrixColumn.mutateAsync({ matrixId, eventId });
+          }
         }
 
-        if (
-          axis === "incoming" &&
-          selectedMatrixIncomingEventId &&
-          changingEventIds.includes(selectedMatrixIncomingEventId)
-        ) {
-          setSelectedMatrixIncomingEventId(null);
-          setMatrixTargetEventId("");
+        if (!nextSelected) {
+          if (
+            axis === "playing" &&
+            selectedMatrixPlayingEventId &&
+            changingEventIds.includes(selectedMatrixPlayingEventId)
+          ) {
+            setSelectedMatrixPlayingEventId(null);
+            setMatrixTargetEventId("");
+          }
+
+          if (
+            axis === "incoming" &&
+            selectedMatrixIncomingEventId &&
+            changingEventIds.includes(selectedMatrixIncomingEventId)
+          ) {
+            setSelectedMatrixIncomingEventId(null);
+            setMatrixTargetEventId("");
+          }
         }
-      }
 
-      const axisLabel = axis === "playing" ? "playing rows" : "incoming columns";
-      const changedLabel =
-        changingEventIds.length === 1
-          ? (matrixEventById.get(changingEventIds[0])?.name ?? "1 event")
-          : `${changingEventIds.length} events`;
+        const axisLabel = axis === "playing" ? "playing rows" : "incoming columns";
+        const changedLabel =
+          changingEventIds.length === 1
+            ? (matrixEventById.get(changingEventIds[0])?.name ?? "1 event")
+            : `${changingEventIds.length} events`;
 
-      setFeedback(
-        nextSelected
+        return nextSelected
           ? `Added ${changedLabel} to ${axisLabel}.`
-          : `Removed ${changedLabel} from ${axisLabel}.`
-      );
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
+          : `Removed ${changedLabel} from ${axisLabel}.`;
+      },
+      onSuccess: (message) => message
+    });
   };
 
   const handleSelectMatrixCell = (playingEventId: EventId, incomingEventId: EventId) => {
@@ -1124,27 +1129,22 @@ export default function ProjectPage() {
 
     const targetEventId = matrixBehavior === "Suppress" ? matrixTargetEventId : matrixTargetEventId || "";
 
-    setFeedback(null);
-
-    try {
-      const entry = await upsertMatrixEntry.mutateAsync({
-        matrixId,
-        playingEventId: selectedMatrixPlayingEventId,
-        incomingEventId: selectedMatrixIncomingEventId,
-        resolutionBehavior: {
-          behaviorName: matrixBehavior,
-          targetEventId: targetEventId ? asEntityId<EventId>(targetEventId) : null
-        }
-      });
-
-      setFeedback(
+    await runWithFeedback({
+      work: () =>
+        upsertMatrixEntry.mutateAsync({
+          matrixId,
+          playingEventId: selectedMatrixPlayingEventId,
+          incomingEventId: selectedMatrixIncomingEventId,
+          resolutionBehavior: {
+            behaviorName: matrixBehavior,
+            targetEventId: targetEventId ? asEntityId<EventId>(targetEventId) : null
+          }
+        }),
+      onSuccess: (entry) =>
         `Set ${matrixEventById.get(entry.playingEventId)?.name ?? "playing event"} x ${
           matrixEventById.get(entry.incomingEventId)?.name ?? "incoming event"
         } to ${entry.resolutionBehavior.behaviorName}.`
-      );
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
+    });
   };
 
   if (workspaceQuery.isLoading) {
@@ -2036,12 +2036,7 @@ export default function ProjectPage() {
                                         <TableCell>{assetSourceLabelFor(item.asset)}</TableCell>
                                         <TableCell>
                                           {item.asset.mediaKind === "audio" ? (
-                                            <AudioPreviewIconButton
-                                              activeKey={audioPreview.activeKey}
-                                              item={previewItem}
-                                              onPlay={(audioItem) => void audioPreview.playItem(audioItem)}
-                                              onStop={audioPreview.stop}
-                                            />
+                                            <AudioPreviewButton item={previewItem} />
                                           ) : (
                                             <span className="text-xs text-gray-500">Visual</span>
                                           )}
@@ -2389,7 +2384,7 @@ export default function ProjectPage() {
             label="Include in playback/export"
             onChange={(event) => setDeviceEnabled(event.currentTarget.checked)}
           />
-          {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
+          <FeedbackText />
         </FormDialog>
 
       <FormDialog
@@ -2410,7 +2405,7 @@ export default function ProjectPage() {
             required
             value={collectionName}
           />
-          {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
+          <FeedbackText />
       </FormDialog>
 
       <FormDialog
@@ -2444,7 +2439,7 @@ export default function ProjectPage() {
               </option>
             ))}
           </Select>
-          {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
+          <FeedbackText />
       </FormDialog>
 
       <FormDialog
@@ -2480,7 +2475,7 @@ export default function ProjectPage() {
               <span className="font-medium text-gray-700">{workspace.importedAssetLibraries.length}</span>
             </div>
           </div>
-          {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
+          <FeedbackText />
       </FormDialog>
 
       <CreateAssetFolderDialog

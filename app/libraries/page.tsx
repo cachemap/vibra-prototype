@@ -56,11 +56,22 @@ import {
   useDeleteAssetLibraryFolderMutation,
   useDeleteAssetMutation
 } from "@/features/projects/queries";
-import { AudioPreviewIconButton, useAudioPreviewPlayer } from "@/features/projects/audio-preview";
+import {
+  AudioPreviewButton,
+  AudioPreviewProvider,
+  useAudioPreviewActions,
+  useAudioPreviewState
+} from "@/features/projects/audio-preview-context";
 import {
   CreateAssetDialog,
   CreateAssetFolderDialog
 } from "@/features/assets/asset-authoring-dialogs";
+import {
+  FeedbackProvider,
+  FeedbackText,
+  useFeedbackActions,
+  useFeedbackMessage
+} from "@/features/feedback/feedback-context";
 import { libraryErrorFallback, messageForError } from "@/lib/errors";
 import { formatAssetDate } from "@/lib/format";
 import { pluralSuffix } from "@/lib/plural";
@@ -146,7 +157,11 @@ const pathForFolder = (
 export default function LibrariesPage() {
   return (
     <Suspense fallback={<LoadingState title="Loading asset libraries" />}>
-      <LibrariesWorkspace />
+      <FeedbackProvider errorFallback={libraryErrorFallback}>
+        <AudioPreviewProvider>
+          <LibrariesWorkspace />
+        </AudioPreviewProvider>
+      </FeedbackProvider>
     </Suspense>
   );
 }
@@ -174,14 +189,16 @@ function LibrariesWorkspace() {
   const treeQuery = useAssetLibraryTreeQuery(selectedLibrarySummary?.library.id ?? null);
   const [dialog, setDialog] = useState<"library" | "folder" | "asset" | null>(null);
   const [libraryName, setLibraryName] = useState("");
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const feedback = useFeedbackMessage();
+  const { clearFeedback, runWithFeedback } = useFeedbackActions();
   const createLibrary = useCreateAssetLibraryMutation();
   const createFolder = useCreateAssetLibraryFolderMutation();
   const createAsset = useCreateAssetMutation();
   const deleteLibrary = useDeleteAssetLibraryMutation();
   const deleteFolder = useDeleteAssetLibraryFolderMutation();
   const deleteAsset = useDeleteAssetMutation();
-  const audioPreview = useAudioPreviewPlayer();
+  const audioPreview = useAudioPreviewState();
+  const { stop } = useAudioPreviewActions();
   const [deleteTarget, setDeleteTarget] = useState<
     | {
         assetId: AssetId;
@@ -255,7 +272,7 @@ function LibrariesWorkspace() {
   };
 
   const openDeleteLibrary = (summary: AssetLibrarySummary) => {
-    setFeedback(null);
+    clearFeedback();
     setDeleteTarget({
       counts: {
         assets: summary.assetCount,
@@ -274,22 +291,22 @@ function LibrariesWorkspace() {
 
   const openCreateLibrary = () => {
     setLibraryName("");
-    setFeedback(null);
+    clearFeedback();
     setDialog("library");
   };
 
   const openCreateFolder = () => {
-    setFeedback(null);
+    clearFeedback();
     setDialog("folder");
   };
 
   const openCreateAsset = () => {
-    setFeedback(null);
+    clearFeedback();
     setDialog("asset");
   };
 
   const openDeleteFolder = (node: AssetLibraryFolderNode) => {
-    setFeedback(null);
+    clearFeedback();
     setDeleteTarget({
       counts: countFolderDescendants(node),
       folderId: node.folder.id,
@@ -299,7 +316,7 @@ function LibrariesWorkspace() {
   };
 
   const openDeleteAsset = (asset: Asset) => {
-    setFeedback(null);
+    clearFeedback();
     setDeleteTarget({
       assetId: asset.id,
       kind: "asset",
@@ -312,16 +329,14 @@ function LibrariesWorkspace() {
       return;
     }
 
-    setFeedback(null);
-
-    try {
+    await runWithFeedback({
+      work: async () => {
       if (deleteTarget.kind === "library") {
         const fallbackLibrary = (librariesQuery.data?.libraries ?? []).find(
           (summary) => summary.library.id !== deleteTarget.libraryId
         );
 
         await deleteLibrary.mutateAsync(deleteTarget.libraryId);
-        setFeedback(`Deleted library ${deleteTarget.name}.`);
         setDeleteTarget(null);
 
         if (fallbackLibrary) {
@@ -330,7 +345,7 @@ function LibrariesWorkspace() {
           router.push("/libraries");
         }
 
-        return;
+        return `Deleted library ${deleteTarget.name}.`;
       }
 
       if (deleteTarget.kind === "folder") {
@@ -339,21 +354,23 @@ function LibrariesWorkspace() {
           folderPath.some((folder) => folder.id === deleteTarget.folderId);
 
         await deleteFolder.mutateAsync(deleteTarget.folderId);
-        setFeedback(`Deleted folder ${deleteTarget.name}.`);
 
         if (shouldReturnToRoot) {
           router.push(hrefWithParams("/libraries", searchParams, { folder: null }));
         }
+
+        setDeleteTarget(null);
+        return `Deleted folder ${deleteTarget.name}.`;
       } else {
-        audioPreview.stop();
+        stop();
         await deleteAsset.mutateAsync(deleteTarget.assetId);
-        setFeedback(`Deleted asset ${deleteTarget.name}.`);
       }
 
       setDeleteTarget(null);
-    } catch (error) {
-      setFeedback(messageForError(error, libraryErrorFallback));
-    }
+        return `Deleted asset ${deleteTarget.name}.`;
+      },
+      onSuccess: (message) => message
+    });
   };
 
   const deleteIsPending = deleteLibrary.isPending || deleteFolder.isPending || deleteAsset.isPending;
@@ -377,16 +394,15 @@ function LibrariesWorkspace() {
 
   const handleCreateLibrary = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setFeedback(null);
-
-    try {
+    await runWithFeedback({
+      work: async () => {
       const created = await createLibrary.mutateAsync({ name: libraryName });
       setDialog(null);
-      setFeedback(`Created ${created.library.name}.`);
       goToLibrary(created.library.id);
-    } catch (error) {
-      setFeedback(messageForError(error, libraryErrorFallback));
-    }
+        return created;
+      },
+      onSuccess: (created) => `Created ${created.library.name}.`
+    });
   };
 
   const handleCreateFolder = async ({ name, icon }: { name: string; icon: string }) => {
@@ -394,17 +410,20 @@ function LibrariesWorkspace() {
       return;
     }
 
-    setFeedback(null);
-
-    const folder = await createFolder.mutateAsync({
-      libraryId: selectedLibrarySummary.library.id,
-      parentFolderId: selectedFolder.folder.id,
-      name,
-      icon
+    await runWithFeedback({
+      work: async () => {
+        const folder = await createFolder.mutateAsync({
+          libraryId: selectedLibrarySummary.library.id,
+          parentFolderId: selectedFolder.folder.id,
+          name,
+          icon
+        });
+        setDialog(null);
+        goToFolder(folder.id);
+        return folder;
+      },
+      onSuccess: (folder) => `Created folder ${folder.name}.`
     });
-    setDialog(null);
-    setFeedback(`Created folder ${folder.name}.`);
-    goToFolder(folder.id);
   };
 
   const handleCreateAsset = async (input: {
@@ -419,15 +438,18 @@ function LibrariesWorkspace() {
       return;
     }
 
-    setFeedback(null);
-
-    const asset = await createAsset.mutateAsync({
-      libraryId: selectedLibrarySummary.library.id,
-      folderId: selectedFolder.folder.id,
-      ...input
+    await runWithFeedback({
+      work: async () => {
+        const asset = await createAsset.mutateAsync({
+          libraryId: selectedLibrarySummary.library.id,
+          folderId: selectedFolder.folder.id,
+          ...input
+        });
+        setDialog(null);
+        return asset;
+      },
+      onSuccess: (asset) => `Uploaded ${asset.mediaKind} asset ${asset.name}.`
     });
-    setDialog(null);
-    setFeedback(`Uploaded ${asset.mediaKind} asset ${asset.name}.`);
   };
 
   if (librariesQuery.isLoading) {
@@ -661,16 +683,13 @@ function LibrariesWorkspace() {
                         <TableCell>{formatAssetDate(item.asset.uploadedAt)}</TableCell>
                         <TableCell>
                           {item.asset.mediaKind === "audio" ? (
-                            <AudioPreviewIconButton
-                              activeKey={audioPreview.activeKey}
+                            <AudioPreviewButton
                               item={{
                                 asset: item.asset,
                                 isEnabled: true,
                                 key: `library-${item.asset.id}`,
                                 startOffset: 0
                               }}
-                              onPlay={(previewItem) => void audioPreview.playItem(previewItem)}
-                              onStop={audioPreview.stop}
                             />
                           ) : (
                             <span className="text-xs text-gray-500">Visual only</span>
@@ -758,16 +777,13 @@ function LibrariesWorkspace() {
                       </span>
                       <span className="flex min-h-[30px] items-center">
                         {item.asset.mediaKind === "audio" ? (
-                          <AudioPreviewIconButton
-                            activeKey={audioPreview.activeKey}
+                          <AudioPreviewButton
                             item={{
                               asset: item.asset,
                               isEnabled: true,
                               key: `library-${item.asset.id}`,
                               startOffset: 0
                             }}
-                            onPlay={(previewItem) => void audioPreview.playItem(previewItem)}
-                            onStop={audioPreview.stop}
                           />
                         ) : (
                           <span className="text-xs font-normal text-gray-500">Visual only</span>
@@ -806,7 +822,7 @@ function LibrariesWorkspace() {
               required
               value={libraryName}
             />
-            {feedback ? <p className="text-xs text-gray-600">{feedback}</p> : null}
+            <FeedbackText className="text-xs text-gray-600" />
           </FormDialog>
         </DialogOverlay>
       ) : null}

@@ -168,24 +168,24 @@ Goal: land the cross-cutting layer that stages 7-14 consume. Highest discipline 
 
 ### 6.1 `features/feedback/feedback-context.tsx`
 
-- [ ] Two contexts: `useFeedbackMessage()` (volatile) and `useFeedbackActions()` (stable, `useMemo([])`).
-- [ ] `FeedbackProvider({ children, errorFallback, initialMessage? })` — receives its subtree via `children`, never renders it inline. Comment the bailout rule in the file.
-- [ ] `FeedbackText({ className? })` renders exactly `{message ? <p className="text-sm text-gray-600">{message}</p> : null}`.
-- [ ] Mount a `FeedbackProvider` per page with the matching `errorFallback` constant.
-- [ ] Replace the 4 in-dialog feedback `<p>` copies with `FeedbackText`.
-- [ ] Leave the two **page-level** banners' markup untouched (libraries 645, projects 551-555); read `useFeedbackMessage()` in place.
-- [ ] Replace ~25 `try/catch` blocks with `runWithFeedback`, keeping success copy verbatim at each call site via `onSuccess`.
-- [ ] Wire `initialMessage` from `readAndClearFlashMessage()` and the `?feedback=` param.
+- [x] Two contexts: `useFeedbackMessage()` (volatile) and `useFeedbackActions()` (stable, `useMemo([])`).
+- [x] `FeedbackProvider({ children, errorFallback, initialMessage? })` — receives its subtree via `children`, never renders it inline. Comment the bailout rule in the file.
+- [x] `FeedbackText({ className? })` renders exactly `{message ? <p className="text-sm text-gray-600">{message}</p> : null}`.
+- [x] Mount a `FeedbackProvider` per page with the matching `errorFallback` constant.
+- [x] Replace the 4 in-dialog feedback `<p>` copies with `FeedbackText`.
+- [x] Leave the two **page-level** banners' markup untouched (libraries 645, projects 551-555); read `useFeedbackMessage()` in place.
+- [x] Replace ~25 `try/catch` blocks with `runWithFeedback`, keeping success copy verbatim at each call site via `onSuccess`.
+- [x] Wire `initialMessage` from `readAndClearFlashMessage()` and the `?feedback=` param.
 
 ### 6.2 `features/projects/audio-preview-context.tsx`
 
-- [ ] Two contexts: `useAudioPreviewState()` (includes `playheadByScheduleKey`) and `useAudioPreviewActions()` (stable).
-- [ ] `AudioPreviewProvider` wraps the existing `useAudioPreviewPlayer()` unchanged and receives its subtree via `children`.
-- [ ] Verify `playItem`'s `useCallback` deps are stable. If not, ref-latch inside the provider — do **not** edit `audio-preview.tsx`.
-- [ ] Back `isSchedulePlaying` and `playheadFor` with a ref-latched read so they can live in the stable-actions context.
-- [ ] `AudioPreviewButton({ item })` — a context-reading wrapper rendering DOM byte-identical to `AudioPreviewIconButton`.
-- [ ] Keep `AudioPreviewIconButton` exported and props-based; it stays the testable unit and the share page's lanes keep using it.
-- [ ] Replace the 7 drilled call sites with `<AudioPreviewButton item={...} />`.
+- [x] Two contexts: `useAudioPreviewState()` (includes `playheadByScheduleKey`) and `useAudioPreviewActions()` (stable).
+- [x] `AudioPreviewProvider` wraps the existing `useAudioPreviewPlayer()` unchanged and receives its subtree via `children`.
+- [x] Verify `playItem`'s `useCallback` deps are stable. If not, ref-latch inside the provider — do **not** edit `audio-preview.tsx`.
+- [x] Back `isSchedulePlaying` and `playheadFor` with a ref-latched read so they can live in the stable-actions context.
+- [x] `AudioPreviewButton({ item })` — a context-reading wrapper rendering DOM byte-identical to `AudioPreviewIconButton`.
+- [x] Keep `AudioPreviewIconButton` exported and props-based; it stays the testable unit and the share page's lanes keep using it.
+- [x] Replace the 7 drilled call sites with `<AudioPreviewButton item={...} />`.
 
 Stage gate:
 
