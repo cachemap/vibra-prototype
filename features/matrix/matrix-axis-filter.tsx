@@ -5,59 +5,23 @@ import { useState } from "react";
 import { Popover, Switch } from "@/components/primitives";
 import { cx, focusRing } from "@/components/primitives/class-names";
 import type { CollectionId, EventId } from "@/domain";
+import {
+  axisLabel,
+  axisNoun,
+  axisNounPlural,
+  selectionStateFor,
+  type MatrixAxis,
+  type MatrixFilterCollection,
+  type MatrixSelectionState
+} from "./matrix-axis-filter-model";
 
-export type MatrixAxis = "playing" | "incoming";
-
-export type MatrixFilterEvent = {
-  id: EventId;
-  name: string;
-};
-
-export type MatrixFilterCollection = {
-  events: readonly MatrixFilterEvent[];
-  id: CollectionId;
-  name: string;
-};
-
-type SelectionState = "all" | "none" | "partial";
-
-const axisNoun: Record<MatrixAxis, string> = {
-  playing: "playing row",
-  incoming: "incoming column"
-};
-
-const axisNounPlural: Record<MatrixAxis, string> = {
-  playing: "playing rows",
-  incoming: "incoming columns"
-};
-
-const axisLabel: Record<MatrixAxis, string> = {
-  playing: "Playing",
-  incoming: "Incoming"
-};
-
-const selectionStateFor = (
-  events: readonly MatrixFilterEvent[],
-  selectedEventIds: ReadonlySet<EventId>
-): SelectionState => {
-  if (events.length === 0) {
-    return "none";
-  }
-
-  const selectedCount = events.filter((event) => selectedEventIds.has(event.id)).length;
-
-  if (selectedCount === 0) {
-    return "none";
-  }
-
-  return selectedCount === events.length ? "all" : "partial";
-};
+export type { MatrixAxis, MatrixFilterCollection } from "./matrix-axis-filter-model";
 
 type SelectionBubbleProps = {
   disabled?: boolean;
   label: string;
   onToggle: () => void;
-  state: SelectionState;
+  state: MatrixSelectionState;
 };
 
 function SelectionBubble({ disabled = false, label, onToggle, state }: SelectionBubbleProps) {
