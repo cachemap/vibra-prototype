@@ -8,7 +8,7 @@ import {
   useDeleteProjectMutation,
   useProjectTreeQuery
 } from "@/features/projects/queries";
-import { useFeedbackActions, useFeedbackMessage } from "@/features/feedback/feedback-context";
+import { FeedbackBanner, useFeedbackActions } from "@/features/feedback/feedback-context";
 import {
   asEntityId,
   type ProjectFolderId,
@@ -36,7 +36,6 @@ export function ProjectsContent() {
     ? asEntityId<ProjectFolderId>(selectedFolderParam)
     : null;
   const [dialog, setDialog] = useState<ProjectsListDialog>(null);
-  const feedback = useFeedbackMessage();
   const { clearFeedback, runWithFeedback } = useFeedbackActions();
   const [deleteTarget, setDeleteTarget] = useState<ProjectListDeleteTarget | null>(null);
   const treeQuery = useProjectTreeQuery(DEMO_USER_ID);
@@ -114,11 +113,7 @@ export function ProjectsContent() {
       />
       <ProjectsToolbar />
 
-      {feedback ? (
-        <p className="min-h-10 border-y border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700" role="status">
-          {feedback}
-        </p>
-      ) : null}
+      <FeedbackBanner />
 
       <ProjectsDialogs
         currentFolder={currentFolder}

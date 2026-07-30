@@ -2,7 +2,7 @@
 
 import { Button, EmptyState, ErrorState, LoadingState } from "@/components/primitives";
 import { useAudioPreviewState } from "@/features/projects/audio-preview-context";
-import { useFeedbackMessage } from "@/features/feedback/feedback-context";
+import { FeedbackBanner } from "@/features/feedback/feedback-context";
 import { libraryErrorFallback, messageForError } from "@/lib/errors";
 import { LibraryAssetTable } from "./library-asset-table";
 import { LibraryAssetTiles } from "./library-asset-tiles";
@@ -16,18 +16,13 @@ type LibraryContentProps = {
 };
 
 export function LibraryContent({ canUploadAsset, controller, selection }: LibraryContentProps) {
-  const feedback = useFeedbackMessage();
   const audioPreview = useAudioPreviewState();
 
   return (
     <main className="grid min-w-0 content-start gap-5 px-4 py-5 md:px-6">
       {selection.selectedLibrarySummary ? (
         <>
-          {feedback ? (
-            <p className="text-sm font-medium text-gray-600" role="status">
-              {feedback}
-            </p>
-          ) : null}
+          <FeedbackBanner />
           {audioPreview.errorMessage ? (
             <p className="text-sm font-medium text-gray-600">{audioPreview.errorMessage}</p>
           ) : null}

@@ -116,3 +116,13 @@ export function FeedbackText({ className }: { className?: string }) {
 
   return message ? <p className={className ?? "text-sm text-gray-600"}>{message}</p> : null;
 }
+
+export function FeedbackBanner() {
+  const message = useFeedbackMessage();
+
+  return message ? (
+    <p className="min-h-10 border-y border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700" role="status">
+      {message}
+    </p>
+  ) : null;
+}
