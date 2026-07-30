@@ -40,3 +40,12 @@
 - Verification: `pnpm vitest run tests/states-primitive.test.tsx`, `pnpm typecheck`, and `pnpm lint` passed. Lint still reports the existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
 - No ADR added; this was a small primitive contract fix, not a new architecture, persistence, route, seed-data, or domain decision.
 - Recommended next group: choose another explicit follow-up from `docs/plan/COMPONENT_DECOMPOSITION_CHECKLIST.md`, such as aligning date formatting or the feedback banner markup.
+
+## Workspace Sidebar Device Vocabulary
+
+- Completed the follow-up where the project workspace sidebar used "Systems" despite the design system's canonical Device vocabulary.
+- Updated the sidebar heading, no-results copy, and collection precondition copy to use device/devices.
+- Added `features/project-workspace/workspace-sidebar-copy.ts` plus `tests/workspace-sidebar-copy.test.ts` to keep this small UI copy contract pinned.
+- Verification: `pnpm vitest run tests/workspace-sidebar-copy.test.ts`, `pnpm typecheck`, and `pnpm lint` passed. Lint still reports the existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- No ADR added; this was a small terminology fix, not a new architecture, persistence, route, seed-data, or domain decision.
+- Recommended next group: choose another explicit follow-up from `docs/plan/COMPONENT_DECOMPOSITION_CHECKLIST.md`, such as aligning date formatting or the feedback banner markup.

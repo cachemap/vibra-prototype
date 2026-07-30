@@ -4,6 +4,7 @@ import type { CollectionId, ProjectId } from "@/domain";
 import type { DeviceSummary } from "@/data/repositories/project-repository";
 import { useDeviceWorkspaceQuery, useProjectWorkspaceQuery } from "@/features/projects/queries";
 import { formatDeviceMeta } from "./workspace-utils";
+import { workspaceSidebarCopy } from "./workspace-sidebar-copy";
 import { useProjectWorkspaceActions, useProjectWorkspaceSelection } from "./workspace-scope-context";
 import { WorkspaceTabBar } from "./workspace-tab-bar";
 
@@ -66,7 +67,7 @@ export function WorkspaceSidebar({
 
       <div className="grid gap-2">
         <div className="flex h-8 items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">Systems</h2>
+          <h2 className="text-sm font-semibold text-gray-700">{workspaceSidebarCopy.deviceHeading}</h2>
           <IconButton icon={Plus} label="Add device" onClick={onAddDevice} size="compact" />
         </div>
         <div className="grid gap-1" data-testid="device-list">
@@ -118,7 +119,7 @@ export function WorkspaceSidebar({
             })
           ) : (
             <p className="px-2 text-xs text-gray-500">
-              {workspace.devices.length ? "No matching systems." : "No systems yet."}
+              {workspace.devices.length ? workspaceSidebarCopy.noMatchingDevices : workspaceSidebarCopy.noDevices}
             </p>
           )}
         </div>
@@ -138,7 +139,7 @@ export function WorkspaceSidebar({
         {deviceWorkspaceQuery.isLoading ? (
           <p className="px-2 text-xs text-gray-500">Loading collections</p>
         ) : !selectedDevice ? (
-          <p className="px-2 text-xs text-gray-500">Select a system before adding collections.</p>
+          <p className="px-2 text-xs text-gray-500">{workspaceSidebarCopy.collectionRequiresDevice}</p>
         ) : filteredCollections.length ? (
           <div className="grid gap-1" data-testid="collection-list">
             {filteredCollections.map((item) => {
@@ -166,4 +167,3 @@ export function WorkspaceSidebar({
     </aside>
   );
 }
-
