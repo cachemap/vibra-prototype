@@ -1,21 +1,19 @@
 "use client";
 
 import { useMemo } from "react";
-import { Button, ErrorState, Switch } from "@/components/primitives";
-import type { Asset, CollisionMatrixEntry, EventId } from "@/domain";
-import type { AssetLibraryFolderNode } from "@/data/repositories/project-repository";
+import { Button, ErrorState } from "@/components/primitives";
 import {
   useAssetLibrariesQuery,
   useAssetLibraryTreeQuery,
   useDeviceWorkspaceQuery,
-  useProjectWorkspaceQuery,
-  useUpdateDeviceMutation
+  useProjectWorkspaceQuery
 } from "@/features/projects/queries";
 import { MatrixTab } from "@/features/matrix/matrix-tab";
 import { EmptyProjectWorkspace } from "./workspace-empty-state";
 import { AssetsTab } from "./assets-tab";
 import { eventRowModelsFor } from "./event-row-model";
 import { EventsTab } from "./events-tab";
+import { WorkspaceDeviceStatus } from "./workspace-device-status";
 import { WorkspaceDeleteConfirm } from "./workspace-delete-confirm";
 import { WorkspaceDialogs } from "./workspace-dialogs";
 import { WorkspaceLayout } from "./workspace-layout";
@@ -23,14 +21,17 @@ import {
   useProjectWorkspaceActions,
   useProjectWorkspaceSelection
 } from "./workspace-scope-context";
-import {
-  countAssetFolderDescendants,
-  findAssetFolderNode,
-  pathForAssetFolder
-} from "@/features/assets/asset-folder-tree";
-import { useFeedbackActions, useFeedbackMessage } from "@/features/feedback/feedback-context";
+import { useFeedbackMessage } from "@/features/feedback/feedback-context";
 import { messageForError, workspaceErrorFallback } from "@/lib/errors";
 import { useShareLink } from "@/features/sharing/use-share-link";
+import { useWorkspaceAssetModel } from "./workspace-asset-model";
+import {
+  assetDeleteTarget,
+  assetFolderDeleteTarget,
+  collectionDeleteTarget,
+  eventDeleteTarget,
+  matrixEntryDeleteTarget
+} from "./workspace-delete-requests";
 
 export function ProjectWorkspaceLoaded() {
   const {
@@ -94,7 +95,6 @@ function ProjectWorkspaceBody({ shareController }: { shareController: ReturnType
     setMatrixSelection
   } = useProjectWorkspaceActions();
   const feedback = useFeedbackMessage();
-  const { runWithFeedback } = useFeedbackActions();
   const workspaceQuery = useProjectWorkspaceQuery(projectId);
   const assetLibrariesQuery = useAssetLibrariesQuery();
   const projectAssetTreeQuery = useAssetLibraryTreeQuery(activeProjectAssetLibraryId);
@@ -104,7 +104,6 @@ function ProjectWorkspaceBody({ shareController }: { shareController: ReturnType
     workspaceDevices[0] ??
     null;
   const deviceWorkspaceQuery = useDeviceWorkspaceQuery(selectedDevice?.device.id ?? null);
-  const updateDevice = useUpdateDeviceMutation();
   const selectedCollection = useMemo(() => {
     const collections = deviceWorkspaceQuery.data?.collections ?? [];
 
@@ -122,137 +121,34 @@ function ProjectWorkspaceBody({ shareController }: { shareController: ReturnType
     () => eventRowModelsFor(selectedCollection?.events ?? []),
     [selectedCollection?.events]
   );
-  const importedLibraryIds = new Set((workspaceQuery.data?.importedAssetLibraries ?? []).map((library) => library.id));
-  const importCandidates = workspaceQuery.data
-    ? (assetLibrariesQuery.data?.libraries ?? []).filter(
-        (summary) =>
-          summary.library.id !== workspaceQuery.data.defaultAssetLibrary.id && !importedLibraryIds.has(summary.library.id)
-      )
-    : [];
-  const selectedProjectAssetFolder = useMemo(() => {
-    if (!projectAssetTreeQuery.data) {
-      return null;
-    }
-
-    if (selectedProjectAssetFolderId) {
-      const matched = findAssetFolderNode(
-        projectAssetTreeQuery.data.rootFolder,
-        selectedProjectAssetFolderId
-      );
-
-      if (matched) {
-        return matched;
-      }
-    }
-
-    return projectAssetTreeQuery.data.rootFolder;
-  }, [projectAssetTreeQuery.data, selectedProjectAssetFolderId]);
-  const projectAssetFolderPath = useMemo(
-    () =>
-      selectedProjectAssetFolder && projectAssetTreeQuery.data
-        ? pathForAssetFolder(
-            projectAssetTreeQuery.data.rootFolder,
-            selectedProjectAssetFolder.folder.id
-          ).map((node) => node.folder)
-        : [],
-    [projectAssetTreeQuery.data, selectedProjectAssetFolder]
-  );
-  const visibleProjectAssetItems = useMemo(() => {
-    if (!selectedProjectAssetFolder) {
-      return [];
-    }
-
-    return [
-      ...selectedProjectAssetFolder.childFolders.map((node) => ({
-        kind: "folder" as const,
-        node
-      })),
-      ...selectedProjectAssetFolder.assets.map((asset) => ({
-        kind: "asset" as const,
-        asset
-      }))
-    ];
-  }, [selectedProjectAssetFolder]);
-  const selectedProjectAssetFolderItemCount =
-    (selectedProjectAssetFolder?.childFolders.length ?? 0) + (selectedProjectAssetFolder?.assets.length ?? 0);
-  const normalizedWorkspaceSearch = workspaceSearch.trim().toLowerCase();
-  const librarySummaryById = new Map(
-    (assetLibrariesQuery.data?.libraries ?? []).map((summary) => [summary.library.id, summary])
-  );
-  const allProjectAssetLibraries = [
-    { library: workspaceQuery.data!.defaultAssetLibrary, status: "Default" },
-    ...workspaceQuery.data!.importedAssetLibraries.map((library) => ({ library, status: "Imported" }))
-  ];
-  const projectAssetLibraries = allProjectAssetLibraries.filter(({ library }) =>
-    normalizedWorkspaceSearch ? library.name.toLowerCase().includes(normalizedWorkspaceSearch) : true
-  );
-  const selectedProjectAssetLibrary =
-    allProjectAssetLibraries.find(({ library }) => library.id === activeProjectAssetLibraryId) ??
-    allProjectAssetLibraries[0] ??
-    null;
-
-  const handleDeviceEnabledChange = async (isEnabled: boolean) => {
-    if (!selectedDevice) {
-      return;
-    }
-
-    await runWithFeedback({
-      work: () =>
-        updateDevice.mutateAsync({
-          deviceId: selectedDevice.device.id,
-          isEnabled
-        }),
-      onSuccess: () =>
-        isEnabled
-          ? `${selectedDevice.device.name} is included in playback and export.`
-          : `${selectedDevice.device.name} is excluded from playback and export.`
-    });
-  };
+  const assetModel = useWorkspaceAssetModel({
+    activeAssetFolderId: selectedProjectAssetFolderId,
+    activeAssetLibraryId: activeProjectAssetLibraryId,
+    assetLibrarySummaries: assetLibrariesQuery.data?.libraries ?? [],
+    assetTreeRoot: projectAssetTreeQuery.data?.rootFolder ?? null,
+    searchTerm: workspaceSearch,
+    workspace: workspaceQuery.data!
+  });
 
   const openDeleteCollection = () => {
     if (!selectedCollection) {
       return;
     }
 
-    requestDelete({
-      kind: "collection",
-      id: selectedCollection.collection.id,
-      name: selectedCollection.collection.name
-    });
+    requestDelete(collectionDeleteTarget(selectedCollection));
   };
 
-  const openDeleteEvent = (event: { id: EventId; name: string }) => {
-    requestDelete({
-      kind: "event",
-      id: event.id,
-      name: event.name
-    });
-  };
+  const openDeleteEvent = (event: Parameters<typeof eventDeleteTarget>[0]) =>
+    requestDelete(eventDeleteTarget(event));
 
-  const openClearMatrixEntry = (entry: CollisionMatrixEntry, name: string) => {
-    requestDelete({
-      kind: "matrixEntry",
-      id: entry.id,
-      name
-    });
-  };
+  const openClearMatrixEntry = (entry: Parameters<typeof matrixEntryDeleteTarget>[0], name: string) =>
+    requestDelete(matrixEntryDeleteTarget(entry, name));
 
-  const openDeleteProjectAssetFolder = (node: AssetLibraryFolderNode) => {
-    requestDelete({
-      counts: countAssetFolderDescendants(node),
-      kind: "assetFolder",
-      id: node.folder.id,
-      name: node.folder.name
-    });
-  };
+  const openDeleteProjectAssetFolder = (node: Parameters<typeof assetFolderDeleteTarget>[0]) =>
+    requestDelete(assetFolderDeleteTarget(node));
 
-  const openDeleteProjectAsset = (asset: Asset) => {
-    requestDelete({
-      kind: "asset",
-      id: asset.id,
-      name: asset.name
-    });
-  };
+  const openDeleteProjectAsset = (asset: Parameters<typeof assetDeleteTarget>[0]) =>
+    requestDelete(assetDeleteTarget(asset));
 
   if (!selectedDevice) {
     return <EmptyProjectWorkspace onAddDevice={() => openDialog("device")} />;
@@ -260,24 +156,7 @@ function ProjectWorkspaceBody({ shareController }: { shareController: ReturnType
 
   return (
     <>
-      <div className="hidden flex-wrap items-center justify-between gap-3 md:flex">
-        <div className="grid gap-1">
-          <h2 className="text-md font-semibold text-gray-700">{selectedDevice.device.name}</h2>
-        </div>
-        <Switch
-          checked={selectedDevice.device.isEnabled}
-          disabled={updateDevice.isPending}
-          id="device-enabled"
-          label="Included in playback/export"
-          onChange={(event) => void handleDeviceEnabledChange(event.currentTarget.checked)}
-        />
-      </div>
-
-      {selectedDevice.device.isEnabled ? null : (
-        <div className="border-y border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-700" role="status">
-          This device is excluded from playback and export until it is enabled again.
-        </div>
-      )}
+      <WorkspaceDeviceStatus selectedDevice={selectedDevice} />
 
       <p className="min-h-5 text-sm text-gray-600" role="status">
         {feedback ?? ""}
@@ -328,10 +207,10 @@ function ProjectWorkspaceBody({ shareController }: { shareController: ReturnType
             <AssetsTab
               assetLibrariesLoading={assetLibrariesQuery.isLoading}
               deviceName={selectedDevice.device.name}
-              importCandidateCount={importCandidates.length}
-              itemCount={selectedProjectAssetFolderItemCount}
-              items={visibleProjectAssetItems}
-              librarySummaryById={librarySummaryById}
+              importCandidateCount={assetModel.importCandidateCount}
+              itemCount={assetModel.itemCount}
+              items={assetModel.items}
+              librarySummaryById={assetModel.librarySummaryById}
               onCreateAsset={() => openDialog("asset")}
               onCreateFolder={() => openDialog("assetFolder")}
               onDeleteAsset={openDeleteProjectAsset}
@@ -339,10 +218,10 @@ function ProjectWorkspaceBody({ shareController }: { shareController: ReturnType
               onImportLibrary={() => openDialog("libraryImport")}
               onOpenFolder={setSelectedProjectAssetFolderId}
               onSelectLibrary={goToProjectAssetLibrary}
-              projectAssetLibraries={projectAssetLibraries}
-              selectedFolder={selectedProjectAssetFolder}
-              selectedFolderPath={projectAssetFolderPath}
-              selectedLibrary={selectedProjectAssetLibrary}
+              projectAssetLibraries={assetModel.projectAssetLibraries}
+              selectedFolder={assetModel.selectedFolder}
+              selectedFolderPath={assetModel.selectedFolderPath}
+              selectedLibrary={assetModel.selectedLibrary}
               treeError={projectAssetTreeQuery.error}
               treeIsError={projectAssetTreeQuery.isError}
               treeIsLoading={projectAssetTreeQuery.isLoading}
