@@ -218,7 +218,7 @@ Stage gate:
 
 ---
 
-## Stage 8: Workspace Scope Context And Chrome
+## Stage 8: Workspace Scope Context And Chrome [x]
 
 Goal: the scope-not-data context, plus the header, sidebar, tab bar, and mobile controls.
 
@@ -239,10 +239,10 @@ Goal: the scope-not-data context, plus the header, sidebar, tab bar, and mobile 
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] Matrix selection persistence re-verified after the hoist into context.
-- [ ] Device and collection switching updates the URL and the body; the sidebar search filters both lists.
-- [ ] Re-capture and diff `project-{assets,events,matrix}-{desktop,mobile}` and `empty-project-viewer.png`.
+- [x] Four gates green.
+- [x] Matrix selection persistence re-verified after the hoist into context.
+- [x] Device and collection switching updates the URL and the body; the sidebar search filters both lists.
+- [x] Re-capture and diff `project-{assets,events,matrix}-{desktop,mobile}` and `empty-project-viewer.png`.
 
 ---
 
