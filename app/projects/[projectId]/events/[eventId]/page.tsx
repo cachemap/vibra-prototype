@@ -6,8 +6,6 @@ import { FormEvent, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Edit3,
-  Copy,
-  ExternalLink,
   FileAudio,
   Link2,
   MoreHorizontal,
@@ -20,7 +18,6 @@ import {
 import {
   Button,
   ConfirmDialog,
-  Dialog,
   DialogOverlay,
   EmptyState,
   ErrorState,
@@ -41,22 +38,17 @@ import {
   type AssetId,
   type EventId,
   type EventTriggerId,
-  type ShareTarget,
-  type SharingLink,
   type ProjectId,
   type TriggerId,
   type TriggerPlaybackId
 } from "@/domain";
-import { DEMO_USER_ID } from "@/data/seed";
 import {
   useCreateEventTriggerMutation,
   useCreateTriggerPlaybackMutation,
   useDeleteEventMutation,
   useDeleteEventTriggerMutation,
-  useDeleteSharingLinkMutation,
   useDeleteTriggerPlaybackMutation,
   useDeviceWorkspaceQuery,
-  useGenerateSharingLinkMutation,
   useProjectWorkspaceQuery,
   useUpdateEventMutation,
   useUpdateEventTriggerMutation,
@@ -70,8 +62,11 @@ import { eventWorkspaceErrorFallback, messageForError } from "@/lib/errors";
 import { hrefWithFlashMessage } from "@/lib/flash-message";
 import { formatSeconds } from "@/lib/format";
 import { pluralSuffix } from "@/lib/plural";
-
-const shareTokenFor = (link: SharingLink) => link.url.split("/").at(-1) ?? link.id;
+import {
+  ShareLinkDeleteConfirm,
+  ShareLinkDialog
+} from "@/features/sharing/share-link-dialog";
+import { useShareLink } from "@/features/sharing/use-share-link";
 
 const timelineTailSeconds = 0.45;
 
@@ -112,9 +107,6 @@ export default function EventDetailPage() {
   const [selectedPlaybackId, setSelectedPlaybackId] = useState<TriggerPlaybackId | null>(null);
   const [playbackAssetId, setPlaybackAssetId] = useState("");
   const [playbackOffset, setPlaybackOffset] = useState("0");
-  const [shareLink, setShareLink] = useState<SharingLink | null>(null);
-  const [shareLinkPendingDelete, setShareLinkPendingDelete] = useState<SharingLink | null>(null);
-  const [shareLabel, setShareLabel] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [deleteEventIsOpen, setDeleteEventIsOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
@@ -142,9 +134,12 @@ export default function EventDetailPage() {
   const createTriggerPlayback = useCreateTriggerPlaybackMutation();
   const updateTriggerPlayback = useUpdateTriggerPlaybackMutation();
   const deleteTriggerPlayback = useDeleteTriggerPlaybackMutation();
-  const generateSharingLink = useGenerateSharingLinkMutation();
-  const deleteSharingLink = useDeleteSharingLinkMutation();
   const audioPreview = useAudioPreviewPlayer();
+  const shareController = useShareLink({
+    errorFallback: eventWorkspaceErrorFallback,
+    setDialog: (nextDialog) => setDialog(nextDialog),
+    setFeedback
+  });
 
   const located = useMemo(
     () =>
@@ -397,69 +392,6 @@ export default function EventDetailPage() {
     setDialog("editPlayback");
   };
 
-  const openShareDialog = async (target: ShareTarget, label: string) => {
-    setFeedback(null);
-    setShareLabel(label);
-    setShareLink(null);
-    setDialog("share");
-
-    try {
-      const generated = await generateSharingLink.mutateAsync({
-        target,
-        createdByUserId: DEMO_USER_ID
-      });
-
-      setShareLink(generated);
-      setFeedback(`Generated share link for ${label}.`);
-    } catch (error) {
-      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
-    }
-  };
-
-  const copyShareLink = async () => {
-    if (!shareLink) {
-      return;
-    }
-
-    const url = `${window.location.origin}/share/${shareTokenFor(shareLink)}`;
-
-    try {
-      await navigator.clipboard.writeText(url);
-      setFeedback("Copied share link.");
-    } catch {
-      setFeedback(url);
-    }
-  };
-
-  const openDeleteShareLinkDialog = () => {
-    if (!shareLink) {
-      return;
-    }
-
-    setDialog(null);
-    setFeedback(null);
-    setShareLinkPendingDelete(shareLink);
-  };
-
-  const handleDeleteShareLink = async () => {
-    if (!shareLinkPendingDelete) {
-      return;
-    }
-
-    setFeedback(null);
-
-    try {
-      const deletedToken = shareTokenFor(shareLinkPendingDelete);
-
-      await deleteSharingLink.mutateAsync(shareLinkPendingDelete.id);
-      setShareLinkPendingDelete(null);
-      setShareLink(null);
-      setFeedback(`Deleted share link /share/${deletedToken}.`);
-    } catch (error) {
-      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
-    }
-  };
-
   const handleEditEvent = async (formEvent: FormEvent<HTMLFormElement>) => {
     formEvent.preventDefault();
 
@@ -676,7 +608,7 @@ export default function EventDetailPage() {
             <Button
               leftIcon={<Link2 className="size-4" />}
               onClick={() =>
-                void openShareDialog(
+                void shareController.openShareDialog(
                   { kind: "event", eventId: selectedEvent.event.id },
                   selectedEvent.event.name
                 )
@@ -786,70 +718,22 @@ export default function EventDetailPage() {
         </ConfirmDialog>
       ) : null}
 
-      {shareLinkPendingDelete ? (
-        <ConfirmDialog
-          confirmLabel="Delete link"
-          disabled={deleteSharingLink.isPending}
-          onCancel={() => setShareLinkPendingDelete(null)}
-          onConfirm={() => void handleDeleteShareLink()}
-          title="Delete share link?"
-        >
-          This removes /share/{shareTokenFor(shareLinkPendingDelete)} from IndexedDB. The shared preview URL
-          will stop resolving.
-        </ConfirmDialog>
-      ) : null}
+      <ShareLinkDeleteConfirm
+        disabled={shareController.deleteSharingLinkIsPending}
+        onCancel={() => shareController.setShareLinkPendingDelete(null)}
+        onConfirm={() => void shareController.handleDeleteShareLink()}
+        shareLink={shareController.shareLinkPendingDelete}
+      />
 
       <DialogOverlay align="end" open={dialog !== null}>
-        <Dialog
-          actions={
-            <>
-              <Button onClick={() => setDialog(null)}>Close</Button>
-              <Button
-                disabled={!shareLink}
-                leftIcon={<Trash2 className="size-4" />}
-                onClick={openDeleteShareLinkDialog}
-                variant="destructive"
-              >
-                Delete link
-              </Button>
-              <Button
-                disabled={!shareLink}
-                leftIcon={<Copy className="size-4" />}
-                onClick={() => void copyShareLink()}
-              >
-                Copy link
-              </Button>
-              <Button
-                disabled={!shareLink}
-                leftIcon={<ExternalLink className="size-4" />}
-                onClick={() => {
-                  if (shareLink) {
-                    window.open(`/share/${shareTokenFor(shareLink)}`, "_blank", "noopener,noreferrer");
-                  }
-                }}
-                variant="primary"
-              >
-                Open preview
-              </Button>
-            </>
-          }
-          className="max-w-[460px]"
+        <ShareLinkDialog
+          copyShareLink={shareController.copyShareLink}
+          onClose={() => setDialog(null)}
+          onDelete={shareController.openDeleteShareLinkDialog}
           open={dialog === "share"}
-          title="Share Link"
-        >
-          <div className="grid gap-4">
-            <div className="grid gap-1">
-              <p className="text-xs font-medium text-gray-500">Target</p>
-              <p className="text-sm font-semibold text-gray-700">{shareLabel || "Selected target"}</p>
-            </div>
-            <div className="grid gap-1">
-              <p className="text-xs font-medium text-gray-500">Generated URL</p>
-              <p className="break-all border-y border-gray-200 bg-gray-50 px-2 py-2 text-sm text-gray-700">
-                {shareLink ? `/share/${shareTokenFor(shareLink)}` : "Generating share link..."}
-              </p>
-            </div>
-          </div>
-        </Dialog>
+          shareLabel={shareController.shareLabel}
+          shareLink={shareController.shareLink}
+        />
 
         <FormDialog
           className="max-w-[420px]"

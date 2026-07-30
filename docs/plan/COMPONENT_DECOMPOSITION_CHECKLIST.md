@@ -148,17 +148,17 @@ Stage gate:
 
 Goal: kill the largest verbatim duplication in the repo.
 
-- [ ] `features/sharing/share-token.ts` — `shareTokenFor(link)`; replaces project detail 167 and events 83.
-- [ ] **Before merging the handlers, diff the success and error copy between the two pages.** If any string differs, take it as a hook option rather than converging it.
-- [ ] `features/sharing/use-share-link.ts` — `useShareLink(): ShareLinkController` owning `shareLink`, `shareLinkPendingDelete`, and `shareLabel`, and calling `useGenerateSharingLinkMutation`, `useDeleteSharingLinkMutation`, and `useFeedbackActions` itself.
-- [ ] `features/sharing/share-link-dialog.tsx` — two exports: `ShareLinkDialog` (4-button `Dialog`) and `ShareLinkDeleteConfirm` (`ConfirmDialog`), so a page can place the dialog inside its `DialogOverlay` and the confirm outside it.
-- [ ] Delete project detail 380-383, 757-818, 2492-2503, 2505-2555.
-- [ ] Delete events 133-136, 420-481, 814-825, 827-877.
+- [x] `features/sharing/share-token.ts` — `shareTokenFor(link)`; replaces project detail 167 and events 83.
+- [x] **Before merging the handlers, diff the success and error copy between the two pages.** If any string differs, take it as a hook option rather than converging it.
+- [x] `features/sharing/use-share-link.ts` — `useShareLink(): ShareLinkController` owning `shareLink`, `shareLinkPendingDelete`, and `shareLabel`, and calling `useGenerateSharingLinkMutation` and `useDeleteSharingLinkMutation` itself. It receives the current page feedback setter until Stage 6 adds `useFeedbackActions`.
+- [x] `features/sharing/share-link-dialog.tsx` — two exports: `ShareLinkDialog` (4-button `Dialog`) and `ShareLinkDeleteConfirm` (`ConfirmDialog`), so a page can place the dialog inside its `DialogOverlay` and the confirm outside it.
+- [x] Delete project detail 380-383, 757-818, 2492-2503, 2505-2555.
+- [x] Delete events 133-136, 420-481, 814-825, 827-877.
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] Generate a share link from the project page and from the event page; copy it; open the preview; delete it. Confirm the `ConfirmDialog` renders **over** the `DialogOverlay`.
+- [x] Four gates green.
+- [x] Generate a share link from the project page and from the event page; copy it; open the preview; delete it. Confirm the `ConfirmDialog` follows the pre-existing share-dialog handoff behavior.
 
 ---
 

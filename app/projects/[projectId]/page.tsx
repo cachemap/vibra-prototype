@@ -7,9 +7,7 @@ import {
   BookOpen,
   ChevronDown,
   CornerDownLeft,
-  Copy,
   Edit3,
-  ExternalLink,
   FileAudio,
   FolderPlus,
   Grid2X2,
@@ -29,7 +27,6 @@ import {
   Badge,
   Button,
   ConfirmDialog,
-  Dialog,
   DialogOverlay,
   EmptyState,
   ErrorState,
@@ -65,11 +62,8 @@ import {
   type EventId,
   type PlatformId,
   type ProjectId,
-  type ResolutionBehaviorName,
-  type ShareTarget,
-  type SharingLink
+  type ResolutionBehaviorName
 } from "@/domain";
-import { DEMO_USER_ID } from "@/data/seed";
 import type {
   AssetLibraryFolderNode,
   DeviceSummary
@@ -90,8 +84,6 @@ import {
   useAssetLibrariesQuery,
   useAssetLibraryTreeQuery,
   useImportAssetLibraryMutation,
-  useGenerateSharingLinkMutation,
-  useDeleteSharingLinkMutation,
   useProjectWorkspaceQuery,
   useDeleteCollisionMatrixEntryMutation,
   useDeselectCollisionMatrixColumnMutation,
@@ -129,11 +121,14 @@ import { messageForError, workspaceErrorFallback } from "@/lib/errors";
 import { writeFlashMessage } from "@/lib/flash-message";
 import { pluralSuffix } from "@/lib/plural";
 import { hrefWithParams } from "@/lib/search-params";
+import {
+  ShareLinkDeleteConfirm,
+  ShareLinkDialog
+} from "@/features/sharing/share-link-dialog";
+import { useShareLink } from "@/features/sharing/use-share-link";
 
 const formatDeviceMeta = (summary: DeviceSummary) =>
   summary.device.isEnabled ? summary.platform.name : "Excluded";
-
-const shareTokenFor = (link: SharingLink) => link.url.split("/").at(-1) ?? link.id;
 
 const matrixRowHeaderWidth = "168px";
 
@@ -346,9 +341,6 @@ export default function ProjectPage() {
     "playingAxis" | "incomingAxis" | "toolbar" | null
   >(null);
   const [matrixFilterAxis, setMatrixFilterAxis] = useState<MatrixAxis>("playing");
-  const [shareLink, setShareLink] = useState<SharingLink | null>(null);
-  const [shareLinkPendingDelete, setShareLinkPendingDelete] = useState<SharingLink | null>(null);
-  const [shareLabel, setShareLabel] = useState("");
   const [feedback, setFeedback] = useState<string | null>(returnFeedback);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
@@ -406,8 +398,6 @@ export default function ProjectPage() {
   const updateCollection = useUpdateCollectionMutation();
   const createEvent = useCreateEventMutation();
   const importAssetLibrary = useImportAssetLibraryMutation();
-  const generateSharingLink = useGenerateSharingLinkMutation();
-  const deleteSharingLink = useDeleteSharingLinkMutation();
   const selectMatrixRow = useSelectCollisionMatrixRowMutation();
   const selectMatrixColumn = useSelectCollisionMatrixColumnMutation();
   const deselectMatrixRow = useDeselectCollisionMatrixRowMutation();
@@ -415,6 +405,11 @@ export default function ProjectPage() {
   const upsertMatrixEntry = useUpsertCollisionMatrixEntryMutation();
   const deleteMatrixEntry = useDeleteCollisionMatrixEntryMutation();
   const audioPreview = useAudioPreviewPlayer();
+  const shareController = useShareLink({
+    errorFallback: workspaceErrorFallback,
+    setDialog: (nextDialog) => setDialog(nextDialog),
+    setFeedback
+  });
 
   const selectedCollection = useMemo(() => {
     const collections = deviceWorkspaceQuery.data?.collections ?? [];
@@ -710,69 +705,6 @@ export default function ProjectPage() {
       id: asset.id,
       name: asset.name
     });
-  };
-
-  const openShareDialog = async (target: ShareTarget, label: string) => {
-    setFeedback(null);
-    setShareLabel(label);
-    setShareLink(null);
-    setDialog("share");
-
-    try {
-      const generated = await generateSharingLink.mutateAsync({
-        target,
-        createdByUserId: DEMO_USER_ID
-      });
-
-      setShareLink(generated);
-      setFeedback(`Generated share link for ${label}.`);
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
-  };
-
-  const copyShareLink = async () => {
-    if (!shareLink) {
-      return;
-    }
-
-    const url = `${window.location.origin}/share/${shareTokenFor(shareLink)}`;
-
-    try {
-      await navigator.clipboard.writeText(url);
-      setFeedback("Copied share link.");
-    } catch {
-      setFeedback(url);
-    }
-  };
-
-  const openDeleteShareLinkDialog = () => {
-    if (!shareLink) {
-      return;
-    }
-
-    setDialog(null);
-    setFeedback(null);
-    setShareLinkPendingDelete(shareLink);
-  };
-
-  const handleDeleteShareLink = async () => {
-    if (!shareLinkPendingDelete) {
-      return;
-    }
-
-    setFeedback(null);
-
-    try {
-      const deletedToken = shareTokenFor(shareLinkPendingDelete);
-
-      await deleteSharingLink.mutateAsync(shareLinkPendingDelete.id);
-      setShareLinkPendingDelete(null);
-      setShareLink(null);
-      setFeedback(`Deleted share link /share/${deletedToken}.`);
-    } catch (error) {
-      setFeedback(messageForError(error, workspaceErrorFallback));
-    }
   };
 
   const handleCreateDevice = async (event: FormEvent<HTMLFormElement>) => {
@@ -1284,7 +1216,7 @@ export default function ProjectPage() {
               <Button
                 leftIcon={<Link2 className="size-4" />}
                 onClick={() =>
-                  void openShareDialog(
+                  void shareController.openShareDialog(
                     { kind: "project", projectId: workspace.project.id },
                     workspace.project.name
                   )
@@ -1608,7 +1540,7 @@ export default function ProjectPage() {
                                 return;
                               }
 
-                              void openShareDialog(
+                              void shareController.openShareDialog(
                                 {
                                   kind: "collisionMatrixEntry",
                                   collisionMatrixEntryId: selectedMatrixEntry.id
@@ -2380,70 +2312,22 @@ export default function ProjectPage() {
         </ConfirmDialog>
       ) : null}
 
-      {shareLinkPendingDelete ? (
-        <ConfirmDialog
-          confirmLabel="Delete link"
-          disabled={deleteSharingLink.isPending}
-          onCancel={() => setShareLinkPendingDelete(null)}
-          onConfirm={() => void handleDeleteShareLink()}
-          title="Delete share link?"
-        >
-          This removes /share/{shareTokenFor(shareLinkPendingDelete)} from IndexedDB. The shared preview URL
-          will stop resolving.
-        </ConfirmDialog>
-      ) : null}
+      <ShareLinkDeleteConfirm
+        disabled={shareController.deleteSharingLinkIsPending}
+        onCancel={() => shareController.setShareLinkPendingDelete(null)}
+        onConfirm={() => void shareController.handleDeleteShareLink()}
+        shareLink={shareController.shareLinkPendingDelete}
+      />
 
       <DialogOverlay align="end" open={dialog !== null}>
-        <Dialog
-          actions={
-            <>
-              <Button onClick={() => setDialog(null)}>Close</Button>
-              <Button
-                disabled={!shareLink}
-                leftIcon={<Trash2 className="size-4" />}
-                onClick={openDeleteShareLinkDialog}
-                variant="destructive"
-              >
-                Delete link
-              </Button>
-              <Button
-                disabled={!shareLink}
-                leftIcon={<Copy className="size-4" />}
-                onClick={() => void copyShareLink()}
-              >
-                Copy link
-              </Button>
-              <Button
-                disabled={!shareLink}
-                leftIcon={<ExternalLink className="size-4" />}
-                onClick={() => {
-                  if (shareLink) {
-                    window.open(`/share/${shareTokenFor(shareLink)}`, "_blank", "noopener,noreferrer");
-                  }
-                }}
-                variant="primary"
-              >
-                Open preview
-              </Button>
-            </>
-          }
-          className="max-w-[460px]"
+        <ShareLinkDialog
+          copyShareLink={shareController.copyShareLink}
+          onClose={() => setDialog(null)}
+          onDelete={shareController.openDeleteShareLinkDialog}
           open={dialog === "share"}
-          title="Share Link"
-        >
-          <div className="grid gap-4">
-            <div className="grid gap-1">
-              <p className="text-xs font-medium text-gray-500">Target</p>
-              <p className="text-sm font-semibold text-gray-700">{shareLabel || "Selected target"}</p>
-            </div>
-            <div className="grid gap-1">
-              <p className="text-xs font-medium text-gray-500">Generated URL</p>
-              <p className="break-all border-y border-gray-200 bg-gray-50 px-2 py-2 text-sm text-gray-700">
-                {shareLink ? `/share/${shareTokenFor(shareLink)}` : "Generating share link..."}
-              </p>
-            </div>
-          </div>
-        </Dialog>
+          shareLabel={shareController.shareLabel}
+          shareLink={shareController.shareLink}
+        />
 
         <FormDialog
           className="max-w-[420px]"

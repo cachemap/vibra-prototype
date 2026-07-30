@@ -554,7 +554,7 @@ One commit per stage, each independently green against all four gates plus the s
 - [x] 12.2 Adopt `lib/` utilities across the pages.
 - [x] 12.3 Add `Badge`, `FormDialog`, `PageStateScaffold`, and `RowActionsMenu` primitives.
 - [x] 12.4 Adopt the new primitives at existing call sites; delete the 7 menu-open state slots.
-- [ ] 12.5 Extract `features/sharing/` from its verbatim duplication across two pages.
+- [x] 12.5 Extract `features/sharing/` from its verbatim duplication across two pages.
 - [ ] 12.6 Add the feedback and audio-preview contexts; `runWithFeedback` replaces ~25 try/catch blocks.
 - [ ] 12.7 Extract `features/matrix/`, keeping the 6 matrix fields on the page as props.
 - [ ] 12.8 Extract the workspace scope context, header, sidebar, and tab bar; move the matrix fields into the context.
