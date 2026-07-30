@@ -1,9 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Upload } from "lucide-react";
+import { FileAudio, Upload, Waves } from "lucide-react";
 
-import { Button, Dialog, Select, TextInput } from "@/components/primitives";
+import { Button, Dialog, TextInput } from "@/components/primitives";
 import {
   AppError,
   UnsupportedMediaError,
@@ -70,6 +70,9 @@ export const inferMediaKindFromFile = (file: File): Asset["mediaKind"] => {
   });
 };
 
+export const iconForMediaKind = (mediaKind: Asset["mediaKind"]) =>
+  mediaKind === "audio" ? FileAudio : Waves;
+
 export const uploadHintForFile = (file: File | null) => {
   if (!file) {
     return "Audio files play in browser previews; haptics remain visual.";
@@ -82,6 +85,28 @@ export const uploadHintForFile = (file: File | null) => {
   }
 };
 
+function AssetFileIcon({ file }: { file: File | null }) {
+  let mediaKind: Asset["mediaKind"] | null = null;
+
+  if (file) {
+    try {
+      mediaKind = inferMediaKindFromFile(file);
+    } catch {
+      // Fall back to the neutral upload icon while the inline hint explains the unsupported type.
+    }
+  }
+
+  if (mediaKind === "audio") {
+    return <FileAudio className="size-4 shrink-0 text-gray-600" strokeWidth={1.8} />;
+  }
+
+  if (mediaKind === "haptic") {
+    return <Waves className="size-4 shrink-0 text-gray-600" strokeWidth={1.8} />;
+  }
+
+  return <Upload className="size-4 shrink-0 text-gray-600" strokeWidth={1.8} />;
+}
+
 export function CreateAssetFolderDialog({
   onClose,
   onCreate,
@@ -92,12 +117,10 @@ export function CreateAssetFolderDialog({
   open: boolean;
 }) {
   const [folderName, setFolderName] = useState("");
-  const [folderIcon, setFolderIcon] = useState("folder");
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const reset = () => {
     setFolderName("");
-    setFolderIcon("folder");
     setFeedback(null);
   };
 
@@ -111,7 +134,7 @@ export function CreateAssetFolderDialog({
     setFeedback(null);
 
     try {
-      await onCreate({ name: folderName, icon: folderIcon });
+      await onCreate({ name: folderName, icon: "folder" });
       reset();
     } catch (error) {
       setFeedback(messageForAssetAuthoringError(error));
@@ -140,18 +163,6 @@ export function CreateAssetFolderDialog({
           required
           value={folderName}
         />
-        <Select
-          id="folder-icon"
-          label="Icon"
-          onChange={(event) => setFolderIcon(event.target.value)}
-          value={folderIcon}
-        >
-          <option value="folder">Folder</option>
-          <option value="bell">Audio lines</option>
-          <option value="check-circle">Check circle</option>
-          <option value="mouse-pointer-click">Pointer</option>
-          <option value="sparkles">Sparkles</option>
-        </Select>
         {feedback ? <p className="text-xs text-gray-600">{feedback}</p> : null}
       </form>
     </Dialog>
@@ -233,7 +244,7 @@ export function CreateAssetDialog({
         <label className="grid gap-1.5 text-sm text-gray-700" htmlFor="asset-file">
           <span className="font-medium">File</span>
           <span className="flex min-h-[64px] items-center gap-3 rounded-lg border border-gray-300 bg-gray-25 px-3 py-2 text-sm text-gray-700">
-            <Upload className="size-4 shrink-0 text-gray-600" strokeWidth={1.8} />
+            <AssetFileIcon file={assetFile} />
             <span className="grid gap-0.5">
               <span>{assetFile ? assetFile.name : "Choose an audio or AHAP file"}</span>
               <span className="text-xs text-gray-500">{uploadHintForFile(assetFile)}</span>

@@ -211,10 +211,10 @@ Goal: deepest JSX in the repo. Two test ids ride along. **Keep the 6 matrix stat
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] **Matrix selection persistence**: select a cell, switch to Events, switch back — selection, behavior picker, and filter anchor all preserved.
-- [ ] Select and deselect rows and columns; set each of the 5 behaviors; set a `Suppress` target; clear an entry.
-- [ ] Re-capture and diff `project-matrix-{desktop,mobile}` and `collision-matrix.png`.
+- [x] Four gates green.
+- [x] **Matrix selection persistence**: select a cell, switch to Events, switch back — selection, behavior picker, and filter anchor all preserved.
+- [x] Select and deselect rows and columns; set each of the 5 behaviors; set a `Suppress` target; clear an entry.
+- [x] Re-capture and diff `project-matrix-{desktop,mobile}` and `collision-matrix.png`.
 
 ---
 
