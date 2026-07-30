@@ -362,6 +362,48 @@ Acceptance:
 - Demo reset works.
 - Known prototype limitations are documented.
 
+### Phase 11: Workspace Authoring And CRUD
+
+Detailed plan: `docs/plan/WORKSPACE_CRUD_IMPLEMENTATION_PLAN.md`
+Detailed checklist: `docs/plan/WORKSPACE_CRUD_CHECKLIST.md`
+
+Relax folder containment, make the header breadcrumb stationary, rebuild the project creator around a device preset picker, allow creation at any level, and add cascade-safe delete for every user-visible entity.
+
+Acceptance:
+
+- Every user-visible entity can be created and deleted from the UI.
+- Cascade consequences are stated before a destructive confirm.
+- Folder containment rules match the relaxed domain model.
+
+### Phase 12: Component Decomposition And Context Layer
+
+Detailed plan: `docs/plan/COMPONENT_DECOMPOSITION_PLAN.md`
+Detailed checklist: `docs/plan/COMPONENT_DECOMPOSITION_CHECKLIST.md`
+
+Phases 4-11 delivered the demo spine by growing five `"use client"` pages to 5,914 lines, one of them 2,757. This phase splits those pages into feature modules organized by data dependency. **It is a pure refactor: zero behavior and zero visual change.** Copy, DOM structure, class strings, ARIA attributes, and test ids all survive byte-identical; anything worth fixing is recorded as a follow-up rather than folded into the work.
+
+The lever is the existing data layer, which does not change. `features/projects/queries.ts` already exposes every read behind a keyed query hook, so an extracted component can re-call `useProjectWorkspaceQuery(projectId)` and get a cache-deduped result. Only *identifiers* and *UI state* travel down the tree; server data never does.
+
+Implementation direction:
+
+- Add `lib/` pure utilities — `errors`, `flash-message`, `format`, `plural`, `search-params`, `tree` — with no `@/domain` imports, then adopt them at call sites.
+- Add four primitives — `Badge`, `FormDialog`, `PageStateScaffold`, `RowActionsMenu` — then adopt them across 16 menus, 9 dialogs, 6 badges, and 5 loading/error scaffolds.
+- Introduce React context for the first time, in three page-scoped providers: project workspace scope, feedback, and audio preview. Contexts carry scope and UI state, never server data. Each splits into a volatile-value context and a stable-actions context, and each provider receives its subtree via `children` so a provider state change re-renders only actual consumers.
+- Extract `features/` modules per surface: `sharing`, `matrix`, `project-workspace`, `events`, `libraries`, `projects-list`, `share-preview`, plus shared `assets` helpers.
+- Keep deliberate non-abstractions: no generic table or record-list, no `readOnly` prop on authenticated components for the share page, no menu-open context, no unification of the libraries and project asset tables. The plan records the verified reason for each.
+- Extract per-row derivation into row models so the desktop-table and mobile-card branches can no longer disagree, and fix the quadratic `matrixEntries.find` per-cell lookup with a precomputed `Map`.
+
+Land one commit per stage, 0 through 15, each independently green. Stages 1-3 are additive and cannot break anything; visual-regression risk concentrates in stage 4 and stages 6-12.
+
+Acceptance:
+
+- No page over ~120 lines and no file in `features/` over ~260 lines, each with one clear data dependency.
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e` green at every stage.
+- The `data-testid` grep still yields exactly 6 results and the ARIA/role grep matches the stage 0 baseline.
+- Visual captures diff clean against the stage 0 and existing `docs/plan/visual-audit-captures/` baselines.
+- Matrix cell selection still survives tab switches, schedule playback still animates without stutter, and both flash-message channels still work.
+- ADRs record the context boundary policy, the feature module layout, the separate share-preview components, and the row-model pattern.
+
 ## Visual Direction
 
 Use `docs/plan/DESIGN_SYSTEM.md` as the implementation authority for UI tokens, component rules, screen rules, and visual QA. Use `design-screenshots/` as the screenshot reference library behind that system:

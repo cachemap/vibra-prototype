@@ -537,3 +537,42 @@ Detailed checklist: `docs/plan/WORKSPACE_CRUD_CHECKLIST.md`
 - [x] 11.3 Rebuild the project creator with a device preset picker.
 - [x] 11.4 Allow folder, project, and asset creation at any level.
 - [x] 11.5 Add delete for every user-visible entity with cascade safety.
+
+## Phase 12: Component Decomposition And Context Layer
+
+Detailed plan: `docs/plan/COMPONENT_DECOMPOSITION_PLAN.md`  
+Detailed checklist: `docs/plan/COMPONENT_DECOMPOSITION_CHECKLIST.md`
+
+Goal: split the five page-dense routes (5,914 lines) into feature modules organized by data dependency, using TanStack Query cache sharing and React context instead of prop drilling.
+
+**This is a pure refactor.** No copy, DOM structure, class string, ARIA attribute, or test id changes. Anything worth fixing goes to the follow-up list in the detailed checklist, not into a commit.
+
+One commit per stage, each independently green against all four gates plus the structural greps. Stages 12.11-12.14 are independent of each other and of 12.7-12.10, so they may run in parallel once 12.6 lands.
+
+- [~] 12.0 Capture baselines: test ids, ARIA/role grep, page line counts, projects-list and share captures.
+- [ ] 12.1 Add `lib/` pure utilities plus unit tests, no call sites changed.
+- [ ] 12.2 Adopt `lib/` utilities across the pages.
+- [ ] 12.3 Add `Badge`, `FormDialog`, `PageStateScaffold`, and `RowActionsMenu` primitives.
+- [ ] 12.4 Adopt the new primitives at existing call sites; delete the 7 menu-open state slots.
+- [ ] 12.5 Extract `features/sharing/` from its verbatim duplication across two pages.
+- [ ] 12.6 Add the feedback and audio-preview contexts; `runWithFeedback` replaces ~25 try/catch blocks.
+- [ ] 12.7 Extract `features/matrix/`, keeping the 6 matrix fields on the page as props.
+- [ ] 12.8 Extract the workspace scope context, header, sidebar, and tab bar; move the matrix fields into the context.
+- [ ] 12.9 Extract the assets and events tabs plus their row models.
+- [ ] 12.10 Extract the workspace dialogs and delete confirm; the project page reaches ~110 lines.
+- [ ] 12.11 Decompose the event detail page; memoize `timelineLanes`.
+- [ ] 12.12 Decompose the libraries page plus shared `features/assets/*`.
+- [ ] 12.13 Decompose the projects list page.
+- [ ] 12.14 Decompose the share preview page.
+- [ ] 12.15 Cleanup: remove `useCollisionMatrixQuery` and `useSharingLinkQuery`; confirm line-count targets.
+
+Phase gate:
+
+- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm test:e2e` green.
+- [ ] `data-testid` grep still yields exactly 6 results, unchanged.
+- [ ] ARIA/role grep matches the 12.0 baseline.
+- [ ] Visual captures diff clean against the 12.0 and `docs/plan/visual-audit-captures/` baselines.
+- [ ] Matrix cell selection survives tab switches; schedule playback animates without stutter; both flash-message channels work.
+- [ ] No page over ~120 lines and no file in `features/` over ~260 lines.
+- [ ] The four ADRs from the detailed plan are written.
+- [ ] Out-of-scope follow-ups are recorded, not implemented.
