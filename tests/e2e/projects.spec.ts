@@ -733,3 +733,59 @@ test("generates and opens share links", async ({ page }) => {
   await page.goto("/share/missing-token");
   await expect(page.getByText("Invalid share link").last()).toBeVisible();
 });
+
+test("keeps workspace dialogs singular and stacks share-link deletion confirmation", async ({ page }) => {
+  await page.goto("/projects");
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.goto("/projects/project_checkout-system");
+
+  const overlays = page.locator("div.fixed.inset-0.z-20");
+  const expectSingleDialog = async (name: string) => {
+    await expect(page.getByRole("dialog", { name })).toBeVisible();
+    await expect(overlays).toHaveCount(1);
+  };
+
+  await page.getByRole("button", { name: "Share project" }).click();
+  await expectSingleDialog("Share Link");
+  await page.getByRole("dialog", { name: "Share Link" }).getByRole("button", { name: "Close" }).click();
+
+  await page.getByRole("button", { name: "Add device" }).first().click();
+  await expectSingleDialog("Create Device");
+  await page.getByRole("dialog", { name: "Create Device" }).getByRole("button", { name: "Cancel" }).click();
+
+  await page.getByRole("button", { name: "Add collection" }).click();
+  await expectSingleDialog("Create Collection");
+  await page.getByRole("dialog", { name: "Create Collection" }).getByRole("button", { name: "Cancel" }).click();
+
+  await page.getByRole("button", { name: "Rename" }).click();
+  await expectSingleDialog("Rename Collection");
+  await page.getByRole("dialog", { name: "Rename Collection" }).getByRole("button", { name: "Cancel" }).click();
+
+  await page.getByRole("button", { name: "Add event" }).first().click();
+  await expectSingleDialog("Create Event");
+  await page.getByRole("dialog", { name: "Create Event" }).getByRole("button", { name: "Cancel" }).click();
+
+  await page.getByRole("tab", { name: "Assets" }).click();
+  await page.getByRole("button", { name: "Import library" }).click();
+  await expectSingleDialog("Import Library");
+  await page.getByRole("dialog", { name: "Import Library" }).getByRole("button", { name: "Cancel" }).click();
+
+  await page.getByRole("button", { name: "New folder" }).click();
+  await expectSingleDialog("New Folder");
+  await page.getByRole("dialog", { name: "New Folder" }).getByRole("button", { name: "Cancel" }).click();
+
+  await page.getByRole("button", { name: "New asset" }).click();
+  await expectSingleDialog("New Asset");
+  await page.getByRole("dialog", { name: "New Asset" }).getByRole("button", { name: "Cancel" }).click();
+
+  await page.getByRole("tab", { name: "Events" }).click();
+  await page.getByRole("button", { name: "Share project" }).click();
+  await page.getByRole("dialog", { name: "Share Link" }).getByRole("button", { name: "Delete link" }).click();
+  await expect(page.getByRole("dialog", { name: "Share Link" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Delete share link?" })).toBeVisible();
+  await expect(overlays).toHaveCount(2);
+  await expect(overlays.last().getByRole("dialog", { name: "Delete share link?" })).toBeVisible();
+  await page.getByRole("dialog", { name: "Delete share link?" }).getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole("dialog", { name: "Share Link" }).getByRole("button", { name: "Close" }).click();
+  await expect(overlays).toHaveCount(0);
+});

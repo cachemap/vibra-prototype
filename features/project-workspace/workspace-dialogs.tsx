@@ -26,13 +26,6 @@ export function WorkspaceDialogs({ shareController }: WorkspaceDialogsProps) {
 
   return (
     <>
-      <ShareLinkDeleteConfirm
-        disabled={shareController.deleteSharingLinkIsPending}
-        onCancel={() => shareController.setShareLinkPendingDelete(null)}
-        onConfirm={() => void shareController.handleDeleteShareLink()}
-        shareLink={shareController.shareLinkPendingDelete}
-      />
-
       <DialogOverlay align="end" open={dialog !== null}>
         {dialog === "share" ? (
           <ShareLinkDialog
@@ -52,6 +45,13 @@ export function WorkspaceDialogs({ shareController }: WorkspaceDialogsProps) {
         {dialog === "assetFolder" ? <AssetFolderDialog /> : null}
         {dialog === "asset" ? <AssetDialog /> : null}
       </DialogOverlay>
+
+      <ShareLinkDeleteConfirm
+        disabled={shareController.deleteSharingLinkIsPending}
+        onCancel={() => shareController.setShareLinkPendingDelete(null)}
+        onConfirm={() => void shareController.handleDeleteShareLink()}
+        shareLink={shareController.shareLinkPendingDelete}
+      />
     </>
   );
 }

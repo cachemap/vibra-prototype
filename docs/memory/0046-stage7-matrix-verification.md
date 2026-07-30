@@ -43,3 +43,21 @@
 - `pnpm test:e2e` passed: 17 tests.
 - The six `data-testid` entries and the Stage 0 ARIA/role grep baseline remained unchanged.
 - Visual evidence: `.codex-verify/stage8-workspace-desktop-verify.png`, `.codex-verify/stage8-workspace-mobile-verify.png`, and the existing matrix coverage capture `.codex-verify/stage-8-workspace-layout-smoke.png`.
+
+## Stage 10 Workspace Dialogs And Delete Confirm Verification
+
+### Changed
+
+- Closed the Stage 10 verification gate and added browser coverage for all eight workspace dialogs.
+- Fixed share-link deletion so its confirmation layers over the still-open Share Link dialog.
+- Added ADR 0050 for the stacked confirmation behavior.
+
+### Verification
+
+- `pnpm typecheck`, `pnpm lint` (2 existing warnings), `pnpm test` (120 tests), and `pnpm test:e2e` (18 tests) passed.
+- The Stage 0 test-id and ARIA/role grep baselines remain unchanged.
+- Reviewed `.codex-verify/stage10-share-dialog.png` and `.codex-verify/stage10-share-delete-confirm.png` against the dialog references; the stacked confirmation is visibly above its parent dialog.
+
+### Next
+
+- No unchecked component-decomposition checklist group remains.

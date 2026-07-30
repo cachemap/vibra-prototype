@@ -267,7 +267,7 @@ Stage gate:
 
 ---
 
-## Stage 10: Workspace Dialogs And Delete Confirm
+## Stage 10: Workspace Dialogs And Delete Confirm [x]
 
 Goal: bring the project page to ~110 lines.
 
@@ -280,11 +280,11 @@ Goal: bring the project page to ~110 lines.
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] Open all 8 dialogs; confirm only one overlay node exists in the DOM at a time.
-- [ ] **Dialog stacking**: open the share dialog, click the delete link — the `ConfirmDialog` appears over the `DialogOverlay`.
-- [ ] Delete each of the 7 target kinds; confirm cascade copy and the selection fallback after each.
-- [ ] Re-capture and diff `overlay-popups-1.png` and `workspace-crud-project-creator-*`.
+- [x] Four gates green.
+- [x] Open all 8 dialogs; confirm only one overlay node exists in the DOM at a time.
+- [x] **Dialog stacking**: open the share dialog, click the delete link — the `ConfirmDialog` appears over the `DialogOverlay`.
+- [x] Delete each of the 7 target kinds; confirm cascade copy and the selection fallback after each.
+- [x] Re-capture and diff `overlay-popups-1.png` and `workspace-crud-project-creator-*`.
 
 ---
 

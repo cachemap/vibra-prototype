@@ -77,7 +77,6 @@ export const useShareLink = ({ setDialog }: UseShareLinkOptions): ShareLinkContr
       return;
     }
 
-    setDialog(null);
     clearFeedback();
     setShareLinkPendingDelete(shareLink);
   };
