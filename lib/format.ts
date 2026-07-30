@@ -1,15 +1,17 @@
-// Current asset-library date format from app/libraries/page.tsx.
-export const formatAssetDate = (value: string): string =>
-  new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
+const displayDateFormatter = new Intl.DateTimeFormat("en", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC"
+});
 
-// Current project-list date format from app/projects/page.tsx.
+// Asset-library date format from features/libraries.
+export const formatAssetDate = (value: string): string =>
+  displayDateFormatter.format(new Date(value));
+
+// Project-list date format from features/projects-list.
 export const formatProjectDate = (value: string): string =>
-  new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC"
-  }).format(new Date(value));
+  displayDateFormatter.format(new Date(value));
 
 export const formatSeconds = (seconds: number): string =>
   `${seconds.toFixed(seconds % 1 === 0 ? 0 : 2)}s`;

@@ -5,12 +5,18 @@ import { hrefWithFlashMessage } from "../lib/flash-message";
 import { hrefWithParams } from "../lib/search-params";
 
 describe("lib format", () => {
-  it("formats asset dates with the current asset-library date options", () => {
-    expect(formatAssetDate("2026-07-29T18:42:00.000Z")).toBe("Jul 29");
+  it("formats asset dates with the shared UTC display date options", () => {
+    expect(formatAssetDate("2026-07-29T18:42:00.000Z")).toBe("Jul 29, 2026");
   });
 
-  it("formats project dates with the current project-list date options", () => {
+  it("formats project dates with the shared UTC display date options", () => {
     expect(formatProjectDate("2026-07-29T18:42:00.000Z")).toBe("Jul 29, 2026");
+  });
+
+  it("keeps asset and project dates aligned for the same timestamp", () => {
+    const value = "2026-01-02T01:30:00.000Z";
+
+    expect(formatAssetDate(value)).toBe(formatProjectDate(value));
   });
 
   it("formats timeline seconds like current preview helpers", () => {
