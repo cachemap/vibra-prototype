@@ -8,11 +8,8 @@ import {
   Edit3,
   FileAudio,
   FolderPlus,
-  Link2,
   MoreVertical,
   Plus,
-  Search,
-  Smartphone,
   Trash2,
   Waves
 } from "lucide-react";
@@ -26,7 +23,6 @@ import {
   FormDialog,
   IconButton,
   LoadingState,
-  PageHeader,
   PageStateScaffold,
   RowActionsMenu,
   Select,
@@ -43,23 +39,15 @@ import {
   asEntityId,
   eventTypes,
   type Asset,
-  type AssetId,
   type AssetLibraryFolder,
   type AssetLibraryFolderId,
   type AssetLibraryId,
-  type CollectionId,
-  type CollisionMatrixEntryId,
   type CollisionMatrixEntry,
-  type DeviceId,
   type EventId,
   type PlatformId,
-  type ProjectId,
-  type ResolutionBehaviorName
+  type ProjectId
 } from "@/domain";
-import type {
-  AssetLibraryFolderNode,
-  DeviceSummary
-} from "@/data/repositories/project-repository";
+import type { AssetLibraryFolderNode } from "@/data/repositories/project-repository";
 import {
   useCreateCollectionMutation,
   useCreateDeviceMutation,
@@ -90,8 +78,18 @@ import {
   useAudioPreviewActions
 } from "@/features/projects/audio-preview-context";
 import { MatrixTab } from "@/features/matrix/matrix-tab";
-import type { MatrixAxis } from "@/features/matrix/matrix-axis-filter";
-import type { MatrixFilterAnchor } from "@/features/matrix/matrix-axis-filter-anchor";
+import { WorkspaceHeader } from "@/features/project-workspace/workspace-header";
+import { WorkspaceMobileControls } from "@/features/project-workspace/workspace-mobile-controls";
+import { WorkspaceSidebar } from "@/features/project-workspace/workspace-sidebar";
+import { EmptyProjectWorkspace } from "@/features/project-workspace/workspace-empty-state";
+import {
+  ProjectWorkspaceScopeProvider,
+  type DeleteTarget,
+  useProjectDeleteTarget,
+  useProjectDialogRequest,
+  useProjectWorkspaceActions,
+  useProjectWorkspaceSelection
+} from "@/features/project-workspace/workspace-scope-context";
 import {
   CreateAssetDialog,
   CreateAssetFolderDialog
@@ -121,18 +119,6 @@ import {
 } from "@/features/sharing/share-link-dialog";
 import { useShareLink } from "@/features/sharing/use-share-link";
 
-const formatDeviceMeta = (summary: DeviceSummary) =>
-  summary.device.isEnabled ? summary.platform.name : "Excluded";
-
-type DeleteTarget =
-  | { kind: "project"; id: ProjectId; name: string }
-  | { kind: "device"; id: DeviceId; name: string }
-  | { kind: "collection"; id: CollectionId; name: string }
-  | { kind: "event"; id: EventId; name: string }
-  | { counts: { assets: number; folders: number }; kind: "assetFolder"; id: AssetLibraryFolderId; name: string }
-  | { kind: "asset"; id: AssetId; name: string }
-  | { kind: "matrixEntry"; id: CollisionMatrixEntryId; name: string };
-
 const deleteActionLabelFor = (target: DeleteTarget) => {
   if (target.kind === "matrixEntry") {
     return "Clear matrix rule";
@@ -145,46 +131,6 @@ const deleteActionLabelFor = (target: DeleteTarget) => {
   return `Delete ${target.kind}`;
 };
 
-function EmptyProjectWorkspace({ onAddDevice }: { onAddDevice: () => void }) {
-  return (
-    <div className="grid min-h-[min(680px,calc(100vh-220px))] grid-rows-[auto_1fr]">
-      <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-3">
-        <h2 className="truncate text-md font-semibold text-gray-700">Untitled</h2>
-        <Button disabled leftIcon={<Plus className="size-4" />}>
-          Add event
-        </Button>
-      </div>
-
-      <div className="relative mt-9 border-t border-gray-200">
-        <div
-          aria-hidden="true"
-          className="grid h-10 grid-cols-[minmax(180px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)] items-center border-b border-gray-200 px-3 text-xs font-medium text-gray-400"
-        >
-          <span>Name</span>
-          <span>Event</span>
-          <span>Sound</span>
-          <span>Haptic</span>
-        </div>
-
-        <div className="flex min-h-[420px] items-center justify-center px-4 py-14 text-center">
-          <div className="grid max-w-sm gap-3">
-            <div>
-              <p className="text-sm font-semibold text-gray-700">Select a system to begin</p>
-              <p className="mt-1 text-sm leading-5 text-gray-500">
-                Select the type of operating system that your sound and haptic events will play on.
-              </p>
-            </div>
-            <div className="flex justify-center">
-              <Button leftIcon={<Plus className="size-4" />} onClick={onAddDevice}>
-                Add system
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const assetExtensionFor = (asset: Asset) =>
   asset.originalFilename.includes(".") ? `.${asset.originalFilename.split(".").pop()}` : asset.mediaKind;
@@ -248,35 +194,53 @@ const pathForAssetFolder = (
 };
 
 export default function ProjectPage() {
+  const { projectId: projectIdParam } = useParams<{ projectId: string }>();
   const searchParams = useSearchParams();
+  const projectId = asEntityId<ProjectId>(projectIdParam);
 
   return (
     <FeedbackProvider errorFallback={workspaceErrorFallback} initialMessage={searchParams.get("feedback")}>
       <AudioPreviewProvider>
-        <ProjectWorkspace />
+        <ProjectWorkspaceScopeProvider projectId={projectId}>
+          <ProjectWorkspace />
+        </ProjectWorkspaceScopeProvider>
       </AudioPreviewProvider>
     </FeedbackProvider>
   );
 }
 
 function ProjectWorkspace() {
-  const { projectId: projectIdParam } = useParams<{ projectId: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const projectId = asEntityId<ProjectId>(projectIdParam);
-  const selectedDeviceParam = searchParams.get("device");
-  const selectedCollectionParam = searchParams.get("collection");
-  const [dialog, setDialog] = useState<
-    | "device"
-    | "collection"
-    | "editCollection"
-    | "event"
-    | "assetFolder"
-    | "asset"
-    | "libraryImport"
-    | "share"
-    | null
-  >(null);
+  const dialog = useProjectDialogRequest();
+  const deleteTarget = useProjectDeleteTarget();
+  const {
+    activeAssetFolderId: selectedProjectAssetFolderId,
+    activeAssetLibraryId: activeProjectAssetLibraryId,
+    activeTab: activeWorkspaceTab,
+    collectionId: selectedCollectionId,
+    deviceId: selectedDeviceId,
+    matrixBehavior,
+    matrixFilterAnchor,
+    matrixFilterAxis,
+    matrixIncomingEventId: selectedMatrixIncomingEventId,
+    matrixPlayingEventId: selectedMatrixPlayingEventId,
+    matrixTargetEventId,
+    projectId,
+    searchTerm: workspaceSearch
+  } = useProjectWorkspaceSelection();
+  const {
+    goToCollection,
+    goToDevice,
+    goToEvent,
+    openDialog,
+    requestDelete,
+    selectAssetFolder: setSelectedProjectAssetFolderId,
+    selectAssetLibrary: goToProjectAssetLibrary,
+    setDeleteTarget,
+    setDialogRequest: setDialog,
+    setMatrixSelection
+  } = useProjectWorkspaceActions();
   const [deviceName, setDeviceName] = useState("");
   const [devicePlatformId, setDevicePlatformId] = useState("");
   const [devicePresetId, setDevicePresetId] = useState("");
@@ -285,47 +249,17 @@ function ProjectWorkspace() {
   const [eventName, setEventName] = useState("");
   const [eventType, setEventType] = useState<(typeof eventTypes)[number]>("Button");
   const [importLibraryId, setImportLibraryId] = useState("");
-  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<"events" | "assets" | "matrix">("events");
-  const [workspaceSearch, setWorkspaceSearch] = useState("");
-  const [selectedProjectAssetLibraryId, setSelectedProjectAssetLibraryId] = useState<AssetLibraryId | null>(null);
-  const [selectedProjectAssetFolderId, setSelectedProjectAssetFolderId] = useState<AssetLibraryFolderId | null>(null);
-  const [selectedMatrixPlayingEventId, setSelectedMatrixPlayingEventId] = useState<EventId | null>(null);
-  const [selectedMatrixIncomingEventId, setSelectedMatrixIncomingEventId] = useState<EventId | null>(null);
-  const [matrixBehavior, setMatrixBehavior] = useState<ResolutionBehaviorName>("Preempt");
-  const [matrixTargetEventId, setMatrixTargetEventId] = useState("");
-  const [matrixFilterAnchor, setMatrixFilterAnchor] = useState<MatrixFilterAnchor | null>(null);
-  const [matrixFilterAxis, setMatrixFilterAxis] = useState<MatrixAxis>("playing");
   const feedback = useFeedbackMessage();
-  const { clearFeedback, runWithFeedback } = useFeedbackActions();
-  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const { runWithFeedback } = useFeedbackActions();
 
   const workspaceQuery = useProjectWorkspaceQuery(projectId);
   const assetLibrariesQuery = useAssetLibrariesQuery();
-  const projectAssetLibraryIds = useMemo(() => {
-    const workspace = workspaceQuery.data;
-
-    if (!workspace) {
-      return [];
-    }
-
-    return [
-      workspace.defaultAssetLibrary.id,
-      ...workspace.importedAssetLibraries.map((library) => library.id)
-    ];
-  }, [workspaceQuery.data]);
-  const activeProjectAssetLibraryId = useMemo(() => {
-    if (selectedProjectAssetLibraryId && projectAssetLibraryIds.includes(selectedProjectAssetLibraryId)) {
-      return selectedProjectAssetLibraryId;
-    }
-
-    return projectAssetLibraryIds[0] ?? null;
-  }, [projectAssetLibraryIds, selectedProjectAssetLibraryId]);
   const projectAssetTreeQuery = useAssetLibraryTreeQuery(activeProjectAssetLibraryId);
   const selectedDevice = useMemo(() => {
     const devices = workspaceQuery.data?.devices ?? [];
 
-    if (selectedDeviceParam) {
-      const matched = devices.find((summary) => summary.device.id === selectedDeviceParam);
+    if (selectedDeviceId) {
+      const matched = devices.find((summary) => summary.device.id === selectedDeviceId);
 
       if (matched) {
         return matched;
@@ -333,7 +267,7 @@ function ProjectWorkspace() {
     }
 
     return devices[0] ?? null;
-  }, [selectedDeviceParam, workspaceQuery.data?.devices]);
+  }, [selectedDeviceId, workspaceQuery.data?.devices]);
   const platformIdByName = useMemo(
     () => new Map((workspaceQuery.data?.platforms ?? []).map((platform) => [platform.name, platform.id])),
     [workspaceQuery.data?.platforms]
@@ -362,8 +296,8 @@ function ProjectWorkspace() {
   const selectedCollection = useMemo(() => {
     const collections = deviceWorkspaceQuery.data?.collections ?? [];
 
-    if (selectedCollectionParam) {
-      const matched = collections.find((item) => item.collection.id === selectedCollectionParam);
+    if (selectedCollectionId) {
+      const matched = collections.find((item) => item.collection.id === selectedCollectionId);
 
       if (matched) {
         return matched;
@@ -371,7 +305,7 @@ function ProjectWorkspace() {
     }
 
     return collections[0] ?? null;
-  }, [deviceWorkspaceQuery.data?.collections, selectedCollectionParam]);
+  }, [deviceWorkspaceQuery.data?.collections, selectedCollectionId]);
   const eventRows = useMemo(() => selectedCollection?.events ?? [], [selectedCollection?.events]);
   const importedLibraryIds = useMemo(
     () => new Set((workspaceQuery.data?.importedAssetLibraries ?? []).map((library) => library.id)),
@@ -439,28 +373,6 @@ function ProjectWorkspace() {
   }, [selectedProjectAssetFolder]);
   const selectedProjectAssetFolderItemCount =
     (selectedProjectAssetFolder?.childFolders.length ?? 0) + (selectedProjectAssetFolder?.assets.length ?? 0);
-  const goToDevice = (deviceId: DeviceId) => {
-    router.push(`/projects/${projectId}${hrefWithParams("", searchParams, { device: deviceId, collection: null })}`);
-  };
-
-  const goToCollection = (collectionId: CollectionId) => {
-    router.push(`/projects/${projectId}${hrefWithParams("", searchParams, { collection: collectionId })}`);
-  };
-
-  const goToEvent = (eventId: EventId) => {
-    router.push(
-      `/projects/${projectId}/events/${eventId}${hrefWithParams("", searchParams, {
-        collection: selectedCollection?.collection.id ?? null,
-        device: selectedDevice?.device.id ?? null
-      })}`
-    );
-  };
-
-  const goToProjectAssetLibrary = (libraryId: AssetLibraryId) => {
-    setSelectedProjectAssetLibraryId(libraryId);
-    setSelectedProjectAssetFolderId(null);
-  };
-
   const goToProjectAssetFolder = (folderId: AssetLibraryFolderId) => {
     setSelectedProjectAssetFolderId(folderId);
   };
@@ -470,8 +382,7 @@ function ProjectWorkspace() {
     setDevicePlatformId(workspaceQuery.data?.platforms[0]?.id ?? "");
     setDevicePresetId("");
     setDeviceEnabled(true);
-    clearFeedback();
-    setDialog("device");
+    openDialog("device");
   };
 
   const selectDevicePreset = (preset: DevicePreset) => {
@@ -487,59 +398,31 @@ function ProjectWorkspace() {
 
   const openCreateCollection = () => {
     setCollectionName("");
-    clearFeedback();
-    setDialog("collection");
+    openDialog("collection");
   };
 
   const openEditCollection = () => {
     setCollectionName(selectedCollection?.collection.name ?? "");
-    clearFeedback();
-    setDialog("editCollection");
+    openDialog("editCollection");
   };
 
   const openCreateEvent = () => {
     setEventName("");
     setEventType("Button");
-    clearFeedback();
-    setDialog("event");
+    openDialog("event");
   };
 
   const openImportLibrary = () => {
     setImportLibraryId(importCandidates[0]?.library.id ?? "");
-    clearFeedback();
-    setDialog("libraryImport");
+    openDialog("libraryImport");
   };
 
   const openCreateAssetFolder = () => {
-    clearFeedback();
-    setDialog("assetFolder");
+    openDialog("assetFolder");
   };
 
   const openCreateAsset = () => {
-    clearFeedback();
-    setDialog("asset");
-  };
-
-  const openDeleteProject = () => {
-    if (!workspaceQuery.data) {
-      return;
-    }
-
-    clearFeedback();
-    setDeleteTarget({
-      kind: "project",
-      id: workspaceQuery.data.project.id,
-      name: workspaceQuery.data.project.name
-    });
-  };
-
-  const openDeleteDevice = (summary: DeviceSummary) => {
-    clearFeedback();
-    setDeleteTarget({
-      kind: "device",
-      id: summary.device.id,
-      name: summary.device.name
-    });
+    openDialog("asset");
   };
 
   const openDeleteCollection = () => {
@@ -547,8 +430,7 @@ function ProjectWorkspace() {
       return;
     }
 
-    clearFeedback();
-    setDeleteTarget({
+    requestDelete({
       kind: "collection",
       id: selectedCollection.collection.id,
       name: selectedCollection.collection.name
@@ -556,8 +438,7 @@ function ProjectWorkspace() {
   };
 
   const openDeleteEvent = (event: { id: EventId; name: string }) => {
-    clearFeedback();
-    setDeleteTarget({
+    requestDelete({
       kind: "event",
       id: event.id,
       name: event.name
@@ -565,8 +446,7 @@ function ProjectWorkspace() {
   };
 
   const openClearMatrixEntry = (entry: CollisionMatrixEntry, name: string) => {
-    clearFeedback();
-    setDeleteTarget({
+    requestDelete({
       kind: "matrixEntry",
       id: entry.id,
       name
@@ -574,8 +454,7 @@ function ProjectWorkspace() {
   };
 
   const openDeleteProjectAssetFolder = (node: AssetLibraryFolderNode) => {
-    clearFeedback();
-    setDeleteTarget({
+    requestDelete({
       counts: countAssetFolderDescendants(node),
       kind: "assetFolder",
       id: node.folder.id,
@@ -584,8 +463,7 @@ function ProjectWorkspace() {
   };
 
   const openDeleteProjectAsset = (asset: Asset) => {
-    clearFeedback();
-    setDeleteTarget({
+    requestDelete({
       kind: "asset",
       id: asset.id,
       name: asset.name
@@ -853,8 +731,7 @@ function ProjectWorkspace() {
       if (deleteTarget.kind === "matrixEntry") {
         await deleteMatrixEntry.mutateAsync(deleteTarget.id);
         setDeleteTarget(null);
-        setMatrixBehavior("Preempt");
-        setMatrixTargetEventId("");
+        setMatrixSelection({ matrixBehavior: "Preempt", matrixTargetEventId: "" });
         return `Cleared matrix rule ${deleteTarget.name}.`;
       }
 
@@ -909,20 +786,7 @@ function ProjectWorkspace() {
   }
 
   const workspace = workspaceQuery.data;
-  const collections = deviceWorkspaceQuery.data?.collections ?? [];
   const normalizedWorkspaceSearch = workspaceSearch.trim().toLowerCase();
-  const filteredDevices = normalizedWorkspaceSearch
-    ? workspace.devices.filter((summary) =>
-        [summary.device.name, summary.platform.name].some((value) =>
-          value.toLowerCase().includes(normalizedWorkspaceSearch)
-        )
-      )
-    : workspace.devices;
-  const filteredCollections = normalizedWorkspaceSearch
-    ? collections.filter((item) =>
-        item.collection.name.toLowerCase().includes(normalizedWorkspaceSearch)
-      )
-    : collections;
   const librarySummaryById = new Map(
     (assetLibrariesQuery.data?.libraries ?? []).map((summary) => [summary.library.id, summary])
   );
@@ -937,285 +801,26 @@ function ProjectWorkspace() {
     allProjectAssetLibraries.find(({ library }) => library.id === activeProjectAssetLibraryId) ??
     allProjectAssetLibraries[0] ??
     null;
-  const selectedTabLabel =
-    activeWorkspaceTab === "events" ? "Events" : activeWorkspaceTab === "assets" ? "Assets" : "Matrix";
 
   return (
     <section className="grid min-h-[calc(100vh-64px)] grid-rows-[auto_1fr] bg-gray-25">
-      <div className="px-4 py-5">
-        <PageHeader
-          actions={
-            <div className="flex items-center gap-2">
-              <Button
-                leftIcon={<Link2 className="size-4" />}
-                onClick={() =>
-                  void shareController.openShareDialog(
-                    { kind: "project", projectId: workspace.project.id },
-                    workspace.project.name
-                  )
-                }
-              >
-                Share project
-              </Button>
-              <RowActionsMenu
-                grouped
-                icon={MoreVertical}
-                items={[
-                  {
-                    destructive: true,
-                    icon: <Trash2 aria-hidden="true" className="size-4" />,
-                    label: "Delete project",
-                    onSelect: openDeleteProject
-                  }
-                ]}
-                label={`Open actions for ${workspace.project.name}`}
-              />
-            </div>
-          }
-          breadcrumbs={[
-            { href: "/projects", label: "Projects" },
-            ...(workspace.folder
-              ? [{ href: `/projects?folder=${workspace.folder.id}`, label: workspace.folder.name }]
-              : [])
-          ]}
-          border={false}
-          className="px-0 py-0"
-          title={workspace.project.name}
-        />
-      </div>
+      <WorkspaceHeader projectId={projectId} shareController={shareController} />
 
       <div className="grid min-h-0 md:grid-cols-[268px_1fr]">
-        <aside className="hidden content-start gap-5 border-r border-gray-300 bg-gray-50 px-4 py-4 md:grid">
-          <div className="grid grid-cols-3 gap-1" role="tablist">
-            <button
-              className={`h-8 rounded-lg text-sm font-medium ${
-                activeWorkspaceTab === "events" ? "bg-gray-200 text-gray-700" : "text-gray-500 hover:bg-gray-100"
-              }`}
-              aria-selected={activeWorkspaceTab === "events"}
-              onClick={() => setActiveWorkspaceTab("events")}
-              role="tab"
-              type="button"
-            >
-              Events
-            </button>
-            <button
-              className={`h-8 rounded-lg text-sm font-medium ${
-                activeWorkspaceTab === "assets" ? "bg-gray-200 text-gray-700" : "text-gray-500 hover:bg-gray-100"
-              }`}
-              aria-selected={activeWorkspaceTab === "assets"}
-              onClick={() => setActiveWorkspaceTab("assets")}
-              role="tab"
-              type="button"
-            >
-              Assets
-            </button>
-            <button
-              className={`h-8 rounded-lg text-sm font-medium ${
-                activeWorkspaceTab === "matrix" ? "bg-gray-200 text-gray-700" : "text-gray-500 hover:bg-gray-100"
-              }`}
-              aria-selected={activeWorkspaceTab === "matrix"}
-              onClick={() => setActiveWorkspaceTab("matrix")}
-              role="tab"
-              type="button"
-            >
-              Matrix
-            </button>
-          </div>
-
-          <label className="relative block" htmlFor="workspace-search">
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-500"
-              strokeWidth={1.8}
-            />
-            <input
-              className="h-[34px] w-full rounded-lg border border-gray-300 bg-gray-25 px-9 text-sm text-gray-700 outline-none transition-shadow placeholder:text-gray-400 focus:border-gray-300 focus:ring-2 focus:ring-purple-500/40"
-              id="workspace-search"
-              onChange={(event) => setWorkspaceSearch(event.currentTarget.value)}
-              placeholder="Search"
-              type="search"
-              value={workspaceSearch}
-            />
-          </label>
-
-          <div className="grid gap-2">
-            <div className="flex h-8 items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-700">Systems</h2>
-              <IconButton icon={Plus} label="Add device" onClick={openCreateDevice} size="compact" />
-            </div>
-            <div className="grid gap-1" data-testid="device-list">
-              {filteredDevices.length ? (
-                filteredDevices.map((summary) => {
-                  const active = selectedDevice?.device.id === summary.device.id;
-
-                  return (
-                    <div
-                      className={`grid min-h-10 grid-cols-[1fr_auto] items-center gap-1 rounded-lg transition-colors ${
-                        active ? "bg-gray-200 text-gray-700" : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                      key={summary.device.id}
-                    >
-                      <button
-                        className="grid min-h-10 min-w-0 grid-cols-[1fr_auto] items-center gap-2 rounded-lg px-2.5 text-left text-sm"
-                        onClick={() => goToDevice(summary.device.id)}
-                        type="button"
-                      >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <Smartphone aria-hidden="true" className="size-4 shrink-0 text-gray-500" />
-                          <span className="truncate font-medium">{summary.device.name}</span>
-                        </span>
-                        <span className="text-xs text-gray-500">{formatDeviceMeta(summary)}</span>
-                      </button>
-                      <div className="pr-1">
-                        <RowActionsMenu
-                          grouped
-                          icon={MoreVertical}
-                          items={[
-                            {
-                              destructive: true,
-                              icon: <Trash2 aria-hidden="true" className="size-4" />,
-                              label: "Delete device",
-                              onSelect: () => openDeleteDevice(summary)
-                            }
-                          ]}
-                          label={`Open actions for ${summary.device.name}`}
-                          size="compact"
-                        />
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="px-2 text-xs text-gray-500">
-                  {workspace.devices.length ? "No matching systems." : "No systems yet."}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 pt-4">
-            <div className="mb-2 flex h-8 items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-700">Collections</h2>
-              <IconButton
-                disabled={!selectedDevice}
-                icon={Plus}
-                label="Add collection"
-                onClick={openCreateCollection}
-                size="compact"
-              />
-            </div>
-            {deviceWorkspaceQuery.isLoading ? (
-              <p className="px-2 text-xs text-gray-500">Loading collections</p>
-            ) : !selectedDevice ? (
-              <p className="px-2 text-xs text-gray-500">Select a system before adding collections.</p>
-            ) : filteredCollections.length ? (
-              <div className="grid gap-1" data-testid="collection-list">
-                {filteredCollections.map((item) => {
-                  const active = selectedCollection?.collection.id === item.collection.id;
-
-                  return (
-                    <button
-                      className={`grid min-h-10 grid-cols-[1fr_auto] items-center gap-2 rounded-lg px-2.5 text-left text-sm transition-colors ${
-                        active ? "bg-gray-200 text-gray-700" : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                      key={item.collection.id}
-                      onClick={() => goToCollection(item.collection.id)}
-                      type="button"
-                    >
-                      <span className="truncate font-medium">{item.collection.name}</span>
-                      <span className="text-xs text-gray-500">{item.events.length}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="px-2 text-xs text-gray-500">No matching collections.</p>
-            )}
-          </div>
-        </aside>
+        <WorkspaceSidebar
+          onAddCollection={openCreateCollection}
+          onAddDevice={openCreateDevice}
+          projectId={projectId}
+          selectedCollectionId={selectedCollection?.collection.id ?? null}
+          selectedDevice={selectedDevice}
+        />
 
         <main className="grid min-w-0 content-start gap-4 px-4 py-3 md:py-4">
-          <div className="grid gap-3 border-b border-gray-200 pb-3 md:hidden">
-            <div className="grid grid-cols-3 gap-1" role="tablist" aria-label="Project workspace views">
-              <button
-                className={`h-8 rounded-lg text-sm font-medium ${
-                  activeWorkspaceTab === "events" ? "bg-gray-200 text-gray-700" : "text-gray-500 hover:bg-gray-100"
-                }`}
-                aria-selected={activeWorkspaceTab === "events"}
-                onClick={() => setActiveWorkspaceTab("events")}
-                role="tab"
-                type="button"
-              >
-                Events
-              </button>
-              <button
-                className={`h-8 rounded-lg text-sm font-medium ${
-                  activeWorkspaceTab === "assets" ? "bg-gray-200 text-gray-700" : "text-gray-500 hover:bg-gray-100"
-                }`}
-                aria-selected={activeWorkspaceTab === "assets"}
-                onClick={() => setActiveWorkspaceTab("assets")}
-                role="tab"
-                type="button"
-              >
-                Assets
-              </button>
-              <button
-                className={`h-8 rounded-lg text-sm font-medium ${
-                  activeWorkspaceTab === "matrix" ? "bg-gray-200 text-gray-700" : "text-gray-500 hover:bg-gray-100"
-                }`}
-                aria-selected={activeWorkspaceTab === "matrix"}
-                onClick={() => setActiveWorkspaceTab("matrix")}
-                role="tab"
-                type="button"
-              >
-                Matrix
-              </button>
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-2">
-              <label className="grid gap-1 text-xs font-medium text-gray-500" htmlFor="mobile-device">
-                Device
-                <select
-                  className="h-[34px] rounded-lg border border-gray-300 bg-gray-25 px-3 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-purple-500/40"
-                  disabled={!workspace.devices.length}
-                  id="mobile-device"
-                  onChange={(event) => goToDevice(asEntityId<DeviceId>(event.currentTarget.value))}
-                  value={selectedDevice?.device.id ?? ""}
-                >
-                  {workspace.devices.length ? null : <option value="">No devices</option>}
-                  {workspace.devices.map((summary) => (
-                    <option key={summary.device.id} value={summary.device.id}>
-                      {summary.device.name} / {formatDeviceMeta(summary)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="grid gap-1 text-xs font-medium text-gray-500" htmlFor="mobile-collection">
-                Collection
-                <select
-                  className="h-[34px] rounded-lg border border-gray-300 bg-gray-25 px-3 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-purple-500/40"
-                  disabled={!collections.length}
-                  id="mobile-collection"
-                  onChange={(event) => goToCollection(asEntityId<CollectionId>(event.currentTarget.value))}
-                  value={selectedCollection?.collection.id ?? ""}
-                >
-                  {collections.length ? null : <option value="">No collections</option>}
-                  {collections.map((item) => (
-                    <option key={item.collection.id} value={item.collection.id}>
-                      {item.collection.name} / {item.events.length} events
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <p className="h-5 truncate text-xs text-gray-500">
-              {selectedDevice
-                ? `${selectedTabLabel} on ${selectedDevice.device.name}`
-                : "Create a device to configure this project."}
-            </p>
-          </div>
+          <WorkspaceMobileControls
+            projectId={projectId}
+            selectedCollectionId={selectedCollection?.collection.id ?? null}
+            selectedDevice={selectedDevice}
+          />
 
           {!selectedDevice ? (
             <EmptyProjectWorkspace onAddDevice={openCreateDevice} />
@@ -1272,12 +877,22 @@ function ProjectWorkspace() {
                       }
                       selectedIncomingEventId={selectedMatrixIncomingEventId}
                       selectedPlayingEventId={selectedMatrixPlayingEventId}
-                      setMatrixBehavior={setMatrixBehavior}
-                      setMatrixFilterAnchor={setMatrixFilterAnchor}
-                      setMatrixFilterAxis={setMatrixFilterAxis}
-                      setMatrixTargetEventId={setMatrixTargetEventId}
-                      setSelectedIncomingEventId={setSelectedMatrixIncomingEventId}
-                      setSelectedPlayingEventId={setSelectedMatrixPlayingEventId}
+                      setMatrixBehavior={(behavior) => setMatrixSelection({ matrixBehavior: behavior })}
+                      setMatrixFilterAnchor={(anchor) => {
+                        if (typeof anchor === "function") {
+                          setMatrixSelection({ matrixFilterAnchor: anchor(matrixFilterAnchor) });
+                        } else {
+                          setMatrixSelection({ matrixFilterAnchor: anchor });
+                        }
+                      }}
+                      setMatrixFilterAxis={(axis) => setMatrixSelection({ matrixFilterAxis: axis })}
+                      setMatrixTargetEventId={(eventId) => setMatrixSelection({ matrixTargetEventId: eventId })}
+                      setSelectedIncomingEventId={(eventId) =>
+                        setMatrixSelection({ matrixIncomingEventId: eventId })
+                      }
+                      setSelectedPlayingEventId={(eventId) =>
+                        setMatrixSelection({ matrixPlayingEventId: eventId })
+                      }
                     />
                   ) : activeWorkspaceTab === "assets" ? (
                     <div className="grid gap-4" data-testid="project-asset-libraries">
