@@ -31,3 +31,12 @@
 ## Recommended Next Group
 
 - Component decomposition is closed. Pick one explicit follow-up from `docs/plan/COMPONENT_DECOMPOSITION_CHECKLIST.md` if product work continues; the remaining unchecked items there are intentionally out of scope follow-ups.
+
+## Loading State Description Follow-Up
+
+- Completed the follow-up where `LoadingState` ignored its `description` prop.
+- Updated `components/primitives/states.tsx` so loading states show optional helper copy below the title while preserving the centered spinner layout.
+- Added `tests/states-primitive.test.tsx` to lock the description rendering behavior.
+- Verification: `pnpm vitest run tests/states-primitive.test.tsx`, `pnpm typecheck`, and `pnpm lint` passed. Lint still reports the existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- No ADR added; this was a small primitive contract fix, not a new architecture, persistence, route, seed-data, or domain decision.
+- Recommended next group: choose another explicit follow-up from `docs/plan/COMPONENT_DECOMPOSITION_CHECKLIST.md`, such as aligning date formatting or the feedback banner markup.

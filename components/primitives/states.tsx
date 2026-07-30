@@ -38,11 +38,14 @@ export function ErrorState({ action, className, description, title }: StateProps
   );
 }
 
-export function LoadingState({ className, title = "Loading" }: Partial<StateProps>) {
+export function LoadingState({ className, description, title = "Loading" }: Partial<StateProps>) {
   return (
-    <div className={cx("flex min-h-40 items-center justify-center gap-2 p-4 text-sm text-gray-500", className)}>
-      <Loader2 aria-hidden="true" className="size-4 animate-spin" />
-      <span>{title}</span>
+    <div className={cx("flex min-h-40 items-center justify-center gap-3 p-4 text-sm text-gray-500", className)}>
+      <Loader2 aria-hidden="true" className="size-4 shrink-0 animate-spin" />
+      <div className="grid gap-1 text-center">
+        <span>{title}</span>
+        {description ? <span className="text-xs leading-5 text-gray-500">{description}</span> : null}
+      </div>
     </div>
   );
 }
