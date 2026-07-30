@@ -189,10 +189,10 @@ Goal: land the cross-cutting layer that stages 7-14 consume. Highest discipline 
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] **Playback animation**: play a lane — the playhead animates smoothly and `timeline-playhead` is present. While playing, type in a dialog: no stutter. Stutter means the `children` bailout rule was violated.
-- [ ] Cross-page flash message still works through both channels.
-- [ ] Preview a single asset from the libraries table, the libraries tiles, and the project asset table.
+- [x] Four gates green.
+- [x] **Playback animation**: play a lane — the playhead animates smoothly and `timeline-playhead` is present. While playing, type in a dialog: no stutter. Stutter means the `children` bailout rule was violated.
+- [x] Cross-page flash message still works through both channels.
+- [x] Preview a single asset from the libraries table, the libraries tiles, and the project asset table.
 
 ---
 

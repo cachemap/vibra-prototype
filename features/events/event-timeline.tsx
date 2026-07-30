@@ -75,7 +75,8 @@ export function EventTimeline({
         const isLaneDisabled = !eventTrigger.isEnabled || !selectedDeviceIsEnabled;
         const laneItems = previewItems.get(eventTrigger.id) ?? [];
         const isLanePlayable = !isLaneDisabled && laneItems.length > 0;
-        const isLanePlaying = audioPreview.isSchedulePlaying(eventTrigger.id);
+        const playheadSeconds = audioPreviewState.playheadByScheduleKey[eventTrigger.id] ?? null;
+        const isLanePlaying = playheadSeconds !== null;
         const playbacks = [...eventTrigger.playbacks].sort(
           (first, second) => first.startOffset - second.startOffset
         );
@@ -175,7 +176,7 @@ export function EventTimeline({
           ),
           title: eventTrigger.label || triggerName,
           playheadLabel: triggerName.slice(0, 1).toUpperCase(),
-          playheadSeconds: audioPreview.playheadFor(eventTrigger.id),
+          playheadSeconds,
           trailingAction: (
             <IconButton
               icon={Plus}
@@ -189,6 +190,7 @@ export function EventTimeline({
     [
       assetById,
       audioPreview,
+      audioPreviewState.playheadByScheduleKey,
       onCreatePlayback,
       onDeleteEventTrigger,
       onDeleteTriggerPlayback,
