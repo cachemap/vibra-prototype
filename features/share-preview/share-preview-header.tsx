@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy } from "lucide-react";
 
 import { Badge, Breadcrumbs, Button } from "@/components/primitives";
 import type { SharingLinkPreviewAggregate } from "@/data/repositories/project-repository";
@@ -9,7 +9,6 @@ import { pluralSuffix } from "@/lib/plural";
 type SharePreviewHeaderProps = {
   onCopyLink: () => void;
   preview: SharingLinkPreviewAggregate;
-  sharePath: string;
 };
 
 export function targetLabelFor(target: SharingLinkPreviewAggregate["target"]): string {
@@ -32,7 +31,7 @@ function sourceContextFor(target: SharingLinkPreviewAggregate["target"]): string
       : `${target.project.name} / ${target.device.name} / Collision Matrix`;
 }
 
-export function SharePreviewHeader({ onCopyLink, preview, sharePath }: SharePreviewHeaderProps) {
+export function SharePreviewHeader({ onCopyLink, preview }: SharePreviewHeaderProps) {
   const target = preview.target;
   const targetLabel = targetLabelFor(target);
   const targetKind = targetKindFor(target);
@@ -63,9 +62,6 @@ export function SharePreviewHeader({ onCopyLink, preview, sharePath }: SharePrev
       <div className="flex items-center gap-2">
         <Button leftIcon={<Copy className="size-4" />} onClick={onCopyLink}>
           Copy link
-        </Button>
-        <Button leftIcon={<ExternalLink className="size-4" />} onClick={() => window.open(sharePath, "_blank")}>
-          Open mobile preview
         </Button>
       </div>
     </div>

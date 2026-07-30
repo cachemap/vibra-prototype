@@ -53,7 +53,6 @@ export default function SharePage() {
       <SharePreviewContent
         onCopyLink={() => void copyLink()}
         preview={previewQuery.data}
-        sharePath={sharePath}
       />
       <div className="min-h-10 border-y border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-700">
         Disabled devices and disabled event interactions remain visible here, but are excluded from playback/export.
