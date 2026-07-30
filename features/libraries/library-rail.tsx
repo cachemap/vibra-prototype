@@ -7,19 +7,25 @@ import type { AssetLibrarySummary } from "@/data/repositories/project-repository
 
 type LibraryRailProps = {
   libraries: readonly AssetLibrarySummary[];
+  librarySearchTerm: string;
   onCreateLibrary: () => void;
   onDeleteLibrary: (summary: AssetLibrarySummary) => void;
+  onLibrarySearchTermChange: (term: string) => void;
   onSelectLibrary: (libraryId: AssetLibraryId) => void;
   selectedLibraryId: AssetLibraryId | null;
 };
 
 export function LibraryRail({
   libraries,
+  librarySearchTerm,
   onCreateLibrary,
   onDeleteLibrary,
+  onLibrarySearchTermChange,
   onSelectLibrary,
   selectedLibraryId
 }: LibraryRailProps) {
+  const hasSearch = librarySearchTerm.trim().length > 0;
+
   return (
     <aside className="border-b border-gray-300 bg-gray-50 px-4 py-5 md:border-b-0 md:border-r">
       <div className="grid gap-4">
@@ -32,12 +38,20 @@ export function LibraryRail({
           placeholder="Search"
           aria-label="Search asset libraries"
           className="pl-9"
+          onChange={(event) => onLibrarySearchTermChange(event.currentTarget.value)}
+          type="search"
+          value={librarySearchTerm}
         />
         <div className="flex items-center justify-between text-sm font-semibold text-gray-700">
           <span>Libraries</span>
           <IconButton icon={Plus} label="Create library" onClick={onCreateLibrary} size="compact" />
         </div>
         <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-1">
+          {libraries.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-gray-300 px-3 py-3 text-sm text-gray-500">
+              {hasSearch ? "No libraries match this search." : "No libraries yet."}
+            </p>
+          ) : null}
           {libraries.map((summary) => {
             const selected = summary.library.id === selectedLibraryId;
 

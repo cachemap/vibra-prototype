@@ -70,9 +70,11 @@ function LibrariesWorkspace() {
 
       <div className="grid min-h-0 md:grid-cols-[268px_1fr]">
         <LibraryRail
-          libraries={selection.librariesQuery.data?.libraries ?? []}
+          libraries={selection.filteredLibraries}
+          librarySearchTerm={selection.librarySearchTerm}
           onCreateLibrary={controller.openCreateLibrary}
           onDeleteLibrary={controller.openDeleteLibrary}
+          onLibrarySearchTermChange={selection.setLibrarySearchTerm}
           onSelectLibrary={selection.goToLibrary}
           selectedLibraryId={selection.selectedLibrarySummary?.library.id ?? null}
         />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { asEntityId, type AssetLibraryFolderId, type AssetLibraryId } from "@/domain";
 import type { Asset, AssetLibraryFolder } from "@/domain";
@@ -8,6 +8,7 @@ import type { AssetLibraryFolderNode } from "@/data/repositories/project-reposit
 import { useAssetLibrariesQuery, useAssetLibraryTreeQuery } from "@/features/projects/queries";
 import { findAssetFolderNode, pathForAssetFolder } from "@/features/assets/asset-folder-tree";
 import { hrefWithParams } from "@/lib/search-params";
+import { filterAssetLibraries } from "./library-search";
 
 export type LibraryView = "list" | "tiles";
 
@@ -21,7 +22,12 @@ export function useLibrarySelection() {
   const selectedLibraryParam = searchParams.get("library");
   const selectedFolderParam = searchParams.get("folder");
   const view: LibraryView = searchParams.get("view") === "tiles" ? "tiles" : "list";
+  const [librarySearchTerm, setLibrarySearchTerm] = useState("");
   const librariesQuery = useAssetLibrariesQuery();
+  const filteredLibraries = useMemo(
+    () => filterAssetLibraries(librariesQuery.data?.libraries ?? [], librarySearchTerm),
+    [librariesQuery.data?.libraries, librarySearchTerm]
+  );
   const selectedLibrarySummary = useMemo(() => {
     const libraries = librariesQuery.data?.libraries ?? [];
 
@@ -95,8 +101,10 @@ export function useLibrarySelection() {
     clearFolderHref,
     folderHref,
     folderPath,
+    filteredLibraries,
     goToFolder,
     goToLibrary,
+    librarySearchTerm,
     librariesQuery,
     router,
     searchParams,
@@ -104,6 +112,7 @@ export function useLibrarySelection() {
     selectedFolderItemCount,
     selectedFolderParam,
     selectedLibrarySummary,
+    setLibrarySearchTerm,
     setView,
     treeQuery,
     view,

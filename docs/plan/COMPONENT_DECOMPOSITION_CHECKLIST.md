@@ -396,7 +396,7 @@ Real issues found during analysis. Each is a behavior or visual change and must 
 - [x] Sidebar heading says "Systems" where the canonical vocabulary is Device.
 - [x] `formatAssetDate` and `formatProjectDate` format the same kind of timestamp differently.
 - [x] The two page-level feedback banners use divergent markup for the same concept.
-- [ ] The libraries search input is rendered but non-functional; the projects search input is rendered `disabled` with a placeholder promising a later slice.
+- [x] The libraries search input is rendered but non-functional; the projects search input is rendered `disabled` with a placeholder promising a later slice.
 - [x] `LoadingState` ignores its `description` prop, so every page passes copy that never renders.
 - [ ] The share page's "Open mobile preview" opens the identical route in a new tab; its summary table restates four values already in the header.
 - [ ] The share route renders inside `WorkspaceShell`, so an unauthenticated viewer sees the app nav and the "Reset demo" button.

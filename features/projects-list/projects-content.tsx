@@ -36,15 +36,17 @@ export function ProjectsContent() {
     ? asEntityId<ProjectFolderId>(selectedFolderParam)
     : null;
   const [dialog, setDialog] = useState<ProjectsListDialog>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const { clearFeedback, runWithFeedback } = useFeedbackActions();
   const [deleteTarget, setDeleteTarget] = useState<ProjectListDeleteTarget | null>(null);
   const treeQuery = useProjectTreeQuery(DEMO_USER_ID);
   const deleteFolder = useDeleteProjectFolderMutation();
   const deleteProject = useDeleteProjectMutation();
 
-  const { currentFolder, folderPath, platformIdByName, rows } = useProjectsListModel(
+  const { allRows, currentFolder, folderPath, platformIdByName, rows } = useProjectsListModel(
     treeQuery.data,
-    selectedFolderId
+    selectedFolderId,
+    searchTerm
   );
   const folderHrefFor = (folderId: ProjectFolderId | null) =>
     hrefWithParams("/projects", searchParams, { folder: folderId });
@@ -111,7 +113,7 @@ export function ProjectsContent() {
         }
         title={title}
       />
-      <ProjectsToolbar />
+      <ProjectsToolbar onSearchTermChange={setSearchTerm} searchTerm={searchTerm} />
 
       <FeedbackBanner />
 
@@ -130,11 +132,13 @@ export function ProjectsContent() {
       />
 
       <ProjectsList
+        allRowCount={allRows.length}
         currentFolder={currentFolder}
         onCreateFolder={() => setDialog("folder")}
         onCreateProject={openProjectDialog}
         onDelete={setDeleteTarget}
         rows={rows}
+        searchTerm={searchTerm}
       />
     </section>
   );
