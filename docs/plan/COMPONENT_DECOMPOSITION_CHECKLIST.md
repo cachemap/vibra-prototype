@@ -292,20 +292,20 @@ Stage gate:
 
 Goal: memoize the 120-line inline lane builder and split the page.
 
-- [ ] `features/events/event-derivations.ts` (pure) — `locateEventInCollections`, `previewItemsByEventTriggerId`, `timelineMaxSecondsFor`, `timelinePlaybacksFor`, exported `timelineTailSeconds = 0.45`. Replaces 166-236.
-- [ ] `tests/event-derivations.test.ts` — 3-4 cases.
-- [ ] `features/events/event-timeline.tsx` — the lane builder (236-359) inside a `useMemo`. Wrap every `on*` in `useCallback` at the caller and include them in the deps.
-- [ ] This component is the sole `useAudioPreviewState()` subscriber, so the per-frame re-render collapses to one subtree.
-- [ ] `features/events/event-header.tsx`, `event-dialogs.tsx` (single `DialogOverlay` plus `ShareLinkDialog` plus 4 `FormDialog`s), `event-delete-confirms.tsx`.
-- [ ] Collapse the two parallel confirm mechanisms (`deleteEventIsOpen` boolean and `deleteTarget` union) into one.
-- [ ] Reduce the page to ~120 lines.
+- [x] `features/events/event-derivations.ts` (pure) — `locateEventInCollections`, `previewItemsByEventTriggerId`, `timelineMaxSecondsFor`, `timelinePlaybacksFor`, exported `timelineTailSeconds = 0.45`. Replaces 166-236.
+- [x] `tests/event-derivations.test.ts` — 3-4 cases.
+- [x] `features/events/event-timeline.tsx` — the lane builder (236-359) inside a `useMemo`. Wrap every `on*` in `useCallback` at the caller and include them in the deps.
+- [x] This component is the sole `useAudioPreviewState()` subscriber, so the per-frame re-render collapses to one subtree.
+- [x] `features/events/event-header.tsx`, `event-dialogs.tsx` (single `DialogOverlay` plus `ShareLinkDialog` plus 4 `FormDialog`s), `event-delete-confirms.tsx`.
+- [x] Collapse the two parallel confirm mechanisms (`deleteEventIsOpen` boolean and `deleteTarget` union) into one.
+- [x] Reduce the page to ~120 lines.
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] **Memo staleness**: add a playback, edit its offset, toggle a trigger, delete a lane — the timeline updates immediately each time.
-- [ ] Play a schedule; the playhead animates and `timeline-playhead` is present.
-- [ ] Re-capture and diff `project-events-{desktop,mobile}` and `event-playback-timeline.png`.
+- [x] Four gates green.
+- [x] **Memo staleness**: add a playback, edit its offset, toggle a trigger, delete a lane — the timeline updates immediately each time.
+- [x] Play a schedule; the playhead animates and `timeline-playhead` is present.
+- [x] Re-capture and diff `project-events-{desktop,mobile}` and `event-playback-timeline.png`.
 
 ---
 

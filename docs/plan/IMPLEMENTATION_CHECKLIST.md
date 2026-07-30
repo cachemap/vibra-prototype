@@ -560,7 +560,7 @@ One commit per stage, each independently green against all four gates plus the s
 - [x] 12.8 Extract the workspace scope context, header, sidebar, and tab bar; move the matrix fields into the context.
 - [x] 12.9 Extract the assets and events tabs plus their row models.
 - [x] 12.10 Extract the workspace dialogs and delete confirm; the project page reaches ~110 lines.
-- [ ] 12.11 Decompose the event detail page; memoize `timelineLanes`.
+- [x] 12.11 Decompose the event detail page; memoize `timelineLanes`.
 - [ ] 12.12 Decompose the libraries page plus shared `features/assets/*`.
 - [ ] 12.13 Decompose the projects list page.
 - [ ] 12.14 Decompose the share preview page.
