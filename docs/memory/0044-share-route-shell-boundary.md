@@ -45,3 +45,26 @@
 ## Recommended Next Group
 
 - Continue the follow-up list with converting the workspace tab bar to the existing unused `Tabs` primitive.
+
+---
+
+# Workspace Tab Primitive Adoption
+
+## Changed
+
+- Completed the component-decomposition follow-up to convert `WorkspaceTabBar` to the shared `Tabs` primitive.
+- Extended `Tabs` with optional `ariaLabel` and `onChange` props, keeping active tab state controlled by callers.
+- Left the workspace-specific tab union in `WorkspaceTabBar` so feature code keeps a typed `"events" | "assets" | "matrix"` boundary.
+- Added `tests/tabs-primitive.test.tsx` for active-tab ARIA state and change callbacks.
+
+## Verification
+
+- `pnpm test tests/tabs-primitive.test.tsx` passed: 1 test.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed with the existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- `pnpm test` passed: 117 tests.
+- `pnpm test:e2e` passed: 17 tests.
+
+## Recommended Next Group
+
+- Continue the follow-up list with action menu placement: adjacent dense row menus can physically cover the next trigger, so positioning should preserve one-click switching.
