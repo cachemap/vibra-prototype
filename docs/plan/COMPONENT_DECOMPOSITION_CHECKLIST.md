@@ -400,6 +400,6 @@ Real issues found during analysis. Each is a behavior or visual change and must 
 - [x] `LoadingState` ignores its `description` prop, so every page passes copy that never renders.
 - [x] The share page's "Open mobile preview" opens the identical route in a new tab; its summary table restates four values already in the header.
 - [x] The share route renders inside `WorkspaceShell`, so an unauthenticated viewer sees the app nav and the "Reset demo" button.
-- [ ] Every mutation invalidates `projectQueryKeys.all`, making the preceding targeted invalidations dead weight; no mutation is optimistic.
+- [x] Every mutation invalidates `projectQueryKeys.all`, making the preceding targeted invalidations dead weight; no mutation is optimistic.
 - [ ] Convert the workspace tab bar to the existing unused `Tabs` primitive.
 - [ ] Action menu placement can physically cover the next dense row's trigger; a positioning pass should keep one-click switching possible for adjacent rows too.

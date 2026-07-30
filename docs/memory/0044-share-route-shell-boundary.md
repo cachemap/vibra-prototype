@@ -22,3 +22,26 @@
 ## Recommended Next Group
 
 - Continue the component-decomposition follow-up list with mutation invalidation cleanup: every mutation currently invalidates `projectQueryKeys.all`, making targeted invalidations largely redundant.
+
+---
+
+# Targeted Query Invalidation
+
+## Changed
+
+- Completed the component-decomposition follow-up for mutation invalidation cleanup.
+- Added `features/projects/invalidation.ts` with named aggregate invalidation helpers.
+- Expanded `projectQueryKeys` with aggregate prefix keys for trees, workspaces, asset library trees, device workspaces, collision matrices, and share links.
+- Replaced every mutation-side `projectQueryKeys.all` invalidation with the narrowest practical aggregate invalidation; cascade deletes still invalidate affected aggregate families conservatively.
+- Recorded ADR `0048-targeted-query-invalidation.md`.
+
+## Verification
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed with the existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- `pnpm test` passed: 116 tests.
+- `pnpm test:e2e` passed: 17 tests.
+
+## Recommended Next Group
+
+- Continue the follow-up list with converting the workspace tab bar to the existing unused `Tabs` primitive.

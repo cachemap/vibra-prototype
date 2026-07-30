@@ -11,7 +11,12 @@ import {
 } from "../../data/repositories/project-repository";
 import { unwrapQueryResult } from "../../domain";
 import type { CollisionMatrixEntryId, SharingLinkId } from "../../domain/ids";
-import { projectQueryKeys } from "./query-keys";
+import {
+  invalidateCollisionMatrices,
+  invalidateCollisionMatrix,
+  invalidateDeviceWorkspaces,
+  invalidateShareLinks
+} from "./invalidation";
 
 const projectRepository = createProjectRepository(db);
 
@@ -22,8 +27,8 @@ export const useSelectCollisionMatrixRowMutation = () => {
     mutationFn: (input: SelectCollisionMatrixEventInput) =>
       projectRepository.selectCollisionMatrixRow(input).then(unwrapQueryResult),
     onSuccess: (row) => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.collisionMatrix(row.matrixId) });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateCollisionMatrix(queryClient, row.matrixId);
+      void invalidateDeviceWorkspaces(queryClient);
     }
   });
 };
@@ -35,8 +40,8 @@ export const useSelectCollisionMatrixColumnMutation = () => {
     mutationFn: (input: SelectCollisionMatrixEventInput) =>
       projectRepository.selectCollisionMatrixColumn(input).then(unwrapQueryResult),
     onSuccess: (column) => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.collisionMatrix(column.matrixId) });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateCollisionMatrix(queryClient, column.matrixId);
+      void invalidateDeviceWorkspaces(queryClient);
     }
   });
 };
@@ -47,8 +52,10 @@ export const useDeselectCollisionMatrixRowMutation = () => {
   return useMutation({
     mutationFn: (input: SelectCollisionMatrixEventInput) =>
       projectRepository.deselectCollisionMatrixRow(input).then(unwrapQueryResult),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+    onSuccess: (_result, input) => {
+      void invalidateCollisionMatrix(queryClient, input.matrixId);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -59,8 +66,10 @@ export const useDeselectCollisionMatrixColumnMutation = () => {
   return useMutation({
     mutationFn: (input: SelectCollisionMatrixEventInput) =>
       projectRepository.deselectCollisionMatrixColumn(input).then(unwrapQueryResult),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+    onSuccess: (_result, input) => {
+      void invalidateCollisionMatrix(queryClient, input.matrixId);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -72,8 +81,9 @@ export const useUpsertCollisionMatrixEntryMutation = () => {
     mutationFn: (input: UpsertCollisionMatrixEntryInput) =>
       projectRepository.upsertCollisionMatrixEntry(input).then(unwrapQueryResult),
     onSuccess: (entry) => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.collisionMatrix(entry.matrixId) });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateCollisionMatrix(queryClient, entry.matrixId);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -85,7 +95,9 @@ export const useDeleteCollisionMatrixEntryMutation = () => {
     mutationFn: (collisionMatrixEntryId: CollisionMatrixEntryId) =>
       projectRepository.deleteCollisionMatrixEntry(collisionMatrixEntryId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateCollisionMatrices(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -96,11 +108,8 @@ export const useGenerateSharingLinkMutation = () => {
   return useMutation({
     mutationFn: (input: GenerateSharingLinkInput) =>
       projectRepository.generateSharingLink(input).then(unwrapQueryResult),
-    onSuccess: (sharingLink) => {
-      const shareToken = sharingLink.url.split("/").at(-1) ?? sharingLink.id;
-
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.shareLink(shareToken) });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+    onSuccess: () => {
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -112,7 +121,7 @@ export const useDeleteSharingLinkMutation = () => {
     mutationFn: (sharingLinkId: SharingLinkId) =>
       projectRepository.deleteSharingLink(sharingLinkId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateShareLinks(queryClient);
     }
   });
 };

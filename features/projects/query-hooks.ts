@@ -31,7 +31,7 @@ export const useAssetLibrariesQuery = () =>
 export const useAssetLibraryTreeQuery = (libraryId: AssetLibraryId | null) =>
   useQuery({
     enabled: Boolean(libraryId),
-    queryKey: libraryId ? projectQueryKeys.assetLibraryTree(libraryId) : [...projectQueryKeys.all, "asset-library-tree"],
+    queryKey: libraryId ? projectQueryKeys.assetLibraryTree(libraryId) : projectQueryKeys.assetLibraryTrees(),
     queryFn: async () => {
       if (!libraryId) {
         throw new Error("Asset library id is required.");
@@ -44,7 +44,7 @@ export const useAssetLibraryTreeQuery = (libraryId: AssetLibraryId | null) =>
 export const useDeviceWorkspaceQuery = (deviceId: DeviceId | null) =>
   useQuery({
     enabled: Boolean(deviceId),
-    queryKey: deviceId ? projectQueryKeys.deviceWorkspace(deviceId) : [...projectQueryKeys.all, "device-workspace"],
+    queryKey: deviceId ? projectQueryKeys.deviceWorkspace(deviceId) : projectQueryKeys.deviceWorkspaces(),
     queryFn: async () => {
       if (!deviceId) {
         throw new Error("Device id is required.");

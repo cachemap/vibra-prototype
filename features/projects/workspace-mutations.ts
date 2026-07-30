@@ -18,7 +18,14 @@ import {
 } from "../../data/repositories/project-repository";
 import { unwrapQueryResult } from "../../domain";
 import type { CollectionId, DeviceId, EventId, EventTriggerId, TriggerPlaybackId } from "../../domain/ids";
-import { projectQueryKeys } from "./query-keys";
+import {
+  invalidateCollisionMatrices,
+  invalidateDeviceWorkspace,
+  invalidateDeviceWorkspaces,
+  invalidateProjectWorkspace,
+  invalidateProjectWorkspaces,
+  invalidateShareLinks
+} from "./invalidation";
 
 const projectRepository = createProjectRepository(db);
 
@@ -29,10 +36,8 @@ export const useCreateDeviceMutation = () => {
     mutationFn: (input: CreateDeviceInput) =>
       projectRepository.createDevice(input).then(unwrapQueryResult),
     onSuccess: (createdDevice) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectQueryKeys.workspace(createdDevice.device.projectId)
-      });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectWorkspace(queryClient, createdDevice.device.projectId);
+      void invalidateDeviceWorkspace(queryClient, createdDevice.device.id);
     }
   });
 };
@@ -44,13 +49,9 @@ export const useUpdateDeviceMutation = () => {
     mutationFn: (input: UpdateDeviceInput) =>
       projectRepository.updateDevice(input).then(unwrapQueryResult),
     onSuccess: (device) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectQueryKeys.workspace(device.projectId)
-      });
-      void queryClient.invalidateQueries({
-        queryKey: projectQueryKeys.deviceWorkspace(device.id)
-      });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectWorkspace(queryClient, device.projectId);
+      void invalidateDeviceWorkspace(queryClient, device.id);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -61,7 +62,10 @@ export const useDeleteDeviceMutation = () => {
   return useMutation({
     mutationFn: (deviceId: DeviceId) => projectRepository.deleteDevice(deviceId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectWorkspaces(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateCollisionMatrices(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -73,10 +77,9 @@ export const useCreateCollectionMutation = () => {
     mutationFn: (input: CreateCollectionInput) =>
       projectRepository.createCollection(input).then(unwrapQueryResult),
     onSuccess: (collection) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectQueryKeys.deviceWorkspace(collection.deviceId)
-      });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectWorkspaces(queryClient);
+      void invalidateDeviceWorkspace(queryClient, collection.deviceId);
+      void invalidateCollisionMatrices(queryClient);
     }
   });
 };
@@ -88,10 +91,8 @@ export const useUpdateCollectionMutation = () => {
     mutationFn: (input: UpdateCollectionInput) =>
       projectRepository.updateCollection(input).then(unwrapQueryResult),
     onSuccess: (collection) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectQueryKeys.deviceWorkspace(collection.deviceId)
-      });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateDeviceWorkspace(queryClient, collection.deviceId);
+      void invalidateCollisionMatrices(queryClient);
     }
   });
 };
@@ -103,7 +104,10 @@ export const useDeleteCollectionMutation = () => {
     mutationFn: (collectionId: CollectionId) =>
       projectRepository.deleteCollection(collectionId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectWorkspaces(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateCollisionMatrices(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -114,7 +118,9 @@ export const useCreateEventMutation = () => {
   return useMutation({
     mutationFn: (input: CreateEventInput) => projectRepository.createEvent(input).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectWorkspaces(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateCollisionMatrices(queryClient);
     }
   });
 };
@@ -125,7 +131,10 @@ export const useDeleteEventMutation = () => {
   return useMutation({
     mutationFn: (eventId: EventId) => projectRepository.deleteEvent(eventId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectWorkspaces(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateCollisionMatrices(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -136,7 +145,9 @@ export const useUpdateEventMutation = () => {
   return useMutation({
     mutationFn: (input: UpdateEventInput) => projectRepository.updateEvent(input).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateCollisionMatrices(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -148,7 +159,8 @@ export const useCreateEventTriggerMutation = () => {
     mutationFn: (input: CreateEventTriggerInput) =>
       projectRepository.createEventTrigger(input).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -160,7 +172,8 @@ export const useUpdateEventTriggerMutation = () => {
     mutationFn: (input: UpdateEventTriggerInput) =>
       projectRepository.updateEventTrigger(input).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -172,7 +185,8 @@ export const useDeleteEventTriggerMutation = () => {
     mutationFn: (eventTriggerId: EventTriggerId) =>
       projectRepository.deleteEventTrigger(eventTriggerId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -184,7 +198,8 @@ export const useCreateTriggerPlaybackMutation = () => {
     mutationFn: (input: CreateTriggerPlaybackInput) =>
       projectRepository.createTriggerPlayback(input).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -196,7 +211,8 @@ export const useUpdateTriggerPlaybackMutation = () => {
     mutationFn: (input: UpdateTriggerPlaybackInput) =>
       projectRepository.updateTriggerPlayback(input).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -208,7 +224,8 @@ export const useDeleteTriggerPlaybackMutation = () => {
     mutationFn: (triggerPlaybackId: TriggerPlaybackId) =>
       projectRepository.deleteTriggerPlayback(triggerPlaybackId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };

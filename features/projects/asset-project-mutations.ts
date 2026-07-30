@@ -14,7 +14,16 @@ import {
 } from "../../data/repositories/project-repository";
 import { unwrapQueryResult } from "../../domain";
 import type { AssetId, AssetLibraryFolderId, AssetLibraryId, ProjectFolderId, ProjectId } from "../../domain/ids";
-import { projectQueryKeys } from "./query-keys";
+import {
+  invalidateAssetLibraryList,
+  invalidateAssetLibraryTree,
+  invalidateAssetLibraryTrees,
+  invalidateDeviceWorkspaces,
+  invalidateProjectTreeViews,
+  invalidateProjectWorkspace,
+  invalidateProjectWorkspaces,
+  invalidateShareLinks
+} from "./invalidation";
 
 const projectRepository = createProjectRepository(db);
 
@@ -24,8 +33,11 @@ export const useCreateProjectMutation = () => {
   return useMutation({
     mutationFn: (input: CreateProjectInput) =>
       projectRepository.createProject(input).then(unwrapQueryResult),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+    onSuccess: (createdProject) => {
+      void invalidateProjectTreeViews(queryClient);
+      void invalidateProjectWorkspace(queryClient, createdProject.project.id);
+      void invalidateAssetLibraryList(queryClient);
+      void invalidateAssetLibraryTree(queryClient, createdProject.defaultAssetLibrary.id);
     }
   });
 };
@@ -36,7 +48,12 @@ export const useDeleteProjectMutation = () => {
   return useMutation({
     mutationFn: (projectId: ProjectId) => projectRepository.deleteProject(projectId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectTreeViews(queryClient);
+      void invalidateProjectWorkspaces(queryClient);
+      void invalidateAssetLibraryList(queryClient);
+      void invalidateAssetLibraryTrees(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -48,7 +65,7 @@ export const useCreateProjectFolderMutation = () => {
     mutationFn: (input: CreateProjectFolderInput) =>
       projectRepository.createProjectFolder(input).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectTreeViews(queryClient);
     }
   });
 };
@@ -60,7 +77,12 @@ export const useDeleteProjectFolderMutation = () => {
     mutationFn: (projectFolderId: ProjectFolderId) =>
       projectRepository.deleteProjectFolder(projectFolderId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectTreeViews(queryClient);
+      void invalidateProjectWorkspaces(queryClient);
+      void invalidateAssetLibraryList(queryClient);
+      void invalidateAssetLibraryTrees(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -72,10 +94,8 @@ export const useCreateAssetLibraryMutation = () => {
     mutationFn: (input: CreateAssetLibraryInput) =>
       projectRepository.createAssetLibrary(input).then(unwrapQueryResult),
     onSuccess: (createdLibrary) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectQueryKeys.assetLibraryTree(createdLibrary.library.id)
-      });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateAssetLibraryList(queryClient);
+      void invalidateAssetLibraryTree(queryClient, createdLibrary.library.id);
     }
   });
 };
@@ -87,7 +107,11 @@ export const useDeleteAssetLibraryMutation = () => {
     mutationFn: (assetLibraryId: AssetLibraryId) =>
       projectRepository.deleteAssetLibrary(assetLibraryId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateAssetLibraryList(queryClient);
+      void invalidateAssetLibraryTrees(queryClient);
+      void invalidateProjectWorkspaces(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -99,10 +123,8 @@ export const useCreateAssetLibraryFolderMutation = () => {
     mutationFn: (input: CreateAssetLibraryFolderInput) =>
       projectRepository.createAssetLibraryFolder(input).then(unwrapQueryResult),
     onSuccess: (folder) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectQueryKeys.assetLibraryTree(folder.libraryId)
-      });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateAssetLibraryList(queryClient);
+      void invalidateAssetLibraryTree(queryClient, folder.libraryId);
     }
   });
 };
@@ -114,7 +136,10 @@ export const useDeleteAssetLibraryFolderMutation = () => {
     mutationFn: (assetLibraryFolderId: AssetLibraryFolderId) =>
       projectRepository.deleteAssetLibraryFolder(assetLibraryFolderId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateAssetLibraryList(queryClient);
+      void invalidateAssetLibraryTrees(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -125,10 +150,9 @@ export const useCreateAssetMutation = () => {
   return useMutation({
     mutationFn: (input: CreateAssetInput) => projectRepository.createAsset(input).then(unwrapQueryResult),
     onSuccess: (asset) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectQueryKeys.assetLibraryTree(asset.libraryId)
-      });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateAssetLibraryList(queryClient);
+      void invalidateAssetLibraryTree(queryClient, asset.libraryId);
+      void invalidateDeviceWorkspaces(queryClient);
     }
   });
 };
@@ -139,7 +163,10 @@ export const useDeleteAssetMutation = () => {
   return useMutation({
     mutationFn: (assetId: AssetId) => projectRepository.deleteAsset(assetId).then(unwrapQueryResult),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateAssetLibraryList(queryClient);
+      void invalidateAssetLibraryTrees(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateShareLinks(queryClient);
     }
   });
 };
@@ -151,10 +178,9 @@ export const useImportAssetLibraryMutation = () => {
     mutationFn: (input: ImportAssetLibraryInput) =>
       projectRepository.importAssetLibrary(input).then(unwrapQueryResult),
     onSuccess: (libraryImport) => {
-      void queryClient.invalidateQueries({
-        queryKey: projectQueryKeys.workspace(libraryImport.projectId)
-      });
-      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
+      void invalidateProjectWorkspace(queryClient, libraryImport.projectId);
+      void invalidateAssetLibraryList(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
     }
   });
 };
