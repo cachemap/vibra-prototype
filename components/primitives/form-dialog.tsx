@@ -8,6 +8,7 @@ type FormDialogProps = {
   children: ReactNode;
   className?: string;
   disabled?: boolean;
+  formClassName?: string;
   formId: string;
   onCancel: () => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
@@ -22,6 +23,7 @@ export function FormDialog({
   children,
   className,
   disabled,
+  formClassName,
   formId,
   onCancel,
   onSubmit,
@@ -40,11 +42,12 @@ export function FormDialog({
           </Button>
         </>
       }
+      className={className}
       open={open}
       size={size}
       title={title}
     >
-      <form className={cx("grid gap-4", className)} id={formId} onSubmit={onSubmit}>
+      <form className={cx("grid gap-4", formClassName)} id={formId} onSubmit={onSubmit}>
         {children}
       </form>
     </Dialog>

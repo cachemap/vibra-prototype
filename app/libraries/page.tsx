@@ -18,17 +18,18 @@ import {
   Waves
 } from "lucide-react";
 import {
-  ActionMenu,
+  Badge,
   Button,
   ConfirmDialog,
-  Dialog,
   DialogOverlay,
   EmptyState,
   ErrorState,
+  FormDialog,
   IconButton,
   LoadingState,
-  MenuItem,
   PageHeader,
+  PageStateScaffold,
+  RowActionsMenu,
   Table,
   TableBody,
   TableCell,
@@ -181,7 +182,6 @@ function LibrariesWorkspace() {
   const deleteFolder = useDeleteAssetLibraryFolderMutation();
   const deleteAsset = useDeleteAssetMutation();
   const audioPreview = useAudioPreviewPlayer();
-  const [openActionsKey, setOpenActionsKey] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<
     | {
         assetId: AssetId;
@@ -255,7 +255,6 @@ function LibrariesWorkspace() {
   };
 
   const openDeleteLibrary = (summary: AssetLibrarySummary) => {
-    setOpenActionsKey(null);
     setFeedback(null);
     setDeleteTarget({
       counts: {
@@ -290,7 +289,6 @@ function LibrariesWorkspace() {
   };
 
   const openDeleteFolder = (node: AssetLibraryFolderNode) => {
-    setOpenActionsKey(null);
     setFeedback(null);
     setDeleteTarget({
       counts: countFolderDescendants(node),
@@ -301,7 +299,6 @@ function LibrariesWorkspace() {
   };
 
   const openDeleteAsset = (asset: Asset) => {
-    setOpenActionsKey(null);
     setFeedback(null);
     setDeleteTarget({
       assetId: asset.id,
@@ -361,23 +358,20 @@ function LibrariesWorkspace() {
 
   const deleteIsPending = deleteLibrary.isPending || deleteFolder.isPending || deleteAsset.isPending;
 
-  const renderActionsMenu = (
-    key: string,
-    label: string,
-    onDelete: () => void,
-    deleteLabel: string
-  ) => (
+  const renderActionsMenu = (label: string, onDelete: () => void, deleteLabel: string) => (
     <span className="inline-flex justify-end">
-      <ActionMenu
+      <RowActionsMenu
+        items={[
+          {
+            destructive: true,
+            icon: <Trash2 className="size-4" />,
+            label: deleteLabel,
+            onSelect: onDelete
+          }
+        ]}
         label={label}
-        onOpenChange={(next) => setOpenActionsKey(next ? key : null)}
-        open={openActionsKey === key}
         size="compact"
-      >
-        <MenuItem destructive icon={<Trash2 className="size-4" />} onClick={onDelete}>
-          {deleteLabel}
-        </MenuItem>
-      </ActionMenu>
+      />
     </span>
   );
 
@@ -438,27 +432,17 @@ function LibrariesWorkspace() {
 
   if (librariesQuery.isLoading) {
     return (
-      <section className="grid gap-4 px-4 py-5">
-        <PageHeader
-          breadcrumbs={[{ href: "/libraries", label: "Libraries" }]}
-          border={false}
-          className="px-0 py-0"
-        />
+      <PageStateScaffold breadcrumbs={[{ href: "/libraries", label: "Libraries" }]}>
         <LoadingState title="Loading asset libraries" description="Preparing the local library workspace." />
-      </section>
+      </PageStateScaffold>
     );
   }
 
   if (librariesQuery.isError) {
     return (
-      <section className="grid gap-4 px-4 py-5">
-        <PageHeader
-          breadcrumbs={[{ href: "/libraries", label: "Libraries" }]}
-          border={false}
-          className="px-0 py-0"
-        />
+      <PageStateScaffold breadcrumbs={[{ href: "/libraries", label: "Libraries" }]}>
         <ErrorState title="Asset libraries unavailable" description={messageForError(librariesQuery.error, libraryErrorFallback)} />
-      </section>
+      </PageStateScaffold>
     );
   }
 
@@ -470,21 +454,17 @@ function LibrariesWorkspace() {
             actions={
               <>
                 {selectedFolder?.folder.parentFolderId ? (
-                  <ActionMenu
+                  <RowActionsMenu
+                    items={[
+                      {
+                        destructive: true,
+                        icon: <Trash2 aria-hidden="true" className="size-4" />,
+                        label: "Delete folder",
+                        onSelect: () => openDeleteFolder(selectedFolder)
+                      }
+                    ]}
                     label={`Open actions for ${selectedFolder.folder.name}`}
-                    onOpenChange={(next) =>
-                      setOpenActionsKey(next ? `selected-folder-${selectedFolder.folder.id}` : null)
-                    }
-                    open={openActionsKey === `selected-folder-${selectedFolder.folder.id}`}
-                  >
-                    <MenuItem
-                      destructive
-                      icon={<Trash2 aria-hidden="true" className="size-4" />}
-                      onClick={() => openDeleteFolder(selectedFolder)}
-                    >
-                      Delete folder
-                    </MenuItem>
-                  </ActionMenu>
+                  />
                 ) : null}
                 <IconButton
                   icon={Grid2X2}
@@ -574,17 +554,16 @@ function LibrariesWorkspace() {
                     </span>
                     <span className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-medium text-gray-600">
                       {summary.defaultForProject ? (
-                        <span className="rounded-lg bg-gray-100 px-2 py-1">Default</span>
+                        <Badge>Default</Badge>
                       ) : null}
                       {summary.importedByProjectCount > 0 ? (
-                        <span className="rounded-lg bg-gray-100 px-2 py-1">Imported</span>
+                        <Badge>Imported</Badge>
                       ) : null}
                     </span>
                   </button>
                   {summary.defaultForProject
                     ? null
                     : renderActionsMenu(
-                        `library-${summary.library.id}`,
                         `Open actions for ${summary.library.name}`,
                         () => openDeleteLibrary(summary),
                         "Delete library"
@@ -658,7 +637,6 @@ function LibrariesWorkspace() {
                           <TableCell>-</TableCell>
                           <TableCell>
                             {renderActionsMenu(
-                              `folder-${item.node.folder.id}`,
                               `Open actions for ${item.node.folder.name}`,
                               () => openDeleteFolder(item.node),
                               "Delete folder"
@@ -700,7 +678,6 @@ function LibrariesWorkspace() {
                         </TableCell>
                         <TableCell>
                           {renderActionsMenu(
-                            `asset-${item.asset.id}`,
                             `Open actions for ${item.asset.name}`,
                             () => openDeleteAsset(item.asset),
                             "Delete asset"
@@ -740,16 +717,15 @@ function LibrariesWorkspace() {
                             </span>
                           </button>
                           {renderActionsMenu(
-                            `folder-tile-${item.node.folder.id}`,
                             `Open actions for ${item.node.folder.name}`,
                             () => openDeleteFolder(item.node),
                             "Delete folder"
                           )}
                         </span>
                         <span className="flex min-w-0 items-center">
-                          <span className="truncate rounded-lg bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
-                            Folder
-                          </span>
+                            <Badge className="truncate text-xs font-medium text-gray-600">
+                              Folder
+                            </Badge>
                         </span>
                       </div>
                     );
@@ -765,12 +741,11 @@ function LibrariesWorkspace() {
                       <span className="flex min-w-0 items-start justify-between gap-2">
                         <span className="flex min-w-0 items-center gap-2">
                           <Icon className="size-5 shrink-0 text-gray-700" strokeWidth={1.6} />
-                          <span className="truncate rounded-lg bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                          <Badge className="truncate text-xs font-medium text-gray-600">
                             {assetExtensionFor(item.asset)}
-                          </span>
+                          </Badge>
                         </span>
                         {renderActionsMenu(
-                          `asset-tile-${item.asset.id}`,
                           `Open actions for ${item.asset.name}`,
                           () => openDeleteAsset(item.asset),
                           "Delete asset"
@@ -816,27 +791,23 @@ function LibrariesWorkspace() {
 
       {dialog === "library" ? (
         <DialogOverlay>
-          <Dialog
-            actions={
-              <>
-                <Button onClick={() => setDialog(null)}>Cancel</Button>
-                <Button form="create-library-form" type="submit" variant="primary">Create</Button>
-              </>
-            }
+          <FormDialog
             className="w-full max-w-md"
+            formId="create-library-form"
+            onCancel={() => setDialog(null)}
+            onSubmit={handleCreateLibrary}
+            submitLabel="Create"
             title="New Library"
           >
-            <form className="grid gap-4" id="create-library-form" onSubmit={handleCreateLibrary}>
-              <TextInput
-                id="library-name"
-                label="Name"
-                onChange={(event) => setLibraryName(event.target.value)}
-                required
-                value={libraryName}
-              />
-              {feedback ? <p className="text-xs text-gray-600">{feedback}</p> : null}
-            </form>
-          </Dialog>
+            <TextInput
+              id="library-name"
+              label="Name"
+              onChange={(event) => setLibraryName(event.target.value)}
+              required
+              value={libraryName}
+            />
+            {feedback ? <p className="text-xs text-gray-600">{feedback}</p> : null}
+          </FormDialog>
         </DialogOverlay>
       ) : null}
 

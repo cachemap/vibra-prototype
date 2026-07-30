@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { MoreHorizontal, type LucideIcon } from "lucide-react";
 import { ActionMenu } from "./action-menu";
 import { MenuGroup, MenuItem } from "./menu";
+
+const rowActionsMenuOpenEvent = "vibra:row-actions-menu-open";
 
 export type RowActionsMenuItem = {
   destructive?: boolean;
@@ -31,14 +33,37 @@ export function RowActionsMenu({
   label,
   size
 }: RowActionsMenuProps) {
+  const menuId = useId();
   const [open, setOpen] = useState(false);
+  const setMenuOpen = (next: boolean) => {
+    if (next) {
+      window.dispatchEvent(new CustomEvent(rowActionsMenuOpenEvent, { detail: menuId }));
+    }
+
+    setOpen(next);
+  };
+
+  useEffect(() => {
+    const closeWhenAnotherMenuOpens = (event: Event) => {
+      if (event instanceof CustomEvent && event.detail !== menuId) {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener(rowActionsMenuOpenEvent, closeWhenAnotherMenuOpens);
+
+    return () => {
+      window.removeEventListener(rowActionsMenuOpenEvent, closeWhenAnotherMenuOpens);
+    };
+  }, [menuId]);
+
   const menuItems = items.map((item) => (
     <MenuItem
       destructive={item.destructive}
       icon={item.icon}
       key={item.label}
       onClick={() => {
-        setOpen(false);
+        setMenuOpen(false);
         item.onSelect();
       }}
     >
@@ -52,7 +77,7 @@ export function RowActionsMenu({
       disabled={disabled}
       icon={icon}
       label={label}
-      onOpenChange={setOpen}
+      onOpenChange={setMenuOpen}
       open={open}
       size={size}
     >

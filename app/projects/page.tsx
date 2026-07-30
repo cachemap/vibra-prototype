@@ -14,20 +14,19 @@ import {
   ToggleRight
 } from "lucide-react";
 import {
-  ActionMenu,
   Button,
   CardGrid,
   Checkbox,
   ConfirmDialog,
   DeviceGlyph,
-  Dialog,
   DialogOverlay,
   EmptyState,
   ErrorState,
+  FormDialog,
   LoadingState,
-  MenuGroup,
-  MenuItem,
   PageHeader,
+  PageStateScaffold,
+  RowActionsMenu,
   SelectableCard,
   Table,
   TableBody,
@@ -191,7 +190,6 @@ function ProjectsWorkspace() {
   const [selectedStarterEventTypes, setSelectedStarterEventTypes] = useState<EventType[]>([]);
   const [starterEventSearch, setStarterEventSearch] = useState("");
   const [feedback, setFeedback] = useState<string | null>(() => readAndClearFlashMessage());
-  const [openActionRowId, setOpenActionRowId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const treeQuery = useProjectTreeQuery(DEMO_USER_ID);
   const createFolder = useCreateProjectFolderMutation();
@@ -377,7 +375,6 @@ function ProjectsWorkspace() {
 
       setFeedback(`Deleted ${deleteTarget.kind.toLowerCase()} ${deleteTarget.name}.`);
       setDeleteTarget(null);
-      setOpenActionRowId(null);
     } catch (error) {
       setFeedback(messageForError(error, projectsErrorFallback));
     }
@@ -394,61 +391,41 @@ function ProjectsWorkspace() {
       }
     : null;
 
-  const renderRowActions = (row: Row) => {
-    const open = openActionRowId === row.id;
-
-    return (
-      <div className="flex justify-end">
-        <ActionMenu
-          label={`Open actions for ${row.name}`}
-          onOpenChange={(next) => setOpenActionRowId(next ? row.id : null)}
-          open={open}
-          size="compact"
-        >
-          <MenuGroup>
-            <MenuItem
-              destructive
-              icon={<Trash2 aria-hidden="true" size={16} />}
-              onClick={() => {
-                setDeleteTarget(row);
-                setOpenActionRowId(null);
-              }}
-            >
-              Delete {row.kind.toLowerCase()}
-            </MenuItem>
-          </MenuGroup>
-        </ActionMenu>
-      </div>
-    );
-  };
+  const renderRowActions = (row: Row) => (
+    <div className="flex justify-end">
+      <RowActionsMenu
+        grouped
+        items={[
+          {
+            destructive: true,
+            icon: <Trash2 aria-hidden="true" size={16} />,
+            label: `Delete ${row.kind.toLowerCase()}`,
+            onSelect: () => setDeleteTarget(row)
+          }
+        ]}
+        label={`Open actions for ${row.name}`}
+        size="compact"
+      />
+    </div>
+  );
 
   if (treeQuery.isLoading) {
     return (
-      <section className="grid gap-4 px-4 py-5">
-        <PageHeader
-          breadcrumbs={[{ href: "/projects", label: "Projects" }]}
-          border={false}
-          className="px-0 py-0"
-        />
+      <PageStateScaffold breadcrumbs={[{ href: "/projects", label: "Projects" }]}>
         <LoadingState title="Loading project folders" description="Restoring the local demo workspace." />
-      </section>
+      </PageStateScaffold>
     );
   }
 
   if (treeQuery.isError) {
     return (
-      <section className="grid gap-4 px-4 py-5">
-        <PageHeader
-          breadcrumbs={[{ href: "/projects", label: "Projects" }]}
-          border={false}
-          className="px-0 py-0"
-        />
+      <PageStateScaffold breadcrumbs={[{ href: "/projects", label: "Projects" }]}>
         <ErrorState
           action={<Button onClick={() => void treeQuery.refetch()}>Retry</Button>}
           title="Project tree could not load"
           description={messageForError(treeQuery.error, projectsErrorFallback)}
         />
-      </section>
+      </PageStateScaffold>
     );
   }
 
@@ -468,26 +445,18 @@ function ProjectsWorkspace() {
         actions={
           <>
             {currentFolderDeleteTarget ? (
-              <ActionMenu
+              <RowActionsMenu
+                grouped
+                items={[
+                  {
+                    destructive: true,
+                    icon: <Trash2 aria-hidden="true" size={16} />,
+                    label: "Delete folder",
+                    onSelect: () => setDeleteTarget(currentFolderDeleteTarget)
+                  }
+                ]}
                 label={`Open actions for ${currentFolderDeleteTarget.name}`}
-                onOpenChange={(next) =>
-                  setOpenActionRowId(next ? currentFolderDeleteTarget.id : null)
-                }
-                open={openActionRowId === currentFolderDeleteTarget.id}
-              >
-                <MenuGroup>
-                  <MenuItem
-                    destructive
-                    icon={<Trash2 aria-hidden="true" size={16} />}
-                    onClick={() => {
-                      setDeleteTarget(currentFolderDeleteTarget);
-                      setOpenActionRowId(null);
-                    }}
-                  >
-                    Delete folder
-                  </MenuItem>
-                </MenuGroup>
-              </ActionMenu>
+              />
             ) : null}
             <Button
               leftIcon={<FolderPlus className="size-4" />}
@@ -535,52 +504,38 @@ function ProjectsWorkspace() {
 
       {dialog === "folder" ? (
         <DialogOverlay>
-          <Dialog
-            actions={
-              <>
-                <Button onClick={() => setDialog(null)}>Cancel</Button>
-                <Button form="create-folder-form" type="submit" variant="primary">
-                  Create folder
-                </Button>
-              </>
-            }
+          <FormDialog
             className="max-w-md"
+            formId="create-folder-form"
+            onCancel={() => setDialog(null)}
+            onSubmit={handleCreateFolder}
+            submitLabel="Create folder"
             title="Create folder"
           >
-            <form className="grid gap-4" id="create-folder-form" onSubmit={handleCreateFolder}>
-              <TextInput
-                autoFocus
-                id="folder-name"
-                label="Folder name"
-                onChange={(event) => setFolderName(event.target.value)}
-                placeholder="Empty Explorations"
-                value={folderName}
-              />
-            </form>
-          </Dialog>
+            <TextInput
+              autoFocus
+              id="folder-name"
+              label="Folder name"
+              onChange={(event) => setFolderName(event.target.value)}
+              placeholder="Empty Explorations"
+              value={folderName}
+            />
+          </FormDialog>
         </DialogOverlay>
       ) : null}
 
       {dialog === "project" ? (
         <DialogOverlay>
-          <Dialog
-            actions={
-              <>
-                <Button onClick={() => setDialog(null)}>Cancel</Button>
-                <Button
-                  disabled={!projectName.trim() || createProject.isPending}
-                  form="create-project-form"
-                  type="submit"
-                  variant="primary"
-                >
-                  Create project
-                </Button>
-              </>
-            }
+          <FormDialog
+            disabled={!projectName.trim() || createProject.isPending}
+            formClassName="md:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]"
+            formId="create-project-form"
+            onCancel={() => setDialog(null)}
+            onSubmit={handleCreateProject}
             size="wide"
+            submitLabel="Create project"
             title="New Project"
           >
-            <form className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]" id="create-project-form" onSubmit={handleCreateProject}>
               <section className="grid content-start gap-4">
                 <div className="grid gap-1">
                   <h3 className="text-sm font-semibold text-gray-700">Select the systems for your project</h3>
@@ -678,8 +633,7 @@ function ProjectsWorkspace() {
                   </div>
                 </div>
               </section>
-            </form>
-          </Dialog>
+          </FormDialog>
         </DialogOverlay>
       ) : null}
 

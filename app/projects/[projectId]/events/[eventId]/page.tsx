@@ -18,18 +18,17 @@ import {
   Waves
 } from "lucide-react";
 import {
-  ActionMenu,
   Button,
   ConfirmDialog,
   Dialog,
   DialogOverlay,
   EmptyState,
   ErrorState,
+  FormDialog,
   IconButton,
   LoadingState,
-  MenuGroup,
-  MenuItem,
   PageHeader,
+  RowActionsMenu,
   Select,
   Switch,
   TextInput,
@@ -117,7 +116,6 @@ export default function EventDetailPage() {
   const [shareLinkPendingDelete, setShareLinkPendingDelete] = useState<SharingLink | null>(null);
   const [shareLabel, setShareLabel] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [openEventActions, setOpenEventActions] = useState(false);
   const [deleteEventIsOpen, setDeleteEventIsOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
@@ -366,7 +364,6 @@ export default function EventDetailPage() {
   };
 
   const openDeleteEvent = () => {
-    setOpenEventActions(false);
     setFeedback(null);
     setDeleteEventIsOpen(true);
   };
@@ -690,21 +687,18 @@ export default function EventDetailPage() {
             <Button leftIcon={<Edit3 className="size-4" />} onClick={openEditEvent} variant="primary">
               Edit event
             </Button>
-            <ActionMenu
+            <RowActionsMenu
+              grouped
+              items={[
+                {
+                  destructive: true,
+                  icon: <Trash2 aria-hidden="true" className="size-4" />,
+                  label: "Delete event",
+                  onSelect: openDeleteEvent
+                }
+              ]}
               label={`Open actions for ${selectedEvent.event.name}`}
-              onOpenChange={setOpenEventActions}
-              open={openEventActions}
-            >
-              <MenuGroup>
-                <MenuItem
-                  destructive
-                  icon={<Trash2 aria-hidden="true" className="size-4" />}
-                  onClick={openDeleteEvent}
-                >
-                  Delete event
-                </MenuItem>
-              </MenuGroup>
-            </ActionMenu>
+            />
           </>
         }
         breadcrumbs={[
@@ -857,20 +851,15 @@ export default function EventDetailPage() {
           </div>
         </Dialog>
 
-        <Dialog
-          actions={
-            <>
-              <Button onClick={() => setDialog(null)}>Cancel</Button>
-              <Button form="event-form" type="submit" variant="primary">
-                Save
-              </Button>
-            </>
-          }
+        <FormDialog
           className="max-w-[420px]"
+          formId="event-form"
+          onCancel={() => setDialog(null)}
+          onSubmit={handleEditEvent}
           open={dialog === "editEvent"}
+          submitLabel="Save"
           title="Edit Event"
         >
-          <form className="grid gap-4" id="event-form" onSubmit={handleEditEvent}>
             <TextInput
               autoFocus
               id="event-name"
@@ -896,23 +885,18 @@ export default function EventDetailPage() {
               ))}
             </Select>
             {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
-          </form>
-        </Dialog>
+        </FormDialog>
 
-        <Dialog
-          actions={
-            <>
-              <Button onClick={() => setDialog(null)}>Cancel</Button>
-              <Button disabled={!availableTriggers.length} form="trigger-form" type="submit" variant="primary">
-                Add interaction
-              </Button>
-            </>
-          }
+        <FormDialog
           className="max-w-[420px]"
+          disabled={!availableTriggers.length}
+          formId="trigger-form"
+          onCancel={() => setDialog(null)}
+          onSubmit={handleCreateTrigger}
           open={dialog === "trigger"}
+          submitLabel="Add interaction"
           title="Add Interaction"
         >
-          <form className="grid gap-4" id="trigger-form" onSubmit={handleCreateTrigger}>
             <Select
               id="trigger-name"
               label="Interaction"
@@ -940,32 +924,18 @@ export default function EventDetailPage() {
               onChange={(formEvent) => setTriggerEnabled(formEvent.currentTarget.checked)}
             />
             {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
-          </form>
-        </Dialog>
+        </FormDialog>
 
-        <Dialog
-          actions={
-            <>
-              <Button onClick={() => setDialog(null)}>Cancel</Button>
-              <Button
-                disabled={!deviceWorkspaceQuery.data?.playbackAssets.length}
-                form="playback-form"
-                type="submit"
-                variant="primary"
-              >
-                {dialog === "editPlayback" ? "Save playback" : "Add playback"}
-              </Button>
-            </>
-          }
+        <FormDialog
           className="max-w-[420px]"
+          disabled={!deviceWorkspaceQuery.data?.playbackAssets.length}
+          formId="playback-form"
+          onCancel={() => setDialog(null)}
+          onSubmit={dialog === "editPlayback" ? handleEditPlayback : handleCreatePlayback}
           open={dialog === "playback" || dialog === "editPlayback"}
+          submitLabel={dialog === "editPlayback" ? "Save playback" : "Add playback"}
           title={dialog === "editPlayback" ? "Edit Playback" : "Add Playback"}
         >
-          <form
-            className="grid gap-4"
-            id="playback-form"
-            onSubmit={dialog === "editPlayback" ? handleEditPlayback : handleCreatePlayback}
-          >
             <fieldset className="grid gap-2">
               <legend className="text-sm font-medium text-gray-700">Asset</legend>
               <div className="grid max-h-72 gap-1 overflow-auto border-y border-gray-300 py-1">
@@ -1015,8 +985,7 @@ export default function EventDetailPage() {
               value={playbackOffset}
             />
             {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
-          </form>
-        </Dialog>
+        </FormDialog>
       </DialogOverlay>
     </section>
   );

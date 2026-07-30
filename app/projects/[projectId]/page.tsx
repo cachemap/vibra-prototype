@@ -26,18 +26,19 @@ import {
   Waves
 } from "lucide-react";
 import {
-  ActionMenu,
+  Badge,
   Button,
   ConfirmDialog,
   Dialog,
   DialogOverlay,
   EmptyState,
   ErrorState,
+  FormDialog,
   IconButton,
   LoadingState,
-  MenuGroup,
-  MenuItem,
   PageHeader,
+  PageStateScaffold,
+  RowActionsMenu,
   Select,
   Switch,
   Table,
@@ -349,11 +350,6 @@ export default function ProjectPage() {
   const [shareLinkPendingDelete, setShareLinkPendingDelete] = useState<SharingLink | null>(null);
   const [shareLabel, setShareLabel] = useState("");
   const [feedback, setFeedback] = useState<string | null>(returnFeedback);
-  const [openProjectActions, setOpenProjectActions] = useState(false);
-  const [openDeviceActions, setOpenDeviceActions] = useState<DeviceId | null>(null);
-  const [openCollectionActions, setOpenCollectionActions] = useState(false);
-  const [openEventActions, setOpenEventActions] = useState<EventId | null>(null);
-  const [openProjectAssetActions, setOpenProjectAssetActions] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
   const workspaceQuery = useProjectWorkspaceQuery(projectId);
@@ -643,7 +639,6 @@ export default function ProjectPage() {
       return;
     }
 
-    setOpenProjectActions(false);
     setFeedback(null);
     setDeleteTarget({
       kind: "project",
@@ -653,7 +648,6 @@ export default function ProjectPage() {
   };
 
   const openDeleteDevice = (summary: DeviceSummary) => {
-    setOpenDeviceActions(null);
     setFeedback(null);
     setDeleteTarget({
       kind: "device",
@@ -667,7 +661,6 @@ export default function ProjectPage() {
       return;
     }
 
-    setOpenCollectionActions(false);
     setFeedback(null);
     setDeleteTarget({
       kind: "collection",
@@ -677,7 +670,6 @@ export default function ProjectPage() {
   };
 
   const openDeleteEvent = (event: { id: EventId; name: string }) => {
-    setOpenEventActions(null);
     setFeedback(null);
     setDeleteTarget({
       kind: "event",
@@ -702,7 +694,6 @@ export default function ProjectPage() {
   };
 
   const openDeleteProjectAssetFolder = (node: AssetLibraryFolderNode) => {
-    setOpenProjectAssetActions(null);
     setFeedback(null);
     setDeleteTarget({
       counts: countAssetFolderDescendants(node),
@@ -713,7 +704,6 @@ export default function ProjectPage() {
   };
 
   const openDeleteProjectAsset = (asset: Asset) => {
-    setOpenProjectAssetActions(null);
     setFeedback(null);
     setDeleteTarget({
       kind: "asset",
@@ -1227,44 +1217,29 @@ export default function ProjectPage() {
 
   if (workspaceQuery.isLoading) {
     return (
-      <section className="grid gap-4 px-4 py-5">
-        <PageHeader
-          breadcrumbs={[{ href: "/projects", label: "Projects" }]}
-          border={false}
-          className="px-0 py-0"
-        />
+      <PageStateScaffold breadcrumbs={[{ href: "/projects", label: "Projects" }]}>
         <LoadingState title="Loading project workspace" description="Opening the local device workspace." />
-      </section>
+      </PageStateScaffold>
     );
   }
 
   if (workspaceQuery.isError) {
     return (
-      <section className="grid gap-4 px-4 py-5">
-        <PageHeader
-          breadcrumbs={[{ href: "/projects", label: "Projects" }]}
-          border={false}
-          className="px-0 py-0"
-        />
+      <PageStateScaffold breadcrumbs={[{ href: "/projects", label: "Projects" }]}>
         <ErrorState
           action={<Button onClick={() => void workspaceQuery.refetch()}>Retry</Button>}
           title="Project workspace could not load"
           description={messageForError(workspaceQuery.error, workspaceErrorFallback)}
         />
-      </section>
+      </PageStateScaffold>
     );
   }
 
   if (!workspaceQuery.data) {
     return (
-      <section className="grid gap-4 px-4 py-5">
-        <PageHeader
-          breadcrumbs={[{ href: "/projects", label: "Projects" }]}
-          border={false}
-          className="px-0 py-0"
-        />
+      <PageStateScaffold breadcrumbs={[{ href: "/projects", label: "Projects" }]}>
         <LoadingState title="Loading project workspace" description="Opening the local device workspace." />
-      </section>
+      </PageStateScaffold>
     );
   }
 
@@ -1317,22 +1292,19 @@ export default function ProjectPage() {
               >
                 Share project
               </Button>
-              <ActionMenu
+              <RowActionsMenu
+                grouped
                 icon={MoreVertical}
+                items={[
+                  {
+                    destructive: true,
+                    icon: <Trash2 aria-hidden="true" className="size-4" />,
+                    label: "Delete project",
+                    onSelect: openDeleteProject
+                  }
+                ]}
                 label={`Open actions for ${workspace.project.name}`}
-                onOpenChange={setOpenProjectActions}
-                open={openProjectActions}
-              >
-                <MenuGroup>
-                  <MenuItem
-                    destructive
-                    icon={<Trash2 aria-hidden="true" className="size-4" />}
-                    onClick={openDeleteProject}
-                  >
-                    Delete project
-                  </MenuItem>
-                </MenuGroup>
-              </ActionMenu>
+              />
             </div>
           }
           breadcrumbs={[
@@ -1430,25 +1402,20 @@ export default function ProjectPage() {
                         <span className="text-xs text-gray-500">{formatDeviceMeta(summary)}</span>
                       </button>
                       <div className="pr-1">
-                        <ActionMenu
+                        <RowActionsMenu
+                          grouped
                           icon={MoreVertical}
+                          items={[
+                            {
+                              destructive: true,
+                              icon: <Trash2 aria-hidden="true" className="size-4" />,
+                              label: "Delete device",
+                              onSelect: () => openDeleteDevice(summary)
+                            }
+                          ]}
                           label={`Open actions for ${summary.device.name}`}
-                          onOpenChange={(next) =>
-                            setOpenDeviceActions(next ? summary.device.id : null)
-                          }
-                          open={openDeviceActions === summary.device.id}
                           size="compact"
-                        >
-                          <MenuGroup>
-                            <MenuItem
-                              destructive
-                              icon={<Trash2 aria-hidden="true" className="size-4" />}
-                              onClick={() => openDeleteDevice(summary)}
-                            >
-                              Delete device
-                            </MenuItem>
-                          </MenuGroup>
-                        </ActionMenu>
+                        />
                       </div>
                     </div>
                   );
@@ -1928,33 +1895,20 @@ export default function ProjectPage() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           {selectedProjectAssetFolder?.folder.parentFolderId ? (
-                            <ActionMenu
+                            <RowActionsMenu
+                              grouped
                               icon={MoreVertical}
-                              label={`Open actions for ${selectedProjectAssetFolder.folder.name}`}
-                              onOpenChange={(next) =>
-                                setOpenProjectAssetActions(
-                                  next
-                                    ? `selected-folder-${selectedProjectAssetFolder.folder.id}`
-                                    : null
-                                )
-                              }
-                              open={
-                                openProjectAssetActions ===
-                                `selected-folder-${selectedProjectAssetFolder.folder.id}`
-                              }
-                            >
-                              <MenuGroup>
-                                <MenuItem
-                                  destructive
-                                  icon={<Trash2 aria-hidden="true" className="size-4" />}
-                                  onClick={() =>
+                              items={[
+                                {
+                                  destructive: true,
+                                  icon: <Trash2 aria-hidden="true" className="size-4" />,
+                                  label: "Delete folder",
+                                  onSelect: () =>
                                     openDeleteProjectAssetFolder(selectedProjectAssetFolder)
-                                  }
-                                >
-                                  Delete folder
-                                </MenuItem>
-                              </MenuGroup>
-                            </ActionMenu>
+                                }
+                              ]}
+                              label={`Open actions for ${selectedProjectAssetFolder.folder.name}`}
+                            />
                           ) : null}
                           <Button
                             disabled={!selectedProjectAssetFolder}
@@ -2011,7 +1965,7 @@ export default function ProjectPage() {
                                     <BookOpen className="size-4 shrink-0 text-gray-600" strokeWidth={1.8} />
                                   </span>
                                   <span className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-medium text-gray-600">
-                                    <span className="rounded-lg bg-gray-100 px-2 py-1">{status}</span>
+                                    <Badge>{status}</Badge>
                                   </span>
                                 </button>
                               );
@@ -2109,30 +2063,21 @@ export default function ProjectPage() {
                                               className="flex justify-end"
                                               onClick={(event) => event.stopPropagation()}
                                             >
-                                              <ActionMenu
+                                              <RowActionsMenu
+                                                grouped
                                                 icon={MoreVertical}
+                                                items={[
+                                                  {
+                                                    destructive: true,
+                                                    icon: <Trash2 aria-hidden="true" className="size-4" />,
+                                                    label: "Delete folder",
+                                                    onSelect: () =>
+                                                      openDeleteProjectAssetFolder(item.node)
+                                                  }
+                                                ]}
                                                 label={`Open actions for ${item.node.folder.name}`}
-                                                onOpenChange={(next) =>
-                                                  setOpenProjectAssetActions(
-                                                    next ? `folder-${item.node.folder.id}` : null
-                                                  )
-                                                }
-                                                open={
-                                                  openProjectAssetActions ===
-                                                  `folder-${item.node.folder.id}`
-                                                }
                                                 size="compact"
-                                              >
-                                                <MenuGroup>
-                                                  <MenuItem
-                                                    destructive
-                                                    icon={<Trash2 aria-hidden="true" className="size-4" />}
-                                                    onClick={() => openDeleteProjectAssetFolder(item.node)}
-                                                  >
-                                                    Delete folder
-                                                  </MenuItem>
-                                                </MenuGroup>
-                                              </ActionMenu>
+                                              />
                                             </div>
                                           </TableCell>
                                         </TableRow>
@@ -2171,29 +2116,20 @@ export default function ProjectPage() {
                                         </TableCell>
                                         <TableCell>
                                           <div className="flex justify-end">
-                                            <ActionMenu
+                                            <RowActionsMenu
+                                              grouped
                                               icon={MoreVertical}
+                                              items={[
+                                                {
+                                                  destructive: true,
+                                                  icon: <Trash2 aria-hidden="true" className="size-4" />,
+                                                  label: "Delete asset",
+                                                  onSelect: () => openDeleteProjectAsset(item.asset)
+                                                }
+                                              ]}
                                               label={`Open actions for ${item.asset.name}`}
-                                              onOpenChange={(next) =>
-                                                setOpenProjectAssetActions(
-                                                  next ? `asset-${item.asset.id}` : null
-                                                )
-                                              }
-                                              open={
-                                                openProjectAssetActions === `asset-${item.asset.id}`
-                                              }
                                               size="compact"
-                                            >
-                                              <MenuGroup>
-                                                <MenuItem
-                                                  destructive
-                                                  icon={<Trash2 aria-hidden="true" className="size-4" />}
-                                                  onClick={() => openDeleteProjectAsset(item.asset)}
-                                                >
-                                                  Delete asset
-                                                </MenuItem>
-                                              </MenuGroup>
-                                            </ActionMenu>
+                                            />
                                           </div>
                                         </TableCell>
                                       </TableRow>
@@ -2230,23 +2166,20 @@ export default function ProjectPage() {
                       >
                         Rename
                       </Button>
-                      <ActionMenu
+                      <RowActionsMenu
                         disabled={!selectedCollection}
+                        grouped
                         icon={MoreVertical}
+                        items={[
+                          {
+                            destructive: true,
+                            icon: <Trash2 aria-hidden="true" className="size-4" />,
+                            label: "Delete collection",
+                            onSelect: openDeleteCollection
+                          }
+                        ]}
                         label={`Open actions for ${selectedCollection?.collection.name ?? "collection"}`}
-                        onOpenChange={setOpenCollectionActions}
-                        open={openCollectionActions}
-                      >
-                        <MenuGroup>
-                          <MenuItem
-                            destructive
-                            icon={<Trash2 aria-hidden="true" className="size-4" />}
-                            onClick={openDeleteCollection}
-                          >
-                            Delete collection
-                          </MenuItem>
-                        </MenuGroup>
-                      </ActionMenu>
+                      />
                       <Button leftIcon={<Plus className="size-4" />} onClick={openCreateCollection}>
                         Collection
                       </Button>
@@ -2310,25 +2243,20 @@ export default function ProjectPage() {
                                     >
                                       Open
                                     </Button>
-                                    <ActionMenu
+                                    <RowActionsMenu
+                                      grouped
                                       icon={MoreVertical}
+                                      items={[
+                                        {
+                                          destructive: true,
+                                          icon: <Trash2 aria-hidden="true" className="size-4" />,
+                                          label: "Delete event",
+                                          onSelect: () => openDeleteEvent(row.event)
+                                        }
+                                      ]}
                                       label={`Open actions for ${row.event.name}`}
-                                      onOpenChange={(next) =>
-                                        setOpenEventActions(next ? row.event.id : null)
-                                      }
-                                      open={openEventActions === row.event.id}
                                       size="compact"
-                                    >
-                                      <MenuGroup>
-                                        <MenuItem
-                                          destructive
-                                          icon={<Trash2 aria-hidden="true" className="size-4" />}
-                                          onClick={() => openDeleteEvent(row.event)}
-                                        >
-                                          Delete event
-                                        </MenuItem>
-                                      </MenuGroup>
-                                    </ActionMenu>
+                                    />
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -2517,20 +2445,15 @@ export default function ProjectPage() {
           </div>
         </Dialog>
 
-        <Dialog
-          actions={
-            <>
-              <Button onClick={() => setDialog(null)}>Cancel</Button>
-              <Button form="create-device-form" type="submit" variant="primary">
-                Create device
-              </Button>
-            </>
-          }
+        <FormDialog
           className="max-w-[420px]"
+          formId="create-device-form"
+          onCancel={() => setDialog(null)}
+          onSubmit={handleCreateDevice}
           open={dialog === "device"}
+          submitLabel="Create device"
           title="Create Device"
         >
-          <form className="grid gap-4" id="create-device-form" onSubmit={handleCreateDevice}>
           <div className="grid max-h-[38vh] gap-4 overflow-auto border-y border-gray-200 bg-gray-50 p-3">
             {groupDevicePresetsByFormFactor().map((group) => (
               <section className="grid gap-2" key={group.formFactor}>
@@ -2583,27 +2506,17 @@ export default function ProjectPage() {
             onChange={(event) => setDeviceEnabled(event.currentTarget.checked)}
           />
           {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
-          </form>
-        </Dialog>
+        </FormDialog>
 
-      <Dialog
-        actions={
-          <>
-            <Button onClick={() => setDialog(null)}>Cancel</Button>
-            <Button form="collection-form" type="submit" variant="primary">
-              {dialog === "editCollection" ? "Save" : "Create collection"}
-            </Button>
-          </>
-        }
+      <FormDialog
         className="max-w-[420px]"
+        formId="collection-form"
+        onCancel={() => setDialog(null)}
+        onSubmit={dialog === "editCollection" ? handleEditCollection : handleCreateCollection}
         open={dialog === "collection" || dialog === "editCollection"}
+        submitLabel={dialog === "editCollection" ? "Save" : "Create collection"}
         title={dialog === "editCollection" ? "Rename Collection" : "Create Collection"}
       >
-        <form
-          className="grid gap-4"
-          id="collection-form"
-          onSubmit={dialog === "editCollection" ? handleEditCollection : handleCreateCollection}
-        >
           <TextInput
             autoFocus
             id="collection-name"
@@ -2614,23 +2527,17 @@ export default function ProjectPage() {
             value={collectionName}
           />
           {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
-        </form>
-      </Dialog>
+      </FormDialog>
 
-      <Dialog
-        actions={
-          <>
-            <Button onClick={() => setDialog(null)}>Cancel</Button>
-            <Button form="event-form" type="submit" variant="primary">
-              Create event
-            </Button>
-          </>
-        }
+      <FormDialog
         className="max-w-[420px]"
+        formId="event-form"
+        onCancel={() => setDialog(null)}
+        onSubmit={handleCreateEvent}
         open={dialog === "event"}
+        submitLabel="Create event"
         title="Create Event"
       >
-        <form className="grid gap-4" id="event-form" onSubmit={handleCreateEvent}>
           <TextInput
             autoFocus
             id="event-name"
@@ -2654,28 +2561,18 @@ export default function ProjectPage() {
             ))}
           </Select>
           {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
-        </form>
-      </Dialog>
+      </FormDialog>
 
-      <Dialog
-        actions={
-          <>
-            <Button onClick={() => setDialog(null)}>Cancel</Button>
-            <Button
-              disabled={!importCandidates.length}
-              form="library-import-form"
-              type="submit"
-              variant="primary"
-            >
-              Import library
-            </Button>
-          </>
-        }
+      <FormDialog
         className="max-w-[460px]"
+        disabled={!importCandidates.length}
+        formId="library-import-form"
+        onCancel={() => setDialog(null)}
+        onSubmit={handleImportLibrary}
         open={dialog === "libraryImport"}
+        submitLabel="Import library"
         title="Import Library"
       >
-        <form className="grid gap-4" id="library-import-form" onSubmit={handleImportLibrary}>
           <Select
             id="asset-library-import"
             label="Library"
@@ -2700,8 +2597,7 @@ export default function ProjectPage() {
             </div>
           </div>
           {feedback ? <p className="text-sm text-gray-600">{feedback}</p> : null}
-        </form>
-      </Dialog>
+      </FormDialog>
 
       <CreateAssetFolderDialog
         onClose={() => setDialog(null)}

@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { Copy, ExternalLink, Grid2X2, Radio, Smartphone } from "lucide-react";
 import {
+  Badge,
   Breadcrumbs,
   Button,
   EmptyState,
@@ -187,9 +188,9 @@ export default function SharePage() {
           />
           <div className="grid gap-2 border-y border-gray-300 bg-gray-50 px-3 py-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-lg border border-gray-300 bg-gray-25 px-2 py-1 text-xs font-semibold text-gray-700">
+              <Badge className="text-xs font-semibold text-gray-700" variant="outline">
                 {targetKind}
-              </span>
+              </Badge>
               <span className="text-xs font-medium text-gray-500">Source: {sourceContext}</span>
             </div>
             <div>

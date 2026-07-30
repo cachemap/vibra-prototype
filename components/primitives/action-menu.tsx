@@ -101,7 +101,11 @@ export function ActionMenu({
         return;
       }
 
-      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) {
+      if (
+        triggerRef.current?.contains(target) ||
+        menuRef.current?.contains(target) ||
+        (target instanceof Element && target.closest("[data-action-menu-trigger='true']"))
+      ) {
         return;
       }
 
@@ -168,6 +172,7 @@ export function ActionMenu({
       <IconButton
         aria-expanded={open}
         aria-haspopup="menu"
+        data-action-menu-trigger="true"
         disabled={disabled}
         icon={icon}
         label={label}

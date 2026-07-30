@@ -121,26 +121,26 @@ Goal: first DOM-touching stage. Bisect lands here cleanly if something breaks.
 
 ### 4.1 `RowActionsMenu` — 16 call sites
 
-- [ ] Project detail: 1355, 1468, 1966, 2147, 2209, 2268.
-- [ ] Libraries: the 5 `renderActionsMenu` calls (629, 703, 745, 785, 815) plus the hand-expanded `PageHeader` copy (516-531).
-- [ ] Projects list: the 2 `renderRowActions` calls (754, 773) plus the hand-expanded `PageHeader` copy (491-512).
-- [ ] Events page: the `openEventActions` menu.
-- [ ] Delete `renderActionsMenu` (libraries 407-425) and `renderRowActions` (projects 418-444).
-- [ ] Delete all 7 menu-open state slots: `openProjectActions`, `openDeviceActions`, `openCollectionActions`, `openEventActions`, `openProjectAssetActions`, `openActionsKey`, `openActionRowId`.
-- [ ] Leave the existing outer wrapper span/div at each call site, including the `stopPropagation` folder-row variant.
+- [x] Project detail: 1355, 1468, 1966, 2147, 2209, 2268.
+- [x] Libraries: the 5 `renderActionsMenu` calls (629, 703, 745, 785, 815) plus the hand-expanded `PageHeader` copy (516-531).
+- [x] Projects list: the 2 `renderRowActions` calls (754, 773) plus the hand-expanded `PageHeader` copy (491-512).
+- [x] Events page: the `openEventActions` menu.
+- [x] Delete `renderActionsMenu` (libraries 407-425) and `renderRowActions` (projects 418-444).
+- [x] Delete all 7 menu-open state slots: `openProjectActions`, `openDeviceActions`, `openCollectionActions`, `openEventActions`, `openProjectAssetActions`, `openActionsKey`, `openActionRowId`.
+- [x] Leave the existing outer wrapper span/div at each call site, including the `stopPropagation` folder-row variant.
 
 ### 4.2 Other primitives
 
-- [ ] `FormDialog` at 9 sites: libraries 860-884; projects 557-583; project detail 2557, 2626, 2657, 2697; events 879, 921, 965. Audit all nine first and leave any outlier on a raw `Dialog`.
-- [ ] `Badge` at 6 sites: libraries 620, 623, 793, 811; project detail 2049; share 197.
-- [ ] `PageStateScaffold` at 5 branches: project detail 1263-1273, 1276-1291, 1293-1304; libraries 482-506; projects 446-474.
+- [x] `FormDialog` at 9 sites: libraries 860-884; projects 557-583; project detail 2557, 2626, 2657, 2697; events 879, 921, 965. Audit all nine first and leave any outlier on a raw `Dialog`.
+- [x] `Badge` at 6 sites: libraries 620, 623, 793, 811; project detail 2049; share 197.
+- [x] `PageStateScaffold` at 5 branches: project detail 1263-1273, 1276-1291, 1293-1304; libraries 482-506; projects 446-474.
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] **Two action menus**: open row A's menu, click row B's trigger — A closes and B opens in one click.
-- [ ] Escape closes an open menu; outside click closes it.
-- [ ] Re-capture and diff `libraries-{list,tile}-{desktop,mobile}`, `project-{assets,events,matrix}-{desktop,mobile}`, `projects-*`, and `overlay-popups-1.png`.
+- [x] Four gates green.
+- [x] **Two action menus**: open row A's menu, click row B's trigger — A closes and B opens in one click.
+- [x] Escape closes an open menu; outside click closes it.
+- [x] Re-capture and diff `libraries-{list,tile}-{desktop,mobile}`, `project-{assets,events,matrix}-{desktop,mobile}`, `projects-*`, and `overlay-popups-1.png`.
 
 ---
 
@@ -402,3 +402,4 @@ Real issues found during analysis. Each is a behavior or visual change and must 
 - [ ] The share route renders inside `WorkspaceShell`, so an unauthenticated viewer sees the app nav and the "Reset demo" button.
 - [ ] Every mutation invalidates `projectQueryKeys.all`, making the preceding targeted invalidations dead weight; no mutation is optimistic.
 - [ ] Convert the workspace tab bar to the existing unused `Tabs` primitive.
+- [ ] Action menu placement can physically cover the next dense row's trigger; a positioning pass should keep one-click switching possible for adjacent rows too.
