@@ -331,20 +331,20 @@ Stage gate:
 
 Goal: flattest page; row-model extraction plus the create dialog.
 
-- [ ] `features/projects-list/project-folder-tree.ts` over `lib/tree.ts`.
-- [ ] `features/projects-list/project-row-model.ts` — replaces the near-identical root (245-265) and in-folder (268-288) mapping blocks with one derivation, killing the double-compute.
-- [ ] `projects-table.tsx` (726-760) and `projects-cards.tsx` (762-787) over one row model. Keep `MemberStack` and its hardcoded initials as-is.
-- [ ] `projects-toolbar.tsx` — preserve the `disabled` search input and its "Search arrives in a later slice" placeholder verbatim.
-- [ ] `create-project-dialog.tsx` — the preset picker, starter-event picker, and its own search state; calls `useCreateProjectMutation` itself.
-- [ ] `create-folder-dialog.tsx`, `projects-delete-confirm.tsx`.
-- [ ] Flash read via `readAndClearFlashMessage()` passed as `FeedbackProvider initialMessage`.
-- [ ] Keep the Suspense wrapper. Reduce the page to ~95 lines.
+- [x] `features/projects-list/project-folder-tree.ts` over `lib/tree.ts`.
+- [x] `features/projects-list/project-row-model.ts` — replaces the near-identical root (245-265) and in-folder (268-288) mapping blocks with one derivation, killing the double-compute.
+- [x] `projects-table.tsx` (726-760) and `projects-cards.tsx` (762-787) over one row model. Keep `MemberStack` and its hardcoded initials as-is.
+- [x] `projects-toolbar.tsx` — preserve the `disabled` search input and its "Search arrives in a later slice" placeholder verbatim.
+- [x] `create-project-dialog.tsx` — the preset picker, starter-event picker, and its own search state; calls `useCreateProjectMutation` itself.
+- [x] `create-folder-dialog.tsx`, `projects-delete-confirm.tsx`.
+- [x] Flash read via `readAndClearFlashMessage()` passed as `FeedbackProvider initialMessage`.
+- [x] Keep the Suspense wrapper. Reduce the page to ~95 lines.
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] Create a folder and a project at root and inside a folder; delete both kinds; verify the flash message after a project delete.
-- [ ] Re-capture and diff `projects-{desktop,tablet,mobile}` and `workspace-crud-project-creator-{desktop,tablet}`.
+- [x] Four gates green.
+- [x] Create a folder and a project at root and inside a folder; delete both kinds; verify the flash message after a project delete.
+- [x] Re-capture and diff `projects-{desktop,tablet,mobile}` and `workspace-crud-project-creator-{desktop,tablet}`.
 
 ---
 
