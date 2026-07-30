@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #414651;
+  background: #fdfdfd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: #fdfdfd;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

@@ -21,9 +21,10 @@ The first complete demo should cover this path:
 5. Attach `onPress`, `onRelease`, `onHover`, or `onHold` trigger playbacks using audio and haptic assets.
 6. Preview the scheduled feedback timeline.
 7. Import an asset library and use an imported asset in a playback.
-8. Configure a collision matrix entry between two events.
-9. Generate project, event, and matrix-entry share links.
-10. Reset/reseed the demo data before the next stakeholder walkthrough.
+8. Upload an audio asset, schedule it on an event trigger, and hear it play in browser previews.
+9. Configure a collision matrix entry between two events.
+10. Generate project, event, and matrix-entry share links.
+11. Reset/reseed the demo data before the next stakeholder walkthrough.
 
 Everything else supports this path.
 
@@ -152,7 +153,7 @@ assets: 'id, libraryId, folderId, mediaKind, uploadedAt'
 sharingLinks: 'id, targetKind, targetId, createdByUserId, url'
 ```
 
-For asset uploads, store metadata and a browser-usable playback URL. If actual file persistence is needed during the prototype, add Blob storage in IndexedDB behind the asset repository. Haptics can be represented visually until native device integrations exist.
+For asset uploads, store metadata and a browser-usable playback URL. Actual file persistence should use Blob storage in IndexedDB behind the asset repository so uploaded audio survives reloads and reset/reseed can still restore canonical demo assets. Haptics can be uploaded and represented visually until native device integrations exist.
 
 ## Seed-First Demo Data
 
@@ -302,13 +303,60 @@ Acceptance:
 - Event previews sort scheduled playbacks by offset.
 - Disabled devices/triggers are explained in preview.
 
-### Phase 9: Visual Integration And Demo Hardening
+### Phase 9: Real Asset Upload And Audio Preview
+
+Replace the current metadata-only asset creation and visual-only timeline preview with real browser file handling for audio assets. Haptic files only need upload, metadata, and timeline visualization in this prototype.
+
+Known mocked-out concepts/user actions from implementation memory:
+
+- Asset creation currently uses a mock create-asset dialog rather than an actual file input.
+- Prototype assets currently store metadata plus stable fake playback URLs such as `https://vibra.local/assets/...`; Blob persistence was explicitly deferred.
+- Timeline and share previews currently communicate scheduled playback visually, but do not play uploaded sound files.
+- Haptics are seeded and selectable as assets, but browser previews are intentionally visual because native haptic playback is out of scope.
+- Share links currently resolve to useful summaries and event playback rows, but project/event/mobile playback is still a browser preview artifact rather than a native app handoff.
+
+Implementation direction:
+
+- Add an asset binary persistence boundary behind the repository, either by extending the `assets` store with Blob fields or adding a versioned companion store keyed by `assetId`.
+- Replace mock asset creation with file upload for audio and haptic assets in `/libraries`, keeping manual mock creation only as a seeded-data/dev helper if still useful.
+- Generate browser-safe object URLs for stored audio Blobs at read time and revoke them when preview components unmount.
+- Validate uploaded media kind against file MIME type and/or extension; reject unsupported files with the existing typed error surface.
+- Preserve asset-folder leaf constraints before accepting a file.
+- Let uploaded haptic files persist and appear in pickers/timelines, but keep their previews visual-only.
+- Add play/stop controls for audio rows in the asset browser, event timeline preview, and event share preview.
+- Schedule audio playback in timeline order using `startOffset`, respecting disabled devices and disabled trigger bindings.
+- Prevent overlapping preview runs from stacking unmanaged audio; a new play action should stop or replace the previous run.
+- Seed at least one small browser-playable audio fixture or deterministic generated tone so fresh demos can prove audio playback without requiring a user upload.
+- Update Playwright smoke coverage for uploading an audio fixture, selecting it for a trigger playback, and verifying the preview audio control path is present. Browser autoplay policy means tests should assert user-initiated control behavior rather than expecting sound output.
+
+Acceptance:
+
+- Users can upload audio files into asset libraries and see them after reload.
+- Users can upload haptic files into asset libraries and select them for scheduled playbacks.
+- Uploaded audio assets can be selected in event playback schedules.
+- Event timeline previews play scheduled audio assets with their configured offsets after a user action.
+- Event share previews can play scheduled audio assets after a user action.
+- Disabled device/trigger behavior is respected by audio preview.
+- Demo reset/reseed restores canonical seeded audio assets.
+
+### Phase 10: Visual Integration And Demo Hardening
 
 Apply the screenshot-driven visual system, add Playwright smoke tests, and write a stakeholder demo script.
+
+Codex visual audit direction:
+
+- Run the app locally and use Codex-controlled browser screenshots to inspect every primary route, tab, empty state, and preview state across desktop and mobile breakpoints.
+- Capture `/projects`, project `Events`, project `Assets`, project `Matrix`, standalone `/libraries`, share project, share event, and share matrix views.
+- Review screenshots for visual redundancies, duplicated labels, repeated navigation concepts, status/readout areas that cause layout shift, controls that do not earn their space, and content that looks mocked rather than representing the domain.
+- Pay special attention to project explorer repetition, tab/header duplication, asset library navigation clarity, collision matrix legibility, and whether timeline previews actually read as timelines with audio/haptic waveforms placed at distinct `startOffset` positions.
+- Produce a short visual audit implementation plan in `docs/plan/` that lists findings, affected views, proposed fixes, acceptance criteria, and the order to implement them.
+- Produce a paired checklist in `docs/plan/` so visual audit fixes can be completed as bounded follow-up implementation passes.
 
 Acceptance:
 
 - Main screens match the supplied screenshot direction.
+- Codex screenshot audit covers all core views and responsive breakpoints.
+- Visual audit plan and checklist exist, with concrete fixes for redundant navigation/content and timeline/matrix fidelity issues.
 - Fresh browser can complete the full demo spine.
 - No console errors on core screens.
 - Demo reset works.

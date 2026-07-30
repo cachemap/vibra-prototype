@@ -24,20 +24,20 @@ Design system: `docs/plan/DESIGN_SYSTEM.md`
 
 Goal: make future implementation work repeatable and safe.
 
-- [ ] Create `docs/adr/` if missing.
-- [ ] Create `docs/memory/` if missing.
-- [ ] Add `docs/adr/0001-prototype-architecture.md` covering client-first Next.js, IndexedDB/Dexie, seed-first demo data, and deferred backend concerns.
-- [ ] Add `docs/memory/0001-initial-planning.md` summarizing the plan, current repo state, and next implementation step.
-- [ ] Add `docs/plan/AI_HARNESS_SYSTEM_PROMPT.md`.
-- [ ] Add `docs/plan/DESIGN_SYSTEM.md`.
-- [ ] Confirm `docs/plan/IMPLEMENTATION_PLAN.md` points to `docs/domain-model/MODEL.md`.
-- [ ] Confirm `docs/plan/IMPLEMENTATION_PLAN.md` points to `docs/plan/DESIGN_SYSTEM.md`.
-- [ ] Confirm this checklist is organized into bounded implementation chunks.
+- [x] Create `docs/adr/` if missing.
+- [x] Create `docs/memory/` if missing.
+- [x] Add `docs/adr/0001-prototype-architecture.md` covering client-first Next.js, IndexedDB/Dexie, seed-first demo data, and deferred backend concerns.
+- [x] Add `docs/memory/0001-initial-planning.md` summarizing the plan, current repo state, and next implementation step.
+- [x] Add `docs/plan/AI_HARNESS_SYSTEM_PROMPT.md`.
+- [x] Add `docs/plan/DESIGN_SYSTEM.md`.
+- [x] Confirm `docs/plan/IMPLEMENTATION_PLAN.md` points to `docs/domain-model/MODEL.md`.
+- [x] Confirm `docs/plan/IMPLEMENTATION_PLAN.md` points to `docs/plan/DESIGN_SYSTEM.md`.
+- [x] Confirm this checklist is organized into bounded implementation chunks.
 
 Phase gate:
 
-- [ ] Planning docs exist and agree on the prototype direction.
-- [ ] ADR and memory conventions are documented.
+- [x] Planning docs exist and agree on the prototype direction.
+- [x] ADR and memory conventions are documented.
 
 ## Phase 1: Walking Skeleton
 
@@ -45,55 +45,55 @@ Goal: create a runnable app with the routes and shell needed for vertical slices
 
 ### 1.1 App Scaffold
 
-- [ ] Use pnpm as the package manager.
-- [ ] Add `packageManager` metadata for pnpm in `package.json`.
-- [ ] Scaffold or configure Next.js App Router.
-- [ ] Enable TypeScript strict mode.
-- [ ] Configure Tailwind CSS.
-- [ ] Install `@tanstack/react-query`.
-- [ ] Install `dexie`.
-- [ ] Install `neverthrow`.
-- [ ] Install `valibot`.
-- [ ] Install `lucide-react`.
-- [ ] Install/configure Vitest.
-- [ ] Install/configure Playwright.
-- [ ] Add scripts for `dev`, `build`, `typecheck`, `lint`, `test`, and `test:e2e`.
+- [x] Use pnpm as the package manager.
+- [x] Add `packageManager` metadata for pnpm in `package.json`.
+- [x] Scaffold or configure Next.js App Router.
+- [x] Enable TypeScript strict mode.
+- [x] Configure Tailwind CSS.
+- [x] Install `@tanstack/react-query`.
+- [x] Install `dexie`.
+- [x] Install `neverthrow`.
+- [x] Install `valibot`.
+- [x] Install `lucide-react`.
+- [x] Install/configure Vitest.
+- [x] Install/configure Playwright.
+- [x] Add scripts for `dev`, `build`, `typecheck`, `lint`, `test`, and `test:e2e`.
 
 ### 1.2 Component Primitive Foundation
 
-- [ ] Create `components/primitives/`.
-- [ ] Define a primitive styling approach that keeps most Tailwind utility stacks out of feature screens.
-- [ ] Build initial `Button` primitive.
-- [ ] Build initial `IconButton` primitive using lucide icons.
-- [ ] Build initial `TextInput` primitive.
-- [ ] Build initial `Select` primitive.
-- [ ] Build initial `Tabs` primitive.
-- [ ] Build initial `Dialog` or `Popover` primitive.
-- [ ] Build initial `Table` primitives for dense rows/cells.
-- [ ] Build `Breadcrumbs`.
-- [ ] Build `EmptyState`, `ErrorState`, and `LoadingState`.
-- [ ] Use primitives in route placeholders instead of one-off Tailwind-heavy markup.
+- [x] Create `components/primitives/`.
+- [x] Define a primitive styling approach that keeps most Tailwind utility stacks out of feature screens.
+- [x] Build initial `Button` primitive.
+- [x] Build initial `IconButton` primitive using lucide icons.
+- [x] Build initial `TextInput` primitive.
+- [x] Build initial `Select` primitive.
+- [x] Build initial `Tabs` primitive.
+- [x] Build initial `Dialog` or `Popover` primitive.
+- [x] Build initial `Table` primitives for dense rows/cells.
+- [x] Build `Breadcrumbs`.
+- [x] Build `EmptyState`, `ErrorState`, and `LoadingState`.
+- [x] Use primitives in route placeholders instead of one-off Tailwind-heavy markup.
 
 ### 1.3 Route Shell
 
-- [ ] Create `app/layout.tsx`.
-- [ ] Create `app/page.tsx` that redirects or links directly into `/projects`.
-- [ ] Create `app/projects/page.tsx`.
-- [ ] Create `app/projects/[projectId]/page.tsx`.
-- [ ] Create `app/libraries/page.tsx`.
-- [ ] Create `app/share/[shareToken]/page.tsx`.
-- [ ] Add a compact top bar.
-- [ ] Add a workspace left rail placeholder for project screens.
-- [ ] Add loading, empty, and error state placeholders.
-- [ ] Add TanStack Query provider wiring.
+- [x] Create `app/layout.tsx`.
+- [x] Create `app/page.tsx` that redirects or links directly into `/projects`.
+- [x] Create `app/projects/page.tsx`.
+- [x] Create `app/projects/[projectId]/page.tsx`.
+- [x] Create `app/libraries/page.tsx`.
+- [x] Create `app/share/[shareToken]/page.tsx`.
+- [x] Add a compact top bar.
+- [x] Add a workspace left rail placeholder for project screens.
+- [x] Add loading, empty, and error state placeholders.
+- [x] Add TanStack Query provider wiring.
 
 Phase gate:
 
-- [ ] `pnpm dev` starts.
-- [ ] Core routes render without crashing.
-- [ ] Core primitives render in the route shell.
-- [ ] `pnpm typecheck` passes.
-- [ ] `pnpm lint` passes, or lint setup status is documented.
+- [x] `pnpm dev` starts.
+- [x] Core routes render without crashing.
+- [x] Core primitives render in the route shell.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm lint` passes, or lint setup status is documented.
 
 ## Phase 2: Domain Kernel
 
@@ -101,63 +101,63 @@ Goal: encode the domain model before persistence and UI logic depend on it.
 
 ### 2.1 Types And Vocabularies
 
-- [ ] Add `domain/ids.ts` with typed ID helpers.
-- [ ] Add `domain/enums.ts` for platform names: `iOS`, `Windows`, `Mac`, `Linux`, `Android`.
-- [ ] Add trigger names: `onHover`, `onPress`, `onRelease`, `onHold`.
-- [ ] Add event types: `Button`, `Toggle`, `Banner`, `Toast`.
-- [ ] Add resolution behaviors: `Preempt`, `Queue`, `Co-play`, `Suppress`, `Not possible`.
-- [ ] Add media kinds: `audio`, `haptic`.
-- [ ] Add `domain/entities.ts` for all persisted entities in the model.
-- [ ] Store timestamps as ISO strings in domain types.
-- [ ] Represent share targets as a discriminated union.
+- [x] Add `domain/ids.ts` with typed ID helpers.
+- [x] Add `domain/enums.ts` for platform names: `iOS`, `Windows`, `Mac`, `Linux`, `Android`.
+- [x] Add trigger names: `onHover`, `onPress`, `onRelease`, `onHold`.
+- [x] Add event types: `Button`, `Toggle`, `Banner`, `Toast`.
+- [x] Add resolution behaviors: `Preempt`, `Queue`, `Co-play`, `Suppress`, `Not possible`.
+- [x] Add media kinds: `audio`, `haptic`.
+- [x] Add `domain/entities.ts` for all persisted entities in the model.
+- [x] Store timestamps as ISO strings in domain types.
+- [x] Represent share targets as a discriminated union.
 
 ### 2.2 Validation And Errors
 
-- [ ] Add Valibot schemas for fixed vocabularies.
-- [ ] Add Valibot schemas for persisted entities.
-- [ ] Add Valibot schemas for command inputs used by create/update flows.
-- [ ] Add Valibot schema for share route params.
-- [ ] Add `domain/errors.ts` with `ValidationError`.
-- [ ] Add `NotFoundError`.
-- [ ] Add `ConflictError`.
-- [ ] Add `ConstraintError`.
-- [ ] Add `PersistenceError`.
-- [ ] Add `UnsupportedMediaError`.
-- [ ] Add `ShareLinkError`.
-- [ ] Add shared `AppError`.
-- [ ] Add neverthrow result aliases and query unwrap helpers.
-- [ ] Add user-facing error message mapping.
+- [x] Add Valibot schemas for fixed vocabularies.
+- [x] Add Valibot schemas for persisted entities.
+- [x] Add Valibot schemas for command inputs used by create/update flows.
+- [x] Add Valibot schema for share route params.
+- [x] Add `domain/errors.ts` with `ValidationError`.
+- [x] Add `NotFoundError`.
+- [x] Add `ConflictError`.
+- [x] Add `ConstraintError`.
+- [x] Add `PersistenceError`.
+- [x] Add `UnsupportedMediaError`.
+- [x] Add `ShareLinkError`.
+- [x] Add shared `AppError`.
+- [x] Add neverthrow result aliases and query unwrap helpers.
+- [x] Add user-facing error message mapping.
 
 ### 2.3 Rule Functions
 
-- [ ] Enforce project folders cannot contain child folders and projects at the same time.
-- [ ] Allow empty leaf project folders.
-- [ ] Enforce project creation creates one default asset library and root folder.
-- [ ] Enforce project cannot import its own default asset library.
-- [ ] Enforce device creation creates one collision matrix.
-- [ ] Enforce unique device per project/platform/name.
-- [ ] Enforce collections are flat.
-- [ ] Enforce unique event-trigger binding per event/trigger.
-- [ ] Enforce disabled event triggers do not fire in preview.
-- [ ] Enforce trigger playback offsets are non-negative.
-- [ ] Enforce playback assets come from the project default library or imported libraries.
-- [ ] Enforce asset folders cannot mix assets and child folders.
-- [ ] Enforce matrix row/column events belong to the selected device.
-- [ ] Enforce matrix entries require selected row and column membership.
-- [ ] Enforce unique matrix entry per playing/incoming pair.
-- [ ] Enforce `Suppress` requires a target.
-- [ ] Enforce resolution target is the playing or incoming event.
-- [ ] Enforce sharing link target exclusivity.
+- [x] Enforce project folders cannot contain child folders and projects at the same time.
+- [x] Allow empty leaf project folders.
+- [x] Enforce project creation creates one default asset library and root folder.
+- [x] Enforce project cannot import its own default asset library.
+- [x] Enforce device creation creates one collision matrix.
+- [x] Enforce unique device per project/platform/name.
+- [x] Enforce collections are flat.
+- [x] Enforce unique event-trigger binding per event/trigger.
+- [x] Enforce disabled event triggers do not fire in preview.
+- [x] Enforce trigger playback offsets are non-negative.
+- [x] Enforce playback assets come from the project default library or imported libraries.
+- [x] Enforce asset folders cannot mix assets and child folders.
+- [x] Enforce matrix row/column events belong to the selected device.
+- [x] Enforce matrix entries require selected row and column membership.
+- [x] Enforce unique matrix entry per playing/incoming pair.
+- [x] Enforce `Suppress` requires a target.
+- [x] Enforce resolution target is the playing or incoming event.
+- [x] Enforce sharing link target exclusivity.
 
 Phase gate:
 
-- [ ] Unit tests cover all fixed vocabularies.
-- [ ] Unit tests cover folder leaf rules.
-- [ ] Unit tests cover trigger uniqueness and playback offset rules.
-- [ ] Unit tests cover asset eligibility.
-- [ ] Unit tests cover matrix membership and target rules.
-- [ ] `pnpm typecheck` passes.
-- [ ] `pnpm test` passes for domain tests.
+- [x] Unit tests cover all fixed vocabularies.
+- [x] Unit tests cover folder leaf rules.
+- [x] Unit tests cover trigger uniqueness and playback offset rules.
+- [x] Unit tests cover asset eligibility.
+- [x] Unit tests cover matrix membership and target rules.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm test` passes for domain tests.
 
 ## Phase 3: IndexedDB Persistence And Seed Data
 
@@ -165,106 +165,106 @@ Goal: make the prototype self-contained with realistic seeded data.
 
 ### 3.1 Dexie Schema
 
-- [ ] Add `data/db.ts`.
-- [ ] Add `users` store.
-- [ ] Add `folders` store.
-- [ ] Add `folderAccess` store.
-- [ ] Add `projects` store.
-- [ ] Add `platforms` store.
-- [ ] Add `devices` store.
-- [ ] Add `collisionMatrices` store.
-- [ ] Add `collisionMatrixRows` store.
-- [ ] Add `collisionMatrixColumns` store.
-- [ ] Add `collisionMatrixEntries` store.
-- [ ] Add `collections` store.
-- [ ] Add `events` store.
-- [ ] Add `triggers` store.
-- [ ] Add `eventTriggers` store.
-- [ ] Add `triggerPlaybacks` store.
-- [ ] Add `assetLibraries` store.
-- [ ] Add `projectAssetLibraryImports` store.
-- [ ] Add `assetLibraryFolders` store.
-- [ ] Add `assets` store.
-- [ ] Add `sharingLinks` store.
-- [ ] Add schema versioning/migration notes.
+- [x] Add `data/db.ts`.
+- [x] Add `users` store.
+- [x] Add `folders` store.
+- [x] Add `folderAccess` store.
+- [x] Add `projects` store.
+- [x] Add `platforms` store.
+- [x] Add `devices` store.
+- [x] Add `collisionMatrices` store.
+- [x] Add `collisionMatrixRows` store.
+- [x] Add `collisionMatrixColumns` store.
+- [x] Add `collisionMatrixEntries` store.
+- [x] Add `collections` store.
+- [x] Add `events` store.
+- [x] Add `triggers` store.
+- [x] Add `eventTriggers` store.
+- [x] Add `triggerPlaybacks` store.
+- [x] Add `assetLibraries` store.
+- [x] Add `projectAssetLibraryImports` store.
+- [x] Add `assetLibraryFolders` store.
+- [x] Add `assets` store.
+- [x] Add `sharingLinks` store.
+- [x] Add schema versioning/migration notes.
 
 ### 3.2 Seed And Reset
 
-- [ ] Add one prototype user.
-- [ ] Seed platform catalog rows.
-- [ ] Seed trigger catalog rows.
-- [ ] Seed two accessible top-level project folders.
-- [ ] Seed nested folders.
-- [ ] Seed one empty leaf folder.
-- [ ] Seed at least two projects.
-- [ ] Seed each project's default asset library and root folder.
-- [ ] Seed iOS and Android devices for one project.
-- [ ] Seed one disabled device.
-- [ ] Seed multiple collections per device.
-- [ ] Seed Button, Toggle, Banner, and Toast events.
-- [ ] Seed enabled and disabled event triggers.
-- [ ] Seed trigger playbacks with different offsets.
-- [ ] Seed audio and haptic assets.
-- [ ] Seed one imported asset library.
-- [ ] Seed nested asset folders with icons.
-- [ ] Seed collision matrix rows and columns.
-- [ ] Seed collision entries for multiple behavior types.
-- [ ] Seed share links for a project, event, and matrix entry.
-- [ ] Seed only when the database is empty.
-- [ ] Add a reset/reseed utility.
+- [x] Add one prototype user.
+- [x] Seed platform catalog rows.
+- [x] Seed trigger catalog rows.
+- [x] Seed two accessible top-level project folders.
+- [x] Seed nested folders.
+- [x] Seed one empty leaf folder.
+- [x] Seed at least two projects.
+- [x] Seed each project's default asset library and root folder.
+- [x] Seed iOS and Android devices for one project.
+- [x] Seed one disabled device.
+- [x] Seed multiple collections per device.
+- [x] Seed Button, Toggle, Banner, and Toast events.
+- [x] Seed enabled and disabled event triggers.
+- [x] Seed trigger playbacks with different offsets.
+- [x] Seed audio and haptic assets.
+- [x] Seed one imported asset library.
+- [x] Seed nested asset folders with icons.
+- [x] Seed collision matrix rows and columns.
+- [x] Seed collision entries for multiple behavior types.
+- [x] Seed share links for a project, event, and matrix entry.
+- [x] Seed only when the database is empty.
+- [x] Add a reset/reseed utility.
 
 ### 3.3 Repositories And Query Hooks
 
-- [ ] Implement project tree loading.
-- [ ] Implement project creation with default library/root folder creation.
-- [ ] Implement project workspace loading.
-- [ ] Implement device creation with collision matrix creation.
-- [ ] Implement device workspace loading.
-- [ ] Implement collection and event create/update.
-- [ ] Implement event trigger and playback create/update/delete.
-- [ ] Implement asset library tree loading.
-- [ ] Implement asset library folder and asset create flows.
-- [ ] Implement library import flow.
-- [ ] Implement collision matrix loading and entry updates.
-- [ ] Implement share link generation and lookup.
-- [ ] Validate IndexedDB reads before returning domain objects.
-- [ ] Convert unknown persistence failures into `PersistenceError`.
-- [ ] Add TanStack Query keys for each aggregate.
-- [ ] Add mutation invalidation for each create/update flow.
+- [x] Implement project tree loading.
+- [x] Implement project creation with default library/root folder creation.
+- [x] Implement project workspace loading.
+- [x] Implement device creation with collision matrix creation.
+- [x] Implement device workspace loading.
+- [x] Implement collection and event create/update.
+- [x] Implement event trigger and playback create/update/delete.
+- [x] Implement asset library tree loading.
+- [x] Implement asset library folder and asset create flows.
+- [x] Implement library import flow.
+- [x] Implement collision matrix loading and entry updates.
+- [x] Implement share link generation and lookup.
+- [x] Validate IndexedDB reads before returning domain objects.
+- [x] Convert unknown persistence failures into `PersistenceError`.
+- [x] Add TanStack Query keys for each aggregate.
+- [x] Add mutation invalidation for each create/update flow.
 
 Phase gate:
 
-- [ ] Fresh browser seeds automatically.
-- [ ] Demo reset/reseed works.
-- [ ] Query hooks load project tree, project workspace, device workspace, asset libraries, collision matrix, and share links.
-- [ ] Repository tests cover dependent creation flows.
-- [ ] `pnpm test` passes for repository tests.
+- [x] Fresh browser seeds automatically.
+- [x] Demo reset/reseed works.
+- [x] Query hooks load project tree, project workspace, device workspace, asset libraries, collision matrix, and share links.
+- [x] Repository tests cover dependent creation flows.
+- [x] `pnpm test` passes for repository tests.
 
 ## Phase 4: Projects Vertical Slice
 
 Goal: make `/projects` demoable.
 
-- [ ] Build project folder breadcrumb.
-- [ ] Build folder/project table.
-- [ ] Build accessible top-level folder view for the prototype user.
-- [ ] Support nested folder browsing.
-- [ ] Render empty leaf folders intentionally.
-- [ ] Build create folder dialog.
-- [ ] Build create project dialog.
-- [ ] Hide or disable invalid folder/project creation actions where possible.
-- [ ] Show typed validation errors when invalid actions are attempted.
-- [ ] Show default asset library after project creation.
-- [ ] Apply visual direction from `design-screenshots/project-folder-explorer.png`.
-- [ ] Add Playwright smoke test for browsing folders.
-- [ ] Add Playwright smoke test for creating a project.
+- [x] Build project folder breadcrumb.
+- [x] Build folder/project table.
+- [x] Build accessible top-level folder view for the prototype user.
+- [x] Support nested folder browsing.
+- [x] Render empty leaf folders intentionally.
+- [x] Build create folder dialog.
+- [x] Build create project dialog.
+- [x] Hide or disable invalid folder/project creation actions where possible.
+- [x] Show typed validation errors when invalid actions are attempted.
+- [x] Show default asset library after project creation.
+- [x] Apply visual direction from `design-screenshots/project-folder-explorer.png`.
+- [x] Add Playwright smoke test for browsing folders.
+- [x] Add Playwright smoke test for creating a project.
 
 Phase gate:
 
-- [ ] User can browse seeded folders.
-- [ ] User can create a valid empty folder.
-- [ ] User can create a valid project.
-- [ ] Folder leaf rules are enforced in UI and service logic.
-- [ ] Project creation is visible immediately after mutation.
+- [x] User can browse seeded folders.
+- [x] User can create a valid empty folder.
+- [x] User can create a valid project.
+- [x] Folder leaf rules are enforced in UI and service logic.
+- [x] Project creation is visible immediately after mutation.
 
 ## Phase 5: Device And Event Vertical Slice
 
@@ -272,188 +272,268 @@ Goal: configure platform-specific sound/haptic events.
 
 ### 5.1 Device And Collection Workspace
 
-- [ ] Build project header.
-- [ ] Build device selector or tabs.
-- [ ] Build create device flow.
-- [ ] Build enabled/disabled device switch.
-- [ ] Mark disabled devices as excluded from playback/export.
-- [ ] Build collection sidebar.
-- [ ] Build create/edit collection flow.
-- [ ] Ensure collections are scoped to the selected device.
-- [ ] Apply visual direction from `empty-project-viewer.png` and `event-list.png`.
+- [x] Build project header.
+- [x] Build device selector or tabs.
+- [x] Build create device flow.
+- [x] Build enabled/disabled device switch.
+- [x] Mark disabled devices as excluded from playback/export.
+- [x] Build collection sidebar.
+- [x] Build create/edit collection flow.
+- [x] Ensure collections are scoped to the selected device.
+- [x] Apply visual direction from `empty-project-viewer.png` and `event-list.png`.
 
 ### 5.2 Events And Trigger Scheduling
 
-- [ ] Build event table.
-- [ ] Build create/edit event flow.
-- [ ] Add event type selection.
-- [ ] Build event details/editor panel.
-- [ ] Build trigger binding list.
-- [ ] Add trigger selector.
-- [ ] Add optional trigger label field.
-- [ ] Add trigger enabled/disabled switch.
-- [ ] Build playback schedule editor.
-- [ ] Add asset picker entry point.
-- [ ] Add start offset input.
-- [ ] Show audio/haptic media kind per playback.
-- [ ] Build deterministic timeline preview.
-- [ ] Sort preview playbacks by `startOffset`.
-- [ ] Explain disabled triggers in preview.
-- [ ] Apply visual direction from `event-playback-timeline.png`.
+- [x] Build event table.
+- [x] Build create/edit event flow.
+- [x] Add event type selection.
+- [x] Build event details/editor panel.
+- [x] Build trigger binding list.
+- [x] Add trigger selector.
+- [x] Add optional trigger label field.
+- [x] Add trigger enabled/disabled switch.
+- [x] Build playback schedule editor.
+- [x] Add asset picker entry point.
+- [x] Add start offset input.
+- [x] Show audio/haptic media kind per playback.
+- [x] Build deterministic timeline preview.
+- [x] Sort preview playbacks by `startOffset`.
+- [x] Explain disabled triggers in preview.
+- [x] Apply visual direction from `event-playback-timeline.png`.
 
 Phase gate:
 
-- [ ] User can add/edit devices, collections, events, triggers, and playbacks.
-- [ ] Duplicate device rule is enforced.
-- [ ] Trigger uniqueness rule is enforced.
-- [ ] Playback offset validation is enforced.
-- [ ] Preview shows scheduled audio/haptic feedback clearly.
-- [ ] Playwright smoke test covers creating an event with a playback.
+- [x] User can add/edit devices, collections, events, triggers, and playbacks.
+- [x] Duplicate device rule is enforced.
+- [x] Trigger uniqueness rule is enforced.
+- [x] Playback offset validation is enforced.
+- [x] Preview shows scheduled audio/haptic feedback clearly.
+- [x] Playwright smoke test covers creating an event with a playback.
 
 ## Phase 6: Asset Libraries Vertical Slice
 
 Goal: make reusable sound/haptic libraries usable in event scheduling.
 
-- [ ] Build `/libraries` route UI.
-- [ ] Build project asset library panel.
-- [ ] Show default library indicator.
-- [ ] Show imported library indicator.
-- [ ] Build asset library list.
-- [ ] Build folder tree or breadcrumb.
-- [ ] Build list view for assets/folders.
-- [ ] Build tile view for assets/folders.
-- [ ] Build create asset library flow.
-- [ ] Build create asset folder flow.
-- [ ] Build mock upload/create asset flow for audio and haptic assets.
-- [ ] Store asset metadata in IndexedDB.
-- [ ] Persist asset blobs or use stable prototype playback URLs.
-- [ ] Build import library flow.
-- [ ] Prevent importing a project's own default library.
-- [ ] Prevent asset folders from mixing child folders and assets.
-- [ ] Integrate asset picker with trigger playback editor.
-- [ ] Enforce asset eligibility for playback selection.
-- [ ] Apply visual direction from asset library screenshots and overlay screenshots.
+- [x] Build `/libraries` route UI.
+- [x] Build project asset library panel.
+- [x] Show default library indicator.
+- [x] Show imported library indicator.
+- [x] Build asset library list.
+- [x] Build folder tree or breadcrumb.
+- [x] Build list view for assets/folders.
+- [x] Build tile view for assets/folders.
+- [x] Build create asset library flow.
+- [x] Build create asset folder flow.
+- [x] Build mock upload/create asset flow for audio and haptic assets.
+- [x] Store asset metadata in IndexedDB.
+- [x] Persist asset blobs or use stable prototype playback URLs.
+- [x] Build import library flow.
+- [x] Prevent importing a project's own default library.
+- [x] Prevent asset folders from mixing child folders and assets.
+- [x] Integrate asset picker with trigger playback editor.
+- [x] Enforce asset eligibility for playback selection.
+- [x] Apply visual direction from asset library screenshots and overlay screenshots.
 
 Phase gate:
 
-- [ ] User can browse default and imported libraries.
-- [ ] User can create folders and assets.
-- [ ] User can import another library.
-- [ ] Imported assets can be selected for event playbacks.
-- [ ] Asset folder and import constraints are enforced.
-- [ ] Playwright smoke test covers importing a library and selecting an asset.
+- [x] User can browse default and imported libraries.
+- [x] User can create folders and assets.
+- [x] User can import another library.
+- [x] Imported assets can be selected for event playbacks.
+- [x] Asset folder and import constraints are enforced.
+- [x] Playwright smoke test covers importing a library and selecting an asset.
 
 ## Phase 7: Collision Matrix Vertical Slice
 
 Goal: configure overlap behavior between device-specific events.
 
-- [ ] Build collision matrix tab/view in project workspace.
-- [ ] Load candidates from events belonging to the selected device.
-- [ ] Build playing row selector.
-- [ ] Build incoming column selector.
-- [ ] Build matrix grid.
-- [ ] Build unset cell state.
-- [ ] Build behavior pill states for all behavior names.
-- [ ] Map `Not possible` to the N/A visual treatment.
-- [ ] Build selected row/column/cell state.
-- [ ] Build resolution behavior editor.
-- [ ] Build target selector for `Suppress`.
-- [ ] Validate row membership before entry creation.
-- [ ] Validate column membership before entry creation.
-- [ ] Reject duplicate playing/incoming entries.
-- [ ] Persist matrix changes.
-- [ ] Add matrix entry share action entry point.
-- [ ] Apply visual direction from `collision-matrix.png` and `matrix-cells.png`.
+- [x] Build collision matrix tab/view in project workspace.
+- [x] Load candidates from events belonging to the selected device.
+- [x] Build playing row selector.
+- [x] Build incoming column selector.
+- [x] Build matrix grid.
+- [x] Build unset cell state.
+- [x] Build behavior pill states for all behavior names.
+- [x] Map `Not possible` to the N/A visual treatment.
+- [x] Build selected row/column/cell state.
+- [x] Build resolution behavior editor.
+- [x] Build target selector for `Suppress`.
+- [x] Validate row membership before entry creation.
+- [x] Validate column membership before entry creation.
+- [x] Reject duplicate playing/incoming entries.
+- [x] Persist matrix changes.
+- [x] Add matrix entry share action entry point.
+- [x] Apply visual direction from `collision-matrix.png` and `matrix-cells.png`.
 
 Phase gate:
 
-- [ ] User can select rows and columns.
-- [ ] User can configure a valid matrix entry.
-- [ ] `Suppress` target validation works.
-- [ ] Matrix changes survive reload.
-- [ ] Playwright smoke test covers configuring a matrix entry.
+- [x] User can select rows and columns.
+- [x] User can configure a valid matrix entry.
+- [x] `Suppress` target validation works.
+- [x] Matrix changes survive reload.
+- [x] Playwright smoke test covers configuring a matrix entry.
 
 ## Phase 8: Sharing And Mobile Preview
 
 Goal: demonstrate distribution of sound/haptic systems through generated links.
 
-- [ ] Build share link dialog.
-- [ ] Generate project share links.
-- [ ] Generate event share links.
-- [ ] Generate collision matrix entry share links.
-- [ ] Copy generated links.
-- [ ] Build `/share/[shareToken]` lookup.
-- [ ] Render invalid share link state.
-- [ ] Render project target summary.
-- [ ] Render event target summary.
-- [ ] Render matrix entry target summary.
-- [ ] Add playback preview to event share page.
-- [ ] Explain disabled device/trigger behavior in share previews.
-- [ ] Apply visual direction from overlay popup screenshots.
-- [ ] Add Playwright smoke test for generating and opening a share link.
+- [x] Build share link dialog.
+- [x] Generate project share links.
+- [x] Generate event share links.
+- [x] Generate collision matrix entry share links.
+- [x] Copy generated links.
+- [x] Build `/share/[shareToken]` lookup.
+- [x] Render invalid share link state.
+- [x] Render project target summary.
+- [x] Render event target summary.
+- [x] Render matrix entry target summary.
+- [x] Add playback preview to event share page.
+- [x] Explain disabled device/trigger behavior in share previews.
+- [x] Apply visual direction from overlay popup screenshots.
+- [x] Add Playwright smoke test for generating and opening a share link.
 
 Phase gate:
 
-- [ ] User can create each share link type.
-- [ ] Generated links resolve after page reload.
-- [ ] Invalid links fail gracefully.
-- [ ] Share pages are useful as stakeholder demo artifacts.
+- [x] User can create each share link type.
+- [x] Generated links resolve after page reload.
+- [x] Invalid links fail gracefully.
+- [x] Share pages are useful as stakeholder demo artifacts.
 
-## Phase 9: Visual System And Demo Hardening
+## Phase 9: Real Asset Upload And Audio Preview
+
+Goal: replace metadata-only asset creation and visual-only sound previews with real upload and browser audio playback.
+
+### 9.1 Asset Binary Persistence
+
+- [x] Decide whether to store uploaded Blobs on `assets` or in a companion `assetBlobs` IndexedDB store.
+- [x] Add Dexie schema migration notes for uploaded asset binary persistence.
+- [x] Add repository write support for storing uploaded audio and haptic files.
+- [x] Add repository read support for returning browser-usable audio playback URLs.
+- [x] Revoke generated object URLs from preview components when no longer needed.
+- [x] Preserve existing seeded prototype playback URLs or replace them with seeded browser-playable fixtures.
+- [x] Add tests for uploaded asset persistence after reload.
+- [x] Add tests for missing/corrupt asset blob error handling.
+
+### 9.2 Real Upload Flow
+
+- [x] Replace mock create-asset controls in `/libraries` with file upload controls.
+- [x] Accept audio uploads for browser playback.
+- [x] Accept haptic uploads for storage, picking, and visual timeline previews.
+- [x] Validate uploaded media kind from MIME type and/or extension.
+- [x] Reject unsupported file types with typed user-facing errors.
+- [x] Keep asset-folder leaf constraints enforced before upload.
+- [x] Store original filename, upload date, media kind, and playback URL/blob reference.
+- [x] Keep seeded/mock asset creation available only as a dev/demo helper if still needed.
+- [x] Update asset list and tile views to distinguish uploaded audio, uploaded haptic, and seeded/demo assets.
+- [x] Add Playwright smoke coverage for uploading an audio fixture.
+- [x] Add Playwright smoke coverage for uploading a haptic fixture.
+
+### 9.3 Browser Audio Preview
+
+- [x] Add play/stop controls for audio assets in the asset browser.
+- [x] Add play/stop controls for scheduled audio rows in the event timeline preview.
+- [x] Add play/stop controls for scheduled audio rows in event share previews.
+- [x] Schedule preview audio playback by `startOffset` after a user-initiated play action.
+- [x] Skip disabled trigger bindings during audio preview.
+- [x] Skip disabled devices during project/share preview playback.
+- [x] Keep haptic playbacks visual-only in browser previews.
+- [x] Stop or replace any active preview run before starting a new one.
+- [x] Surface playback errors when an audio file cannot be decoded or loaded.
+- [x] Add Playwright smoke coverage for selecting an uploaded audio asset in a trigger playback.
+- [x] Add Playwright smoke coverage for the user-initiated preview control path.
+
+Phase gate:
+
+- [x] Uploaded audio assets persist after reload.
+- [x] Uploaded haptic assets persist after reload and remain selectable.
+- [x] Uploaded audio can be scheduled on an event trigger.
+- [x] Event timeline preview plays scheduled audio in offset order after user action.
+- [x] Event share preview plays scheduled audio after user action.
+- [x] Demo reset/reseed restores canonical browser-playable audio assets.
+- [x] Repository and smoke tests cover the upload/playback path.
+
+## Phase 10: Visual System And Demo Hardening
 
 Goal: make the prototype feel polished enough for stakeholder review.
 
-### 9.1 Primitive Visual System
+### 10.1 Primitive Visual System
 
-- [ ] Define Tailwind color tokens from `color-palette.png`.
-- [ ] Harden `Button` against all screenshot states.
-- [ ] Harden `IconButton` against all screenshot states.
-- [ ] Harden `TextInput` against all screenshot states.
-- [ ] Harden `Select` against all screenshot states.
-- [ ] Build `Checkbox`.
-- [ ] Build `Switch`.
-- [ ] Harden `Tabs` against all screenshot states.
-- [ ] Harden `Dialog` against all screenshot states.
-- [ ] Harden `Popover` against all screenshot states.
-- [ ] Build `Tooltip`.
-- [ ] Build `Menu`.
-- [ ] Harden `Table` against all screenshot states.
-- [ ] Harden `Breadcrumbs` against all screenshot states.
-- [ ] Harden `EmptyState`, `ErrorState`, and `LoadingState`.
-- [ ] Use lucide icons in icon buttons and row actions.
+- [x] Define Tailwind color tokens from `color-palette.png`.
+- [x] Harden `Button` against all screenshot states.
+- [x] Harden `IconButton` against all screenshot states.
+- [x] Harden `TextInput` against all screenshot states.
+- [x] Harden `Select` against all screenshot states.
+- [x] Build `Checkbox`.
+- [x] Build `Switch`.
+- [x] Harden `Tabs` against all screenshot states.
+- [x] Harden `Dialog` against all screenshot states.
+- [x] Harden `Popover` against all screenshot states.
+- [x] Build `Tooltip`.
+- [x] Build `Menu`.
+- [x] Harden `Table` against all screenshot states.
+- [x] Harden `Breadcrumbs` against all screenshot states.
+- [x] Harden `EmptyState`, `ErrorState`, and `LoadingState`.
+- [x] Use lucide icons in icon buttons and row actions.
 
-### 9.2 Screen Polish
+### 10.2 Screen Polish
 
-- [ ] Match `/projects` to `project-folder-explorer.png`.
-- [ ] Match empty project workspace to `empty-project-viewer.png`.
-- [ ] Match event list to `event-list.png`.
-- [ ] Match timeline editor to `event-playback-timeline.png`.
-- [ ] Match asset list and tile views to asset library screenshots.
-- [ ] Match matrix editor to matrix screenshots.
-- [ ] Match dialogs/popovers/pickers to overlay screenshots.
-- [ ] Check desktop viewport.
-- [ ] Check tablet viewport.
-- [ ] Check mobile viewport.
-- [ ] Confirm button text does not overflow.
-- [ ] Confirm table text does not overlap.
-- [ ] Confirm dialogs fit their content.
-- [ ] Confirm hover/focus/loading states do not shift layout.
+- [x] Start the app locally for a Codex-driven visual audit.
+- [x] Use Codex browser screenshots to capture `/projects` on desktop.
+- [x] Use Codex browser screenshots to capture `/projects` on mobile.
+- [x] Use Codex browser screenshots to capture project `Events` on desktop and mobile.
+- [x] Use Codex browser screenshots to capture project `Assets` on desktop and mobile.
+- [x] Use Codex browser screenshots to capture project `Matrix` on desktop and mobile.
+- [x] Use Codex browser screenshots to capture `/libraries` list and tile views.
+- [x] Use Codex browser screenshots to capture share project, share event, and share matrix views.
+- [x] Audit screenshots for redundant navigation and repeated labels, including project explorer repetition.
+- [x] Audit screenshots for toolbar/header controls that do not support the current view.
+- [x] Audit screenshots for layout shifts from status/readout regions.
+- [x] Audit asset library screenshots for clear navigation into folders and assets.
+- [x] Audit timeline screenshots for believable waveform lanes at distinct playback offsets.
+- [x] Audit matrix screenshots for clear `Playing` and `Incoming` axes, compact cells, icons, labels, and selected states.
+- [x] Write `docs/plan/VISUAL_AUDIT_IMPLEMENTATION_PLAN.md` with findings, affected views, proposed fixes, acceptance criteria, and implementation order.
+- [x] Write `docs/plan/VISUAL_AUDIT_CHECKLIST.md` with bounded follow-up tasks generated from the screenshot findings.
+- [x] Match `/projects` to `project-folder-explorer.png`.
+- [x] Match empty project workspace to `empty-project-viewer.png`.
+- [x] Match event list to `event-list.png`.
+- [x] Match timeline editor to `event-playback-timeline.png`.
+- [x] Match asset list and tile views to asset library screenshots.
+- [x] Match matrix editor to matrix screenshots.
+- [x] Match dialogs/popovers/pickers to overlay screenshots.
+- [x] Check desktop viewport.
+- [x] Check tablet viewport.
+- [x] Check mobile viewport.
+- [x] Confirm button text does not overflow.
+- [x] Confirm table text does not overlap.
+- [x] Confirm dialogs fit their content.
+- [x] Confirm hover/focus/loading states do not shift layout.
 
-### 9.3 Demo Reliability
+### 10.3 Demo Reliability
 
-- [ ] Add visible demo reset/reseed control.
-- [ ] Add stakeholder demo script.
-- [ ] Document known prototype limitations.
-- [ ] Ensure fresh browser loads seeded data.
-- [ ] Ensure full demo spine has no console errors.
-- [ ] Run Playwright smoke suite.
-- [ ] Capture or document main screen screenshots for QA.
+- [x] Add visible demo reset/reseed control.
+- [x] Add stakeholder demo script.
+- [x] Document known prototype limitations.
+- [x] Ensure fresh browser loads seeded data.
+- [x] Ensure full demo spine has no console errors.
+- [x] Run Playwright smoke suite.
+- [x] Capture or document main screen screenshots for QA.
 
 Final gate:
 
-- [ ] Fresh checkout can start the app.
-- [ ] Fresh browser can complete the product demo spine.
-- [ ] Core domain rules have tests.
-- [ ] Core screens have smoke tests.
-- [ ] Demo reset/reseed is reliable.
-- [ ] ADRs and memory notes are current.
+- [x] Fresh checkout can start the app.
+- [x] Fresh browser can complete the product demo spine.
+- [x] Core domain rules have tests.
+- [x] Core screens have smoke tests.
+- [x] Demo reset/reseed is reliable.
+- [x] ADRs and memory notes are current.
+
+## Phase 11: Workspace Authoring And CRUD
+
+Detailed plan: `docs/plan/WORKSPACE_CRUD_IMPLEMENTATION_PLAN.md`  
+Detailed checklist: `docs/plan/WORKSPACE_CRUD_CHECKLIST.md`
+
+- [x] 11.1 Relax folder containment in the domain model and rules.
+- [x] 11.2 Make the header breadcrumb stationary across all routes.
+- [x] 11.3 Rebuild the project creator with a device preset picker.
+- [x] 11.4 Allow folder, project, and asset creation at any level.
+- [x] 11.5 Add delete for every user-visible entity with cascade safety.

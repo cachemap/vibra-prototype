@@ -34,11 +34,12 @@ For each chunk:
 1. Mark the active checklist item or group as `[~]`.
 2. Implement the selected tasks.
 3. Add or update focused tests when behavior changes.
-4. Run the smallest useful verification commands, such as `pnpm typecheck`, `pnpm lint`, `pnpm test`, or a targeted Playwright test.
-5. Mark completed checklist items as `[x]`; leave incomplete work as `[ ]` or `[~]`.
-6. Record important decisions in `docs/adr/` using sequential filenames like `0001-indexeddb-client-persistence.md`.
-7. Record a handoff note in `docs/memory/`. Update the most recently modified memory file if it is about 50 lines or shorter; otherwise create the next sequential file, such as `0002-domain-kernel.md`. Do not use timestamps in memory filenames.
-8. Commit the changes with a concise commit message.
+4. Review your changes for any mistakes you might have missed. Don't forget you can use the Codex CLI to get screenshots of the running app to aid your analysis and decision making.
+5. Run the smallest useful verification commands, such as `pnpm typecheck`, `pnpm lint`, `pnpm test`, or a targeted Playwright test.
+6. Mark completed checklist items as `[x]`; leave incomplete work as `[ ]` or `[~]`.
+7. Record important decisions in `docs/adr/` using sequential filenames like `0001-indexeddb-client-persistence.md`.
+8. Record a handoff note in `docs/memory/`. Update the most recently modified memory file if it is about 50 lines or shorter; otherwise create the next sequential file, such as `0002-domain-kernel.md`. Do not use timestamps in memory filenames.
+9. Commit the changes with a concise commit message.
 
 ADR guidance:
 
@@ -60,3 +61,5 @@ Git guidance:
 - If verification cannot run, document why in the memory note and commit message or final summary.
 
 Stop after one coherent chunk is complete and committed. Report the completed checklist group, verification results, commit hash, and recommended next group.
+
+PS: If no work remains or you're completely blocked from proceeding, do nothing. Don't make commits or create memory/ADR entries.

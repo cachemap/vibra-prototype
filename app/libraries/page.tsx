@@ -1,0 +1,940 @@
+"use client";
+
+import { FormEvent, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  AudioLines,
+  BookOpen,
+  CheckCircle2,
+  FileAudio,
+  Folder,
+  FolderPlus,
+  Grid2X2,
+  List,
+  MousePointerClick,
+  Plus,
+  Sparkles,
+  Trash2,
+  Waves
+} from "lucide-react";
+import {
+  ActionMenu,
+  Button,
+  ConfirmDialog,
+  Dialog,
+  DialogOverlay,
+  EmptyState,
+  ErrorState,
+  IconButton,
+  LoadingState,
+  MenuItem,
+  PageHeader,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  TextInput
+} from "@/components/primitives";
+import {
+  AppError,
+  asEntityId,
+  toUserFacingErrorMessage,
+  type AssetId,
+  type AssetLibraryFolderId,
+  type AssetLibraryId
+} from "@/domain";
+import type { Asset, AssetLibraryFolder } from "@/domain";
+import type { AssetLibraryFolderNode, AssetLibrarySummary } from "@/data/repositories/project-repository";
+import {
+  useAssetLibrariesQuery,
+  useAssetLibraryTreeQuery,
+  useCreateAssetLibraryFolderMutation,
+  useCreateAssetLibraryMutation,
+  useCreateAssetMutation,
+  useDeleteAssetLibraryMutation,
+  useDeleteAssetLibraryFolderMutation,
+  useDeleteAssetMutation
+} from "@/features/projects/queries";
+import { AudioPreviewIconButton, useAudioPreviewPlayer } from "@/features/projects/audio-preview";
+import {
+  CreateAssetDialog,
+  CreateAssetFolderDialog
+} from "@/features/assets/asset-authoring-dialogs";
+
+const iconMap = {
+  bell: AudioLines,
+  "check-circle": CheckCircle2,
+  folder: Folder,
+  "mouse-pointer-click": MousePointerClick,
+  sparkles: Sparkles
+} as const;
+
+const messageForError = (error: unknown): string => {
+  if (error instanceof AppError) {
+    return `${toUserFacingErrorMessage(error)} ${error.message}`;
+  }
+
+  return "The local asset library could not be updated.";
+};
+
+const formatDate = (value: string) =>
+  new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
+
+const assetExtensionFor = (asset: Asset) =>
+  asset.originalFilename.includes(".") ? `.${asset.originalFilename.split(".").pop()}` : asset.mediaKind;
+
+const assetSourceLabelFor = (asset: Asset) =>
+  asset.playbackUrl.startsWith("blob:") || asset.playbackUrl.includes("/assets/uploaded/")
+    ? `Uploaded ${asset.mediaKind}`
+    : `Demo ${asset.mediaKind}`;
+
+const flattenFolders = (node: AssetLibraryFolderNode): AssetLibraryFolderNode[] => [
+  node,
+  ...node.childFolders.flatMap(flattenFolders)
+];
+
+type FolderDescendantCounts = {
+  assets: number;
+  folders: number;
+};
+
+const countFolderDescendants = (node: AssetLibraryFolderNode): FolderDescendantCounts => {
+  const childCounts = node.childFolders.reduce(
+    (counts: FolderDescendantCounts, child): FolderDescendantCounts => {
+      const next = countFolderDescendants(child);
+
+      return {
+        assets: counts.assets + next.assets,
+        folders: counts.folders + 1 + next.folders
+      };
+    },
+    { assets: node.assets.length, folders: 0 }
+  );
+
+  return childCounts;
+};
+
+const findFolderNode = (
+  node: AssetLibraryFolderNode,
+  folderId: AssetLibraryFolderId
+): AssetLibraryFolderNode | null => {
+  if (node.folder.id === folderId) {
+    return node;
+  }
+
+  for (const child of node.childFolders) {
+    const matched = findFolderNode(child, folderId);
+
+    if (matched) {
+      return matched;
+    }
+  }
+
+  return null;
+};
+
+const pathForFolder = (
+  folders: AssetLibraryFolder[],
+  folderId: AssetLibraryFolderId
+): AssetLibraryFolder[] => {
+  const byId = new Map(folders.map((folder) => [folder.id, folder]));
+  const path: AssetLibraryFolder[] = [];
+  let current = byId.get(folderId) ?? null;
+
+  while (current) {
+    path.unshift(current);
+    current = current.parentFolderId ? byId.get(current.parentFolderId) ?? null : null;
+  }
+
+  return path;
+};
+
+const searchParamsFor = (
+  params: URLSearchParams,
+  values: {
+    folderId?: AssetLibraryFolderId | null;
+    libraryId?: AssetLibraryId | null;
+    view?: "list" | "tiles";
+  }
+) => {
+  const next = new URLSearchParams(params.toString());
+
+  if (values.libraryId !== undefined) {
+    if (values.libraryId) {
+      next.set("library", values.libraryId);
+    } else {
+      next.delete("library");
+    }
+  }
+
+  if (values.folderId !== undefined) {
+    if (values.folderId) {
+      next.set("folder", values.folderId);
+    } else {
+      next.delete("folder");
+    }
+  }
+
+  if (values.view) {
+    next.set("view", values.view);
+  }
+
+  const query = next.toString();
+  return query ? `/libraries?${query}` : "/libraries";
+};
+
+export default function LibrariesPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedLibraryParam = searchParams.get("library");
+  const selectedFolderParam = searchParams.get("folder");
+  const view = searchParams.get("view") === "tiles" ? "tiles" : "list";
+  const librariesQuery = useAssetLibrariesQuery();
+  const selectedLibrarySummary = useMemo(() => {
+    const libraries = librariesQuery.data?.libraries ?? [];
+
+    if (selectedLibraryParam) {
+      const matched = libraries.find((summary) => summary.library.id === selectedLibraryParam);
+
+      if (matched) {
+        return matched;
+      }
+    }
+
+    return libraries[0] ?? null;
+  }, [librariesQuery.data?.libraries, selectedLibraryParam]);
+  const treeQuery = useAssetLibraryTreeQuery(selectedLibrarySummary?.library.id ?? null);
+  const [dialog, setDialog] = useState<"library" | "folder" | "asset" | null>(null);
+  const [libraryName, setLibraryName] = useState("");
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const createLibrary = useCreateAssetLibraryMutation();
+  const createFolder = useCreateAssetLibraryFolderMutation();
+  const createAsset = useCreateAssetMutation();
+  const deleteLibrary = useDeleteAssetLibraryMutation();
+  const deleteFolder = useDeleteAssetLibraryFolderMutation();
+  const deleteAsset = useDeleteAssetMutation();
+  const audioPreview = useAudioPreviewPlayer();
+  const [openActionsKey, setOpenActionsKey] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<
+    | {
+        assetId: AssetId;
+        kind: "asset";
+        name: string;
+      }
+    | {
+        counts: {
+          assets: number;
+          folders: number;
+        };
+        importedByProjectCount: number;
+        kind: "library";
+        libraryId: AssetLibraryId;
+        name: string;
+      }
+    | {
+        counts: {
+          assets: number;
+          folders: number;
+        };
+        folderId: AssetLibraryFolderId;
+        kind: "folder";
+        name: string;
+      }
+    | null
+  >(null);
+  const folders = useMemo(
+    () => (treeQuery.data ? flattenFolders(treeQuery.data.rootFolder).map((node) => node.folder) : []),
+    [treeQuery.data]
+  );
+  const selectedFolder = useMemo(() => {
+    if (!treeQuery.data) {
+      return null;
+    }
+
+    if (selectedFolderParam) {
+      const matched = findFolderNode(
+        treeQuery.data.rootFolder,
+        asEntityId<AssetLibraryFolderId>(selectedFolderParam)
+      );
+
+      if (matched) {
+        return matched;
+      }
+    }
+
+    return treeQuery.data.rootFolder;
+  }, [selectedFolderParam, treeQuery.data]);
+  const folderPath = useMemo(
+    () => (selectedFolder ? pathForFolder(folders, selectedFolder.folder.id) : []),
+    [folders, selectedFolder]
+  );
+  const visibleItems = useMemo(() => {
+    if (!selectedFolder) {
+      return [];
+    }
+
+    return [
+      ...selectedFolder.childFolders.map((node) => ({ kind: "folder" as const, node })),
+      ...selectedFolder.assets.map((asset) => ({ kind: "asset" as const, asset }))
+    ];
+  }, [selectedFolder]);
+  const canCreateFolder = Boolean(selectedFolder);
+  const canUploadAsset = Boolean(selectedFolder);
+  const selectedFolderItemCount =
+    (selectedFolder?.childFolders.length ?? 0) + (selectedFolder?.assets.length ?? 0);
+
+  const goToLibrary = (libraryId: AssetLibraryId) => {
+    router.push(searchParamsFor(searchParams, { libraryId, folderId: null }));
+  };
+
+  const openDeleteLibrary = (summary: AssetLibrarySummary) => {
+    setOpenActionsKey(null);
+    setFeedback(null);
+    setDeleteTarget({
+      counts: {
+        assets: summary.assetCount,
+        folders: summary.folderCount
+      },
+      importedByProjectCount: summary.importedByProjectCount,
+      kind: "library",
+      libraryId: summary.library.id,
+      name: summary.library.name
+    });
+  };
+
+  const goToFolder = (folderId: AssetLibraryFolderId) => {
+    router.push(searchParamsFor(searchParams, { folderId }));
+  };
+
+  const openCreateLibrary = () => {
+    setLibraryName("");
+    setFeedback(null);
+    setDialog("library");
+  };
+
+  const openCreateFolder = () => {
+    setFeedback(null);
+    setDialog("folder");
+  };
+
+  const openCreateAsset = () => {
+    setFeedback(null);
+    setDialog("asset");
+  };
+
+  const openDeleteFolder = (node: AssetLibraryFolderNode) => {
+    setOpenActionsKey(null);
+    setFeedback(null);
+    setDeleteTarget({
+      counts: countFolderDescendants(node),
+      folderId: node.folder.id,
+      kind: "folder",
+      name: node.folder.name
+    });
+  };
+
+  const openDeleteAsset = (asset: Asset) => {
+    setOpenActionsKey(null);
+    setFeedback(null);
+    setDeleteTarget({
+      assetId: asset.id,
+      kind: "asset",
+      name: asset.name
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+
+    setFeedback(null);
+
+    try {
+      if (deleteTarget.kind === "library") {
+        const fallbackLibrary = (librariesQuery.data?.libraries ?? []).find(
+          (summary) => summary.library.id !== deleteTarget.libraryId
+        );
+
+        await deleteLibrary.mutateAsync(deleteTarget.libraryId);
+        setFeedback(`Deleted library ${deleteTarget.name}.`);
+        setDeleteTarget(null);
+
+        if (fallbackLibrary) {
+          goToLibrary(fallbackLibrary.library.id);
+        } else {
+          router.push("/libraries");
+        }
+
+        return;
+      }
+
+      if (deleteTarget.kind === "folder") {
+        const shouldReturnToRoot =
+          Boolean(selectedFolderParam) &&
+          folderPath.some((folder) => folder.id === deleteTarget.folderId);
+
+        await deleteFolder.mutateAsync(deleteTarget.folderId);
+        setFeedback(`Deleted folder ${deleteTarget.name}.`);
+
+        if (shouldReturnToRoot) {
+          router.push(searchParamsFor(searchParams, { folderId: null }));
+        }
+      } else {
+        audioPreview.stop();
+        await deleteAsset.mutateAsync(deleteTarget.assetId);
+        setFeedback(`Deleted asset ${deleteTarget.name}.`);
+      }
+
+      setDeleteTarget(null);
+    } catch (error) {
+      setFeedback(messageForError(error));
+    }
+  };
+
+  const deleteIsPending = deleteLibrary.isPending || deleteFolder.isPending || deleteAsset.isPending;
+
+  const renderActionsMenu = (
+    key: string,
+    label: string,
+    onDelete: () => void,
+    deleteLabel: string
+  ) => (
+    <span className="inline-flex justify-end">
+      <ActionMenu
+        label={label}
+        onOpenChange={(next) => setOpenActionsKey(next ? key : null)}
+        open={openActionsKey === key}
+        size="compact"
+      >
+        <MenuItem destructive icon={<Trash2 className="size-4" />} onClick={onDelete}>
+          {deleteLabel}
+        </MenuItem>
+      </ActionMenu>
+    </span>
+  );
+
+  const handleCreateLibrary = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFeedback(null);
+
+    try {
+      const created = await createLibrary.mutateAsync({ name: libraryName });
+      setDialog(null);
+      setFeedback(`Created ${created.library.name}.`);
+      goToLibrary(created.library.id);
+    } catch (error) {
+      setFeedback(messageForError(error));
+    }
+  };
+
+  const handleCreateFolder = async ({ name, icon }: { name: string; icon: string }) => {
+    if (!selectedLibrarySummary || !selectedFolder) {
+      return;
+    }
+
+    setFeedback(null);
+
+    const folder = await createFolder.mutateAsync({
+      libraryId: selectedLibrarySummary.library.id,
+      parentFolderId: selectedFolder.folder.id,
+      name,
+      icon
+    });
+    setDialog(null);
+    setFeedback(`Created folder ${folder.name}.`);
+    goToFolder(folder.id);
+  };
+
+  const handleCreateAsset = async (input: {
+    name: string;
+    assetId: string;
+    mediaKind: Asset["mediaKind"];
+    originalFilename: string;
+    blob: File;
+    contentType?: string;
+  }) => {
+    if (!selectedLibrarySummary || !selectedFolder) {
+      return;
+    }
+
+    setFeedback(null);
+
+    const asset = await createAsset.mutateAsync({
+      libraryId: selectedLibrarySummary.library.id,
+      folderId: selectedFolder.folder.id,
+      ...input
+    });
+    setDialog(null);
+    setFeedback(`Uploaded ${asset.mediaKind} asset ${asset.name}.`);
+  };
+
+  if (librariesQuery.isLoading) {
+    return (
+      <section className="grid gap-4 px-4 py-5">
+        <PageHeader
+          breadcrumbs={[{ href: "/libraries", label: "Libraries" }]}
+          border={false}
+          className="px-0 py-0"
+        />
+        <LoadingState title="Loading asset libraries" description="Preparing the local library workspace." />
+      </section>
+    );
+  }
+
+  if (librariesQuery.isError) {
+    return (
+      <section className="grid gap-4 px-4 py-5">
+        <PageHeader
+          breadcrumbs={[{ href: "/libraries", label: "Libraries" }]}
+          border={false}
+          className="px-0 py-0"
+        />
+        <ErrorState title="Asset libraries unavailable" description={messageForError(librariesQuery.error)} />
+      </section>
+    );
+  }
+
+  return (
+    <section className="grid min-h-[calc(100vh-64px)] bg-gray-25">
+      {selectedLibrarySummary ? (
+        <div className="px-4 py-5">
+          <PageHeader
+            actions={
+              <>
+                {selectedFolder?.folder.parentFolderId ? (
+                  <ActionMenu
+                    label={`Open actions for ${selectedFolder.folder.name}`}
+                    onOpenChange={(next) =>
+                      setOpenActionsKey(next ? `selected-folder-${selectedFolder.folder.id}` : null)
+                    }
+                    open={openActionsKey === `selected-folder-${selectedFolder.folder.id}`}
+                  >
+                    <MenuItem
+                      destructive
+                      icon={<Trash2 aria-hidden="true" className="size-4" />}
+                      onClick={() => openDeleteFolder(selectedFolder)}
+                    >
+                      Delete folder
+                    </MenuItem>
+                  </ActionMenu>
+                ) : null}
+                <IconButton
+                  icon={Grid2X2}
+                  label="Show tile view"
+                  onClick={() => router.push(searchParamsFor(searchParams, { view: "tiles" }))}
+                />
+                <IconButton
+                  icon={List}
+                  label="Show list view"
+                  onClick={() => router.push(searchParamsFor(searchParams, { view: "list" }))}
+                />
+                <Button
+                  disabled={!canCreateFolder}
+                  leftIcon={<FolderPlus className="size-4" />}
+                  onClick={openCreateFolder}
+                >
+                  New folder
+                </Button>
+                <Button
+                  disabled={!canUploadAsset}
+                  leftIcon={<Plus className="size-4" />}
+                  onClick={openCreateAsset}
+                  variant="primary"
+                >
+                  New asset
+                </Button>
+              </>
+            }
+            breadcrumbs={[
+              { label: "Libraries", href: "/libraries" },
+              ...folderPath.map((folder) => ({
+                label: folder.name,
+                href: searchParamsFor(searchParams, { folderId: folder.id })
+              }))
+            ]}
+            border={false}
+            className="px-0 py-0"
+            subtitle={`${selectedFolder?.folder.name ?? "Root"} contains ${selectedFolderItemCount} item${
+              selectedFolderItemCount === 1 ? "" : "s"
+            }.`}
+            title={selectedLibrarySummary.library.name}
+          />
+        </div>
+      ) : null}
+
+      <div className="grid min-h-0 md:grid-cols-[268px_1fr]">
+        <aside className="border-b border-gray-300 bg-gray-50 px-4 py-5 md:border-b-0 md:border-r">
+        <div className="grid gap-4">
+          <div>
+            <h1 className="text-md font-semibold text-gray-700">Asset Libraries</h1>
+            <p className="mt-1 text-xs text-gray-500">Reusable audio and haptic source material.</p>
+          </div>
+          <TextInput
+            id="library-search"
+            placeholder="Search"
+            aria-label="Search asset libraries"
+            className="pl-9"
+          />
+          <div className="flex items-center justify-between text-sm font-semibold text-gray-700">
+            <span>Libraries</span>
+            <IconButton icon={Plus} label="Create library" onClick={openCreateLibrary} size="compact" />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-1">
+            {(librariesQuery.data?.libraries ?? []).map((summary) => {
+              const selected = summary.library.id === selectedLibrarySummary?.library.id;
+
+              return (
+                <div
+                  className={`grid grid-cols-[1fr_auto] items-start gap-2 rounded-xl border px-3 py-3 text-left transition-colors ${
+                    selected
+                      ? "border-gray-200 bg-gray-200"
+                      : "border-gray-300 bg-gray-25 hover:bg-gray-100"
+                  }`}
+                  key={summary.library.id}
+                >
+                  <button
+                    className="min-w-0 text-left"
+                    onClick={() => goToLibrary(summary.library.id)}
+                    type="button"
+                  >
+                    <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <BookOpen className="size-4 shrink-0 text-gray-600" strokeWidth={1.8} />
+                      <span className="truncate">{summary.library.name}</span>
+                    </span>
+                    <span className="mt-1 block text-xs text-gray-500">
+                      {summary.assetCount} assets, {summary.folderCount} folders
+                    </span>
+                    <span className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-medium text-gray-600">
+                      {summary.defaultForProject ? (
+                        <span className="rounded-lg bg-gray-100 px-2 py-1">Default</span>
+                      ) : null}
+                      {summary.importedByProjectCount > 0 ? (
+                        <span className="rounded-lg bg-gray-100 px-2 py-1">Imported</span>
+                      ) : null}
+                    </span>
+                  </button>
+                  {summary.defaultForProject
+                    ? null
+                    : renderActionsMenu(
+                        `library-${summary.library.id}`,
+                        `Open actions for ${summary.library.name}`,
+                        () => openDeleteLibrary(summary),
+                        "Delete library"
+                      )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </aside>
+
+        <main className="grid min-w-0 content-start gap-5 px-4 py-5 md:px-6">
+        {selectedLibrarySummary ? (
+          <>
+            {feedback ? <p className="text-sm font-medium text-gray-600" role="status">{feedback}</p> : null}
+            {audioPreview.errorMessage ? (
+              <p className="text-sm font-medium text-gray-600">{audioPreview.errorMessage}</p>
+            ) : null}
+
+            {treeQuery.isLoading ? (
+              <LoadingState title="Loading library tree" description="Reading folders and assets from IndexedDB." />
+            ) : null}
+            {treeQuery.isError ? (
+              <ErrorState title="Library tree unavailable" description={messageForError(treeQuery.error)} />
+            ) : null}
+
+            {!treeQuery.isLoading && !treeQuery.isError && visibleItems.length === 0 ? (
+              <EmptyState
+                action={
+                  <Button disabled={!canUploadAsset} onClick={openCreateAsset} variant="primary">
+                    Create asset
+                  </Button>
+                }
+                title="This folder is empty"
+                description="Upload an audio or haptic asset to shape the reusable library."
+              />
+            ) : null}
+
+            {!treeQuery.isLoading && !treeQuery.isError && visibleItems.length > 0 && view === "list" ? (
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeaderCell>Name</TableHeaderCell>
+                    <TableHeaderCell>Type</TableHeaderCell>
+                    <TableHeaderCell>Library</TableHeaderCell>
+                    <TableHeaderCell>Last modified</TableHeaderCell>
+                    <TableHeaderCell>Preview</TableHeaderCell>
+                    <TableHeaderCell className="w-12 text-right">Actions</TableHeaderCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {visibleItems.map((item) => {
+                    if (item.kind === "folder") {
+                      const Icon = iconMap[item.node.folder.icon as keyof typeof iconMap] ?? Folder;
+
+                      return (
+                        <TableRow
+                          className="cursor-pointer hover:bg-gray-50"
+                          key={item.node.folder.id}
+                          onClick={() => goToFolder(item.node.folder.id)}
+                        >
+                          <TableCell className="font-medium">
+                            <span className="flex items-center gap-2">
+                              <Icon className="size-4 text-gray-600" strokeWidth={1.8} />
+                              {item.node.folder.name}
+                            </span>
+                          </TableCell>
+                          <TableCell>File folder</TableCell>
+                          <TableCell>Folder</TableCell>
+                          <TableCell>-</TableCell>
+                          <TableCell>-</TableCell>
+                          <TableCell>
+                            {renderActionsMenu(
+                              `folder-${item.node.folder.id}`,
+                              `Open actions for ${item.node.folder.name}`,
+                              () => openDeleteFolder(item.node),
+                              "Delete folder"
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+
+                    const Icon = item.asset.mediaKind === "audio" ? FileAudio : Waves;
+
+                    return (
+                      <TableRow key={item.asset.id}>
+                        <TableCell className="font-medium">
+                          <span className="flex items-center gap-2">
+                            <Icon className="size-4 text-gray-600" strokeWidth={1.8} />
+                            {item.asset.name}
+                          </span>
+                        </TableCell>
+                        <TableCell>{assetExtensionFor(item.asset)}</TableCell>
+                        <TableCell>{assetSourceLabelFor(item.asset)}</TableCell>
+                        <TableCell>{formatDate(item.asset.uploadedAt)}</TableCell>
+                        <TableCell>
+                          {item.asset.mediaKind === "audio" ? (
+                            <AudioPreviewIconButton
+                              activeKey={audioPreview.activeKey}
+                              item={{
+                                asset: item.asset,
+                                isEnabled: true,
+                                key: `library-${item.asset.id}`,
+                                startOffset: 0
+                              }}
+                              onPlay={(previewItem) => void audioPreview.playItem(previewItem)}
+                              onStop={audioPreview.stop}
+                            />
+                          ) : (
+                            <span className="text-xs text-gray-500">Visual only</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {renderActionsMenu(
+                            `asset-${item.asset.id}`,
+                            `Open actions for ${item.asset.name}`,
+                            () => openDeleteAsset(item.asset),
+                            "Delete asset"
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            ) : null}
+
+            {!treeQuery.isLoading && !treeQuery.isError && visibleItems.length > 0 && view === "tiles" ? (
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 pt-2">
+                {visibleItems.map((item) => {
+                  if (item.kind === "folder") {
+                    const Icon = iconMap[item.node.folder.icon as keyof typeof iconMap] ?? Folder;
+                    const itemCount = item.node.childFolders.length + item.node.assets.length;
+
+                    return (
+                      <div
+                        className="grid min-h-[128px] content-between gap-3 rounded-lg border border-gray-300 bg-gray-25 px-3 py-3 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        key={item.node.folder.id}
+                      >
+                        <span className="flex min-w-0 items-start justify-between gap-2">
+                          <button
+                            className="flex min-w-0 flex-1 items-start gap-2 text-left"
+                            onClick={() => goToFolder(item.node.folder.id)}
+                            type="button"
+                          >
+                            <Icon className="size-5 shrink-0 text-gray-700" strokeWidth={1.6} />
+                            <span className="min-w-0">
+                              <span className="block truncate font-medium">{item.node.folder.name}</span>
+                              <span className="block text-xs text-gray-500">
+                                {itemCount} item{itemCount === 1 ? "" : "s"}
+                              </span>
+                            </span>
+                          </button>
+                          {renderActionsMenu(
+                            `folder-tile-${item.node.folder.id}`,
+                            `Open actions for ${item.node.folder.name}`,
+                            () => openDeleteFolder(item.node),
+                            "Delete folder"
+                          )}
+                        </span>
+                        <span className="flex min-w-0 items-center">
+                          <span className="truncate rounded-lg bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                            Folder
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  const Icon = item.asset.mediaKind === "audio" ? FileAudio : Waves;
+
+                  return (
+                    <div
+                      className="grid min-h-[156px] content-between gap-3 rounded-lg border border-gray-300 bg-gray-25 px-3 py-3 text-left text-sm text-gray-700"
+                      key={item.asset.id}
+                    >
+                      <span className="flex min-w-0 items-start justify-between gap-2">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Icon className="size-5 shrink-0 text-gray-700" strokeWidth={1.6} />
+                          <span className="truncate rounded-lg bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                            {assetExtensionFor(item.asset)}
+                          </span>
+                        </span>
+                        {renderActionsMenu(
+                          `asset-tile-${item.asset.id}`,
+                          `Open actions for ${item.asset.name}`,
+                          () => openDeleteAsset(item.asset),
+                          "Delete asset"
+                        )}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{item.asset.name}</span>
+                        <span className="block truncate text-xs text-gray-500">{assetSourceLabelFor(item.asset)}</span>
+                        <span className="block truncate text-xs text-gray-500">Modified {formatDate(item.asset.uploadedAt)}</span>
+                      </span>
+                      <span className="flex min-h-[30px] items-center">
+                        {item.asset.mediaKind === "audio" ? (
+                          <AudioPreviewIconButton
+                            activeKey={audioPreview.activeKey}
+                            item={{
+                              asset: item.asset,
+                              isEnabled: true,
+                              key: `library-${item.asset.id}`,
+                              startOffset: 0
+                            }}
+                            onPlay={(previewItem) => void audioPreview.playItem(previewItem)}
+                            onStop={audioPreview.stop}
+                          />
+                        ) : (
+                          <span className="text-xs font-normal text-gray-500">Visual only</span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <EmptyState
+            action={<Button onClick={openCreateLibrary} variant="primary">Create library</Button>}
+            title="No asset libraries"
+            description="Create a reusable audio/haptic library to start the workspace."
+          />
+        )}
+        </main>
+      </div>
+
+      {dialog === "library" ? (
+        <DialogOverlay>
+          <Dialog
+            actions={
+              <>
+                <Button onClick={() => setDialog(null)}>Cancel</Button>
+                <Button form="create-library-form" type="submit" variant="primary">Create</Button>
+              </>
+            }
+            className="w-full max-w-md"
+            title="New Library"
+          >
+            <form className="grid gap-4" id="create-library-form" onSubmit={handleCreateLibrary}>
+              <TextInput
+                id="library-name"
+                label="Name"
+                onChange={(event) => setLibraryName(event.target.value)}
+                required
+                value={libraryName}
+              />
+              {feedback ? <p className="text-xs text-gray-600">{feedback}</p> : null}
+            </form>
+          </Dialog>
+        </DialogOverlay>
+      ) : null}
+
+      {dialog === "folder" ? (
+        <DialogOverlay>
+          <CreateAssetFolderDialog
+            onClose={() => setDialog(null)}
+            onCreate={handleCreateFolder}
+            open={dialog === "folder"}
+          />
+        </DialogOverlay>
+      ) : null}
+
+      {dialog === "asset" ? (
+        <DialogOverlay>
+          <CreateAssetDialog
+            onClose={() => setDialog(null)}
+            onCreate={handleCreateAsset}
+            open={dialog === "asset"}
+          />
+        </DialogOverlay>
+      ) : null}
+
+      {deleteTarget ? (
+        <ConfirmDialog
+          confirmLabel={
+            deleteTarget.kind === "library"
+              ? "Delete library"
+              : deleteTarget.kind === "folder"
+                ? "Delete folder"
+                : "Delete asset"
+          }
+          disabled={deleteIsPending}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => void handleConfirmDelete()}
+          title={
+            deleteTarget.kind === "library"
+              ? "Delete library?"
+              : deleteTarget.kind === "folder"
+                ? "Delete folder?"
+                : "Delete asset?"
+          }
+          cascadeSummary={
+            deleteTarget.kind === "library"
+              ? `${deleteTarget.counts.folders} folder${
+                  deleteTarget.counts.folders === 1 ? "" : "s"
+                }, ${deleteTarget.counts.assets} asset${
+                  deleteTarget.counts.assets === 1 ? "" : "s"
+                }, and ${deleteTarget.importedByProjectCount} project import${
+                  deleteTarget.importedByProjectCount === 1 ? "" : "s"
+                }.`
+              : deleteTarget.kind === "folder"
+              ? `${deleteTarget.counts.folders} child folder${
+                  deleteTarget.counts.folders === 1 ? "" : "s"
+                } and ${deleteTarget.counts.assets} asset${deleteTarget.counts.assets === 1 ? "" : "s"}.`
+              : "Stored file data and any scheduled playback rows that reference this asset."
+          }
+        >
+          {deleteTarget.kind === "library"
+            ? `This removes ${deleteTarget.name} from the asset library list.`
+            : `This removes ${deleteTarget.name} from the selected asset library.`}
+        </ConfirmDialog>
+      ) : null}
+    </section>
+  );
+}

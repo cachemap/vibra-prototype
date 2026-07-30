@@ -8,9 +8,10 @@ Single source of truth for the Vibra conceptual domain model. Agent instructions
 
 Domain-modeling sentences go here. Write business rules in plain language; the agent translates them into diagram updates.
 
-- Each user upon signing in will see a "Projects" view of project folders that may contain other project folders which may at the leaf nodes contain Projects.
+- Each user upon signing in will see a "Projects" view of project folders that may contain other project folders and Projects.
 - Folders can be shared with other users.
-- A leaf folder can contain no projects or folders when initially created.
+- A ProjectFolder may contain both child ProjectFolders and Projects.
+- A Project may belong to a ProjectFolder or sit at the root of the Projects view.
 - Folders and Projects should have creation date timestamps.
 - A Project configures zero or more Devices (e.g. iPhone 16 Pro, iPhone 16e) on Platforms (iOS, Android, etc.). Each Device owns that Project's Collections and CollisionMatrix for that target. Collections are groups of Events and cannot contain other Collections.
 - An Event is generically a "sound trigger": one or more sounds or haptic files scheduled to play in a certain order when the user takes a specific action.
@@ -19,7 +20,7 @@ Domain-modeling sentences go here. Write business rules in plain language; the a
 - An AssetLibrary consists of uploaded Assets, exists independently of Projects, and can be imported into a Project by linking it.
 - Each Project has exactly one default AssetLibrary, created when the Project is created. Other AssetLibraries can be created independently, filled with Assets, and imported into a Project—including another Project's default library.
 - An Event has an eventType drawn from the fixed set { Button, Toggle, Banner, Toast }.
-- An AssetLibrary contains exactly one top-level folder by default; folders may nest arbitrarily, and leaf nodes are folders or Asset files (audio and haptic).
+- An AssetLibrary contains exactly one top-level folder by default; folders may nest arbitrarily and may contain both child folders and Asset files (audio and haptic).
 - An AssetLibraryFolder has a name and an icon used for display.
 - An AssetLibrary has a name.
 - Collections, Projects, and ProjectFolders have names.
@@ -45,8 +46,8 @@ Domain-modeling sentences go here. Write business rules in plain language; the a
 | Concept | Attributes | Notes |
 |---|---|---|
 | User | preferredName | Signs in; the Projects view shows folders shared with them. |
-| ProjectFolder | name, createdAt | A node in the folder hierarchy; may nest other folders or hold Projects at leaves. |
-| Project | name, createdAt | Leaf content inside a ProjectFolder. |
+| ProjectFolder | name, createdAt | A node in the folder hierarchy; may contain child folders and Projects. |
+| Project | name, createdAt | Content inside a ProjectFolder or at the Projects root. |
 | Platform | name | Platform catalog entry; `name` is iOS, Windows, Mac, Linux, or Android. |
 | Device | name, createdAt, updatedAt, isEnabled | A named target on a Platform within a Project; owns Collections and a CollisionMatrix. |
 | CollisionMatrix | | Resolves playback collisions between Events in one Device; initially empty. |
@@ -70,7 +71,7 @@ Domain-modeling sentences go here. Write business rules in plain language; the a
 |---|---|---|---|---|---|
 | User | has access to | ProjectFolder | 0..* | 0..* | Association |
 | ProjectFolder | contains | ProjectFolder | 0..* | 1 | Composition |
-| ProjectFolder | contains | Project | 0..* | 1 | Composition |
+| ProjectFolder | contains | Project | 0..* | 0..1 | Composition |
 | Project | has | Device | 0..* | 1 | Composition |
 | Device | is on | Platform | 1 | 0..* | Association |
 | Device | owns | Collection | 0..* | 1 | Composition |
@@ -101,7 +102,7 @@ Domain-modeling sentences go here. Write business rules in plain language; the a
 
 - **User → ProjectFolder (`has access to`):** A User has access to zero or more ProjectFolders; a ProjectFolder is shared with zero or more Users.
 - **ProjectFolder → ProjectFolder (`contains`):** A ProjectFolder contains zero or more child ProjectFolders; a child ProjectFolder is contained in exactly one parent ProjectFolder.
-- **ProjectFolder → Project (`contains`):** A ProjectFolder contains zero or more Projects; a Project belongs to exactly one ProjectFolder.
+- **ProjectFolder → Project (`contains`):** A ProjectFolder contains zero or more Projects; a Project belongs to zero or one ProjectFolder. A Project with no ProjectFolder is a root-level Project in the Projects view.
 - **Project → Device (`has`):** A Project has zero or more Devices; a Device belongs to exactly one Project.
 - **Device → Platform (`is on`):** A Device is on exactly one Platform; a Platform has zero or more Devices configured across Projects.
 - **Device → Collection (`owns`):** A Device owns zero or more Collections; a Collection belongs to exactly one Device.
@@ -147,7 +148,7 @@ classDiagram
     }
     User "0..*" --> "0..*" ProjectFolder : has access to
     ProjectFolder "1" *-- "0..*" ProjectFolder : contains
-    ProjectFolder "1" *-- "0..*" Project : contains
+    ProjectFolder "0..1" *-- "0..*" Project : contains
     Project "1" *-- "0..*" Device : has
     Project "1" *-- "1" AssetLibrary : has default
     Project "0..*" --> "0..*" AssetLibrary : imports
@@ -231,8 +232,9 @@ classDiagram
 Rules the diagram cannot express:
 
 - The signed-in user's Projects view shows ProjectFolders shared with them and the nested folder tree beneath each accessible folder.
-- A ProjectFolder that contains Projects is a leaf: it must not also contain child ProjectFolders.
-- A newly created leaf ProjectFolder may contain no Projects and no child ProjectFolders.
+- A ProjectFolder may contain both child ProjectFolders and Projects.
+- A newly created ProjectFolder may contain no Projects and no child ProjectFolders.
+- A root-level Project has no containing ProjectFolder.
 - Each Device for a Project is edited independently of the Project's other Devices.
 - A Project has at most one Device per `name` on a given Platform.
 - A disabled Device is excluded from export and mobile-app playback.
@@ -261,11 +263,21 @@ Rules the diagram cannot express:
 - An Event's `eventType` must be one of: Button, Toggle, Banner, Toast.
 - An Asset's `mediaKind` must be audio or haptic.
 - A default AssetLibrary is created when its Project is created, with one top-level root folder.
-- An AssetLibraryFolder that contains Assets is a leaf: it must not also contain child AssetLibraryFolders.
-- A leaf AssetLibraryFolder may contain no Assets and no child folders.
+- An AssetLibraryFolder may contain both child AssetLibraryFolders and Assets.
+- A newly created AssetLibraryFolder may contain no Assets and no child folders.
 - A Project's default AssetLibrary is always available to that Project without being listed as an import.
 - A Project must not import its own default AssetLibrary.
 - A TriggerPlayback may only play an Asset from the Project (via Event → Collection → Device → Project) default AssetLibrary or an AssetLibrary imported by that Project.
+- Deleting a ProjectFolder deletes its child ProjectFolders and Projects recursively.
+- Deleting a Project deletes its Devices, CollisionMatrices, Collections, Events, default AssetLibrary, import links, and SharingLinks.
+- Deleting a Device deletes its Collections, Events, and CollisionMatrix records.
+- Deleting a Collection deletes its Events.
+- Deleting an Event deletes its EventTriggers, TriggerPlaybacks, CollisionMatrix references, CollisionMatrixEntries that reference it, and SharingLinks.
+- Deleting an AssetLibrary deletes its folder tree and Assets, except a Project default AssetLibrary is deleted only with its Project.
+- Deleting an AssetLibraryFolder deletes child folders and Assets recursively.
+- Deleting an Asset deletes its stored file data and TriggerPlaybacks that reference it.
+- Deleting a CollisionMatrix row or column deletes entries that depend on that row or column.
+- Deleting a CollisionMatrixEntry deletes SharingLinks generated for it.
 
 ---
 
@@ -313,6 +325,9 @@ Unresolved product decisions:
 | 2026-07-26 | Added Asset `playbackUrl`. |
 | 2026-07-26 | Renamed InterruptionMatrix/InterruptionMatrixEntry to CollisionMatrix/CollisionMatrixEntry throughout. |
 | 2026-07-26 | Added SharingLink; Event generates 0..* links (1+ when shared). |
+| 2026-07-28 | Relaxed ProjectFolder containment so folders may contain both child folders and Projects; Projects may also sit at the Projects root. |
+| 2026-07-28 | Relaxed AssetLibraryFolder containment so asset folders may contain both child folders and Assets. |
+| 2026-07-28 | Added delete cascade constraints for folders, projects, devices, collections, events, assets, libraries, matrix entries, and sharing links. |
 | 2026-07-26 | SharingLinks also generated by Project; each link targets Project or Event for mobile-app playback. |
 | 2026-07-26 | SharingLinks can target a CollisionMatrixEntry (playing/incoming Event pair in a CollisionMatrix). |
 | 2026-07-26 | Replaced EventTrigger→Asset with TriggerPlayback; supports audio/haptic/both per trigger with `startOffset`. |

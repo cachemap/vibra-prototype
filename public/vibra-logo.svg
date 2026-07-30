@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 368" role="img" aria-labelledby="logo-title logo-desc">
+  <title id="logo-title">Layered V logo</title>
+  <desc id="logo-desc">Five nested violet V-shaped lines with rounded centers and a light-to-violet vertical gradient.</desc>
+  <defs>
+    <linearGradient id="logo-gradient" x1="0" y1="10" x2="0" y2="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FAF9FF"/>
+      <stop offset="1" stop-color="#7C5CF2"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#logo-gradient)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 10 L194 340 Q220 370 246 340 L436 10"/>
+    <path d="M4 10 L192 297 Q220 327 248 297 L436 10"/>
+    <path d="M4 10 L192 253 Q220 283 248 253 L436 10"/>
+    <path d="M4 10 L190 209 Q220 239 250 209 L436 10"/>
+    <path d="M4 10 L190 165 Q220 195 250 165 L436 10"/>
+  </g>
+</svg>

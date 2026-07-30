@@ -259,7 +259,7 @@ Rules:
 - Sound and haptic assets can share a folder.
 - Reference count is primary metadata.
 - Envelope display is read-only.
-- Asset folders with assets are leaf folders.
+- Asset folders may contain both child folders and assets.
 
 Useful computed views for later prototype polish:
 
