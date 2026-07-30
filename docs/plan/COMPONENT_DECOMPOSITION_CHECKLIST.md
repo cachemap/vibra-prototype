@@ -313,17 +313,17 @@ Stage gate:
 
 Goal: decompose without unifying with the project assets tab.
 
-- [ ] `features/libraries/use-library-selection.ts` — owns `?library=`, `?folder=`, `?view=` plus `goToFolder`, `goToLibrary`, `setView` over `lib/search-params.ts`; resolves `folderPath`, `selectedFolder`, `selectedLibrary`, `visibleItems` by calling the queries itself. Returns a plain object — **no context** (depth 2).
-- [ ] `library-rail.tsx`, `library-toolbar.tsx` — preserve the non-functional search input verbatim (no `value`, no `onChange`).
-- [ ] `library-asset-table.tsx` (669-757) and `library-asset-tiles.tsx` (759-848) — two branches sharing `asset-cells.tsx`, keeping all 6 columns and the tile layout as-is.
-- [ ] `library-dialogs.tsx` (860-884 via `FormDialog`), `library-delete-confirm.tsx` (906-945, nested ternaries becoming a local `switch`).
-- [ ] Keep the existing `LibrariesPage` Suspense wrapper. Reduce the page to ~100 lines.
+- [x] `features/libraries/use-library-selection.ts` — owns `?library=`, `?folder=`, `?view=` plus `goToFolder`, `goToLibrary`, `setView` over `lib/search-params.ts`; resolves `folderPath`, `selectedFolder`, `selectedLibrary`, `visibleItems` by calling the queries itself. Returns a plain object — **no context** (depth 2).
+- [x] `library-rail.tsx`, `library-toolbar.tsx` — preserve the non-functional search input verbatim (no `value`, no `onChange`).
+- [x] `library-asset-table.tsx` (669-757) and `library-asset-tiles.tsx` (759-848) — two branches sharing `asset-cells.tsx`, keeping all 6 columns and the tile layout as-is.
+- [x] `library-dialogs.tsx` (860-884 via `FormDialog`), `library-delete-confirm.tsx` (906-945, nested ternaries becoming a local `switch`).
+- [x] Keep the existing `LibrariesPage` Suspense wrapper. Reduce the page to ~100 lines.
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] Toggle list and tile views; create a library, a folder, and an asset; delete each of the 3 target kinds; confirm cascade copy.
-- [ ] Re-capture and diff `libraries-{list,tile}-{desktop,mobile}` and `asset-library-explorer-{list,tile}-view.png`.
+- [x] Four gates green.
+- [x] Toggle list and tile views; create a library, a folder, and an asset; delete each of the 3 target kinds; confirm cascade copy.
+- [x] Re-capture and diff `libraries-{list,tile}-{desktop,mobile}` and `asset-library-explorer-{list,tile}-view.png`.
 
 ---
 
