@@ -46,11 +46,9 @@ import {
   useProjectTreeQuery
 } from "@/features/projects/queries";
 import {
-  AppError,
   asEntityId,
   eventTypes,
   groupDevicePresetsByFormFactor,
-  toUserFacingErrorMessage,
   type DevicePreset,
   type EventType,
   type PlatformId,
@@ -58,6 +56,11 @@ import {
   type ProjectId
 } from "@/domain";
 import type { CreatedProjectAggregate, ProjectFolderNode } from "@/data/repositories/project-repository";
+import { messageForError, projectsErrorFallback } from "@/lib/errors";
+import { readAndClearFlashMessage } from "@/lib/flash-message";
+import { formatProjectDate } from "@/lib/format";
+import { pluralSuffix } from "@/lib/plural";
+import { hrefWithParams } from "@/lib/search-params";
 
 type Row =
   | {
@@ -130,22 +133,6 @@ const findPath = (
 const countProjects = (node: ProjectFolderNode): number =>
   node.projects.length + node.childFolders.reduce((total, child) => total + countProjects(child), 0);
 
-const formatDate = (value: string): string =>
-  new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC"
-  }).format(new Date(value));
-
-const messageForError = (error: unknown): string => {
-  if (error instanceof AppError) {
-    return `${toUserFacingErrorMessage(error)} ${error.message}`;
-  }
-
-  return "The local demo data could not be updated.";
-};
-
 const memberInitials = ["D", "P", "A"];
 
 const starterEventGroups = [
@@ -203,15 +190,7 @@ function ProjectsWorkspace() {
   const [selectedPresetIds, setSelectedPresetIds] = useState<string[]>([]);
   const [selectedStarterEventTypes, setSelectedStarterEventTypes] = useState<EventType[]>([]);
   const [starterEventSearch, setStarterEventSearch] = useState("");
-  const [feedback, setFeedback] = useState<string | null>(() => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-
-    const persisted = window.sessionStorage.getItem("vibra.projects.feedback");
-    window.sessionStorage.removeItem("vibra.projects.feedback");
-    return persisted;
-  });
+  const [feedback, setFeedback] = useState<string | null>(() => readAndClearFlashMessage());
   const [openActionRowId, setOpenActionRowId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const treeQuery = useProjectTreeQuery(DEMO_USER_ID);
@@ -299,7 +278,7 @@ function ProjectsWorkspace() {
     [selectedPresetIds]
   );
   const folderHrefFor = (folderId: ProjectFolderId | null) =>
-    folderId ? `/projects?folder=${folderId}` : "/projects";
+    hrefWithParams("/projects", searchParams, { folder: folderId });
 
   const openProjectDialog = () => {
     setProjectName("");
@@ -343,7 +322,7 @@ function ProjectsWorkspace() {
       setFeedback(`Created folder ${folder.name}.`);
       router.push(`/projects?folder=${folder.id}`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, projectsErrorFallback));
     }
   };
 
@@ -377,7 +356,7 @@ function ProjectsWorkspace() {
           : `/projects/${created.project.id}`
       );
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, projectsErrorFallback));
     }
   };
 
@@ -400,7 +379,7 @@ function ProjectsWorkspace() {
       setDeleteTarget(null);
       setOpenActionRowId(null);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, projectsErrorFallback));
     }
   };
 
@@ -467,14 +446,14 @@ function ProjectsWorkspace() {
         <ErrorState
           action={<Button onClick={() => void treeQuery.refetch()}>Retry</Button>}
           title="Project tree could not load"
-          description={messageForError(treeQuery.error)}
+          description={messageForError(treeQuery.error, projectsErrorFallback)}
         />
       </section>
     );
   }
 
   const title = currentFolder?.folder.name ?? "Projects";
-  const rowCountLabel = rows.length === 1 ? "1 row" : `${rows.length} rows`;
+  const rowCountLabel = `${rows.length} row${pluralSuffix(rows.length)}`;
   const breadcrumbs = [
     { href: "/projects", label: "Projects" },
     ...folderPath.map((node) => ({
@@ -746,7 +725,7 @@ function ProjectsWorkspace() {
                     </TableCell>
                     <TableCell>{row.kind}</TableCell>
                     <TableCell>{row.stat}</TableCell>
-                    <TableCell>{formatDate(row.createdAt)}</TableCell>
+                    <TableCell>{formatProjectDate(row.createdAt)}</TableCell>
                     <TableCell>
                       <MemberStack />
                     </TableCell>
@@ -776,7 +755,7 @@ function ProjectsWorkspace() {
                   <span className="min-w-0">
                     <span className="font-medium text-gray-700">{row.kind}</span>
                   </span>
-                  <span className="min-w-0 text-right">{formatDate(row.createdAt)}</span>
+                  <span className="min-w-0 text-right">{formatProjectDate(row.createdAt)}</span>
                   <span className="min-w-0 truncate">{row.stat}</span>
                   <span className="flex min-w-0 justify-end">
                     <MemberStack />

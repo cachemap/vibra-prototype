@@ -82,18 +82,18 @@ Stage gate:
 
 Goal: delete the duplicated helpers. Mechanical, but every string needs eyes.
 
-- [ ] Replace all 5 `messageForError` copies; pass the matching named fallback at each call site.
-- [ ] Replace both `formatDate` copies with `formatAssetDate` / `formatProjectDate` — do not converge them.
-- [ ] Replace both `formatSeconds` copies (`share:39`, `events:81`).
-- [ ] Replace all 12 inline `x === 1 ? "" : "s"` with `pluralSuffix`.
-- [ ] Replace `searchParamsFor` (project detail 138-162), `searchParamsFor` (libraries 154-186), and `folderHrefFor` (projects 301-302) with `hrefWithParams`.
-- [ ] Replace `hrefWithFeedback` (events 87-94), the `sessionStorage` write (project detail 1031-1032), and the lazy read initializer (projects 206-214) with the `lib/flash-message.ts` helpers.
-- [ ] Diff-review every error fallback and both date option sets against Stage 1's transcription.
+- [x] Replace all 5 `messageForError` copies; pass the matching named fallback at each call site.
+- [x] Replace both `formatDate` copies with `formatAssetDate` / `formatProjectDate` — do not converge them.
+- [x] Replace both `formatSeconds` copies (`share:39`, `events:81`).
+- [x] Replace all 12 inline `x === 1 ? "" : "s"` with `pluralSuffix`.
+- [x] Replace `searchParamsFor` (project detail 138-162), `searchParamsFor` (libraries 154-186), and `folderHrefFor` (projects 301-302) with `hrefWithParams`.
+- [x] Replace `hrefWithFeedback` (events 87-94), the `sessionStorage` write (project detail 1031-1032), and the lazy read initializer (projects 206-214) with the `lib/flash-message.ts` helpers.
+- [x] Diff-review every error fallback and both date option sets against Stage 1's transcription.
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] Cross-page flash message verified in the browser through **both** channels: delete an event from the event page (`?feedback=`), delete a project (`sessionStorage`).
+- [x] Four gates green.
+- [x] Cross-page flash message verified in the browser through **both** channels: delete an event from the event page (`?feedback=`), delete a project (`sessionStorage`).
 
 ---
 

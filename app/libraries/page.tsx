@@ -38,9 +38,7 @@ import {
   TextInput
 } from "@/components/primitives";
 import {
-  AppError,
   asEntityId,
-  toUserFacingErrorMessage,
   type AssetId,
   type AssetLibraryFolderId,
   type AssetLibraryId
@@ -62,6 +60,10 @@ import {
   CreateAssetDialog,
   CreateAssetFolderDialog
 } from "@/features/assets/asset-authoring-dialogs";
+import { libraryErrorFallback, messageForError } from "@/lib/errors";
+import { formatAssetDate } from "@/lib/format";
+import { pluralSuffix } from "@/lib/plural";
+import { hrefWithParams } from "@/lib/search-params";
 
 const iconMap = {
   bell: AudioLines,
@@ -70,17 +72,6 @@ const iconMap = {
   "mouse-pointer-click": MousePointerClick,
   sparkles: Sparkles
 } as const;
-
-const messageForError = (error: unknown): string => {
-  if (error instanceof AppError) {
-    return `${toUserFacingErrorMessage(error)} ${error.message}`;
-  }
-
-  return "The local asset library could not be updated.";
-};
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
 
 const assetExtensionFor = (asset: Asset) =>
   asset.originalFilename.includes(".") ? `.${asset.originalFilename.split(".").pop()}` : asset.mediaKind;
@@ -149,40 +140,6 @@ const pathForFolder = (
   }
 
   return path;
-};
-
-const searchParamsFor = (
-  params: URLSearchParams,
-  values: {
-    folderId?: AssetLibraryFolderId | null;
-    libraryId?: AssetLibraryId | null;
-    view?: "list" | "tiles";
-  }
-) => {
-  const next = new URLSearchParams(params.toString());
-
-  if (values.libraryId !== undefined) {
-    if (values.libraryId) {
-      next.set("library", values.libraryId);
-    } else {
-      next.delete("library");
-    }
-  }
-
-  if (values.folderId !== undefined) {
-    if (values.folderId) {
-      next.set("folder", values.folderId);
-    } else {
-      next.delete("folder");
-    }
-  }
-
-  if (values.view) {
-    next.set("view", values.view);
-  }
-
-  const query = next.toString();
-  return query ? `/libraries?${query}` : "/libraries";
 };
 
 export default function LibrariesPage() {
@@ -294,7 +251,7 @@ function LibrariesWorkspace() {
     (selectedFolder?.childFolders.length ?? 0) + (selectedFolder?.assets.length ?? 0);
 
   const goToLibrary = (libraryId: AssetLibraryId) => {
-    router.push(searchParamsFor(searchParams, { libraryId, folderId: null }));
+    router.push(hrefWithParams("/libraries", searchParams, { library: libraryId, folder: null }));
   };
 
   const openDeleteLibrary = (summary: AssetLibrarySummary) => {
@@ -313,7 +270,7 @@ function LibrariesWorkspace() {
   };
 
   const goToFolder = (folderId: AssetLibraryFolderId) => {
-    router.push(searchParamsFor(searchParams, { folderId }));
+    router.push(hrefWithParams("/libraries", searchParams, { folder: folderId }));
   };
 
   const openCreateLibrary = () => {
@@ -388,7 +345,7 @@ function LibrariesWorkspace() {
         setFeedback(`Deleted folder ${deleteTarget.name}.`);
 
         if (shouldReturnToRoot) {
-          router.push(searchParamsFor(searchParams, { folderId: null }));
+          router.push(hrefWithParams("/libraries", searchParams, { folder: null }));
         }
       } else {
         audioPreview.stop();
@@ -398,7 +355,7 @@ function LibrariesWorkspace() {
 
       setDeleteTarget(null);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, libraryErrorFallback));
     }
   };
 
@@ -434,7 +391,7 @@ function LibrariesWorkspace() {
       setFeedback(`Created ${created.library.name}.`);
       goToLibrary(created.library.id);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, libraryErrorFallback));
     }
   };
 
@@ -500,7 +457,7 @@ function LibrariesWorkspace() {
           border={false}
           className="px-0 py-0"
         />
-        <ErrorState title="Asset libraries unavailable" description={messageForError(librariesQuery.error)} />
+        <ErrorState title="Asset libraries unavailable" description={messageForError(librariesQuery.error, libraryErrorFallback)} />
       </section>
     );
   }
@@ -532,12 +489,12 @@ function LibrariesWorkspace() {
                 <IconButton
                   icon={Grid2X2}
                   label="Show tile view"
-                  onClick={() => router.push(searchParamsFor(searchParams, { view: "tiles" }))}
+                  onClick={() => router.push(hrefWithParams("/libraries", searchParams, { view: "tiles" }))}
                 />
                 <IconButton
                   icon={List}
                   label="Show list view"
-                  onClick={() => router.push(searchParamsFor(searchParams, { view: "list" }))}
+                  onClick={() => router.push(hrefWithParams("/libraries", searchParams, { view: "list" }))}
                 />
                 <Button
                   disabled={!canCreateFolder}
@@ -560,13 +517,13 @@ function LibrariesWorkspace() {
               { label: "Libraries", href: "/libraries" },
               ...folderPath.map((folder) => ({
                 label: folder.name,
-                href: searchParamsFor(searchParams, { folderId: folder.id })
+                href: hrefWithParams("/libraries", searchParams, { folder: folder.id })
               }))
             ]}
             border={false}
             className="px-0 py-0"
             subtitle={`${selectedFolder?.folder.name ?? "Root"} contains ${selectedFolderItemCount} item${
-              selectedFolderItemCount === 1 ? "" : "s"
+              pluralSuffix(selectedFolderItemCount)
             }.`}
             title={selectedLibrarySummary.library.name}
           />
@@ -651,7 +608,7 @@ function LibrariesWorkspace() {
               <LoadingState title="Loading library tree" description="Reading folders and assets from IndexedDB." />
             ) : null}
             {treeQuery.isError ? (
-              <ErrorState title="Library tree unavailable" description={messageForError(treeQuery.error)} />
+              <ErrorState title="Library tree unavailable" description={messageForError(treeQuery.error, libraryErrorFallback)} />
             ) : null}
 
             {!treeQuery.isLoading && !treeQuery.isError && visibleItems.length === 0 ? (
@@ -723,7 +680,7 @@ function LibrariesWorkspace() {
                         </TableCell>
                         <TableCell>{assetExtensionFor(item.asset)}</TableCell>
                         <TableCell>{assetSourceLabelFor(item.asset)}</TableCell>
-                        <TableCell>{formatDate(item.asset.uploadedAt)}</TableCell>
+                        <TableCell>{formatAssetDate(item.asset.uploadedAt)}</TableCell>
                         <TableCell>
                           {item.asset.mediaKind === "audio" ? (
                             <AudioPreviewIconButton
@@ -778,7 +735,7 @@ function LibrariesWorkspace() {
                             <span className="min-w-0">
                               <span className="block truncate font-medium">{item.node.folder.name}</span>
                               <span className="block text-xs text-gray-500">
-                                {itemCount} item{itemCount === 1 ? "" : "s"}
+                                {itemCount} item{pluralSuffix(itemCount)}
                               </span>
                             </span>
                           </button>
@@ -822,7 +779,7 @@ function LibrariesWorkspace() {
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{item.asset.name}</span>
                         <span className="block truncate text-xs text-gray-500">{assetSourceLabelFor(item.asset)}</span>
-                        <span className="block truncate text-xs text-gray-500">Modified {formatDate(item.asset.uploadedAt)}</span>
+                        <span className="block truncate text-xs text-gray-500">Modified {formatAssetDate(item.asset.uploadedAt)}</span>
                       </span>
                       <span className="flex min-h-[30px] items-center">
                         {item.asset.mediaKind === "audio" ? (
@@ -924,17 +881,17 @@ function LibrariesWorkspace() {
           }
           cascadeSummary={
             deleteTarget.kind === "library"
-              ? `${deleteTarget.counts.folders} folder${
-                  deleteTarget.counts.folders === 1 ? "" : "s"
-                }, ${deleteTarget.counts.assets} asset${
-                  deleteTarget.counts.assets === 1 ? "" : "s"
-                }, and ${deleteTarget.importedByProjectCount} project import${
-                  deleteTarget.importedByProjectCount === 1 ? "" : "s"
-                }.`
+              ? `${deleteTarget.counts.folders} folder${pluralSuffix(
+                  deleteTarget.counts.folders
+                )}, ${deleteTarget.counts.assets} asset${pluralSuffix(
+                  deleteTarget.counts.assets
+                )}, and ${deleteTarget.importedByProjectCount} project import${pluralSuffix(
+                  deleteTarget.importedByProjectCount
+                )}.`
               : deleteTarget.kind === "folder"
-              ? `${deleteTarget.counts.folders} child folder${
-                  deleteTarget.counts.folders === 1 ? "" : "s"
-                } and ${deleteTarget.counts.assets} asset${deleteTarget.counts.assets === 1 ? "" : "s"}.`
+              ? `${deleteTarget.counts.folders} child folder${pluralSuffix(
+                  deleteTarget.counts.folders
+                )} and ${deleteTarget.counts.assets} asset${pluralSuffix(deleteTarget.counts.assets)}.`
               : "Stored file data and any scheduled playback rows that reference this asset."
           }
         >

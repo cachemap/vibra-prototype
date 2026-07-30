@@ -18,7 +18,6 @@ import {
   Timeline,
   type TimelineLane
 } from "@/components/primitives";
-import { AppError, toUserFacingErrorMessage } from "@/domain";
 import { useSharingLinkPreviewQuery } from "@/features/projects/queries";
 import {
   AudioPreviewIconButton,
@@ -27,16 +26,9 @@ import {
   useAudioPreviewPlayer,
   type AudioPreviewItem
 } from "@/features/projects/audio-preview";
-
-const messageForError = (error: unknown): string => {
-  if (error instanceof AppError) {
-    return `${toUserFacingErrorMessage(error)} ${error.message}`;
-  }
-
-  return "The local share preview could not be opened.";
-};
-
-const formatSeconds = (seconds: number) => `${seconds.toFixed(seconds % 1 === 0 ? 0 : 2)}s`;
+import { messageForError, shareErrorFallback } from "@/lib/errors";
+import { formatSeconds } from "@/lib/format";
+import { pluralSuffix } from "@/lib/plural";
 
 const behaviorCopy = {
   Preempt: "Incoming stops the playing event and takes over.",
@@ -159,7 +151,7 @@ export default function SharePage() {
         />
         <ErrorState
           title="Invalid share link"
-          description={messageForError(previewQuery.error)}
+          description={messageForError(previewQuery.error, shareErrorFallback)}
           action={<Button onClick={() => void previewQuery.refetch()}>Retry</Button>}
         />
       </section>
@@ -178,7 +170,7 @@ export default function SharePage() {
     target.kind === "collisionMatrixEntry" ? "Collision Matrix Entry" : target.kind === "project" ? "Project" : "Event";
   const sourceContext =
     target.kind === "project"
-      ? `${target.devices.length} device target${target.devices.length === 1 ? "" : "s"} configured`
+      ? `${target.devices.length} device target${pluralSuffix(target.devices.length)} configured`
       : target.kind === "event"
         ? `${target.project.name} / ${target.device.name} / ${target.collection.name}`
         : `${target.project.name} / ${target.device.name} / Collision Matrix`;

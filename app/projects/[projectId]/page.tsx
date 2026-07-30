@@ -49,11 +49,9 @@ import {
   TextInput
 } from "@/components/primitives";
 import {
-  AppError,
   asEntityId,
   eventTypes,
   resolutionBehaviorNames,
-  toUserFacingErrorMessage,
   type Asset,
   type AssetId,
   type AssetLibraryFolder,
@@ -126,40 +124,10 @@ import {
   groupDevicePresetsByFormFactor,
   type DevicePreset
 } from "@/domain/device-catalog";
-
-const messageForError = (error: unknown): string => {
-  if (error instanceof AppError) {
-    return `${toUserFacingErrorMessage(error)} ${error.message}`;
-  }
-
-  return "The local demo workspace could not be updated.";
-};
-
-const searchParamsFor = (
-  params: URLSearchParams,
-  values: { collectionId?: CollectionId | null; deviceId?: DeviceId | null }
-) => {
-  const next = new URLSearchParams(params.toString());
-
-  if (values.deviceId !== undefined) {
-    if (values.deviceId) {
-      next.set("device", values.deviceId);
-    } else {
-      next.delete("device");
-    }
-  }
-
-  if (values.collectionId !== undefined) {
-    if (values.collectionId) {
-      next.set("collection", values.collectionId);
-    } else {
-      next.delete("collection");
-    }
-  }
-
-  const query = next.toString();
-  return query ? `?${query}` : "";
-};
+import { messageForError, workspaceErrorFallback } from "@/lib/errors";
+import { writeFlashMessage } from "@/lib/flash-message";
+import { pluralSuffix } from "@/lib/plural";
+import { hrefWithParams } from "@/lib/search-params";
 
 const formatDeviceMeta = (summary: DeviceSummary) =>
   summary.device.isEnabled ? summary.platform.name : "Excluded";
@@ -590,18 +558,18 @@ export default function ProjectPage() {
   ]);
 
   const goToDevice = (deviceId: DeviceId) => {
-    router.push(`/projects/${projectId}${searchParamsFor(searchParams, { deviceId, collectionId: null })}`);
+    router.push(`/projects/${projectId}${hrefWithParams("", searchParams, { device: deviceId, collection: null })}`);
   };
 
   const goToCollection = (collectionId: CollectionId) => {
-    router.push(`/projects/${projectId}${searchParamsFor(searchParams, { collectionId })}`);
+    router.push(`/projects/${projectId}${hrefWithParams("", searchParams, { collection: collectionId })}`);
   };
 
   const goToEvent = (eventId: EventId) => {
     router.push(
-      `/projects/${projectId}/events/${eventId}${searchParamsFor(searchParams, {
-        collectionId: selectedCollection?.collection.id ?? null,
-        deviceId: selectedDevice?.device.id ?? null
+      `/projects/${projectId}/events/${eventId}${hrefWithParams("", searchParams, {
+        collection: selectedCollection?.collection.id ?? null,
+        device: selectedDevice?.device.id ?? null
       })}`
     );
   };
@@ -769,7 +737,7 @@ export default function ProjectPage() {
       setShareLink(generated);
       setFeedback(`Generated share link for ${label}.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -813,7 +781,7 @@ export default function ProjectPage() {
       setShareLink(null);
       setFeedback(`Deleted share link /share/${deletedToken}.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -842,7 +810,7 @@ export default function ProjectPage() {
       setFeedback(`Created ${created.device.name} with a new Collision Matrix.`);
       goToDevice(created.device.id);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -866,7 +834,7 @@ export default function ProjectPage() {
       setFeedback(`Created ${collection.name} for ${selectedDevice.device.name}.`);
       goToCollection(collection.id);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -888,7 +856,7 @@ export default function ProjectPage() {
       setDialog(null);
       setFeedback(`Renamed collection to ${collection.name}.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -913,7 +881,7 @@ export default function ProjectPage() {
       setFeedback(`Created ${created.name} in ${selectedCollection.collection.name}.`);
       goToEvent(created.id);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -938,7 +906,7 @@ export default function ProjectPage() {
       setDialog(null);
       setFeedback(`Imported ${library?.name ?? "asset library"} for playback selection.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -961,7 +929,7 @@ export default function ProjectPage() {
       setFeedback(`Created folder ${folder.name}.`);
       goToProjectAssetFolder(folder.id);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
       throw error;
     }
   };
@@ -990,7 +958,7 @@ export default function ProjectPage() {
       setDialog(null);
       setFeedback(`Uploaded ${asset.mediaKind} asset ${asset.name}.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
       throw error;
     }
   };
@@ -1013,7 +981,7 @@ export default function ProjectPage() {
           : `${selectedDevice.device.name} is excluded from playback and export.`
       );
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -1028,10 +996,7 @@ export default function ProjectPage() {
       if (deleteTarget.kind === "project") {
         await deleteProject.mutateAsync(deleteTarget.id);
         setDeleteTarget(null);
-        window.sessionStorage.setItem(
-          "vibra.projects.feedback",
-          `Deleted project ${deleteTarget.name}.`
-        );
+        writeFlashMessage(`Deleted project ${deleteTarget.name}.`);
         router.push("/projects");
         return;
       }
@@ -1048,8 +1013,8 @@ export default function ProjectPage() {
 
         if (selectedCollection?.collection.id === deleteTarget.id) {
           router.push(
-            `/projects/${projectId}${searchParamsFor(searchParams, {
-              collectionId: fallbackCollectionId
+            `/projects/${projectId}${hrefWithParams("", searchParams, {
+              collection: fallbackCollectionId
             })}`
           );
         }
@@ -1108,14 +1073,14 @@ export default function ProjectPage() {
 
       if (selectedDevice?.device.id === deleteTarget.id) {
         router.push(
-          `/projects/${projectId}${searchParamsFor(searchParams, {
-            deviceId: fallbackDeviceId,
-            collectionId: null
+          `/projects/${projectId}${hrefWithParams("", searchParams, {
+            device: fallbackDeviceId,
+            collection: null
           })}`
         );
       }
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -1212,7 +1177,7 @@ export default function ProjectPage() {
           : `Removed ${changedLabel} from ${axisLabel}.`
       );
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -1256,7 +1221,7 @@ export default function ProjectPage() {
         } to ${entry.resolutionBehavior.behaviorName}.`
       );
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, workspaceErrorFallback));
     }
   };
 
@@ -1284,7 +1249,7 @@ export default function ProjectPage() {
         <ErrorState
           action={<Button onClick={() => void workspaceQuery.refetch()}>Retry</Button>}
           title="Project workspace could not load"
-          description={messageForError(workspaceQuery.error)}
+          description={messageForError(workspaceQuery.error, workspaceErrorFallback)}
         />
       </section>
     );
@@ -1651,7 +1616,7 @@ export default function ProjectPage() {
                 <ErrorState
                   action={<Button onClick={() => void deviceWorkspaceQuery.refetch()}>Retry</Button>}
                   title="Device workspace could not load"
-                  description={messageForError(deviceWorkspaceQuery.error)}
+                  description={messageForError(deviceWorkspaceQuery.error, workspaceErrorFallback)}
                 />
               ) : (
                 <section className="grid gap-3">
@@ -2078,7 +2043,7 @@ export default function ProjectPage() {
                                 </h4>
                                 <p className="text-xs text-gray-500">
                                   {selectedProjectAssetFolderItemCount} item
-                                  {selectedProjectAssetFolderItemCount === 1 ? "" : "s"} available for playback
+                                  {pluralSuffix(selectedProjectAssetFolderItemCount)} available for playback
                                   scheduling.
                                 </p>
                               </div>
@@ -2090,7 +2055,7 @@ export default function ProjectPage() {
                             {projectAssetTreeQuery.isError ? (
                               <ErrorState
                                 title="Asset library unavailable"
-                                description={messageForError(projectAssetTreeQuery.error)}
+                                description={messageForError(projectAssetTreeQuery.error, workspaceErrorFallback)}
                               />
                             ) : null}
 
@@ -2474,11 +2439,9 @@ export default function ProjectPage() {
                   : deleteTarget.kind === "event"
                     ? "Trigger schedules, collision matrix rows, columns, entries, and share links."
                     : deleteTarget.kind === "assetFolder"
-                      ? `${deleteTarget.counts.folders} child folder${
-                          deleteTarget.counts.folders === 1 ? "" : "s"
-                        } and ${deleteTarget.counts.assets} asset${
-                          deleteTarget.counts.assets === 1 ? "" : "s"
-                        }.`
+                      ? `${deleteTarget.counts.folders} child folder${pluralSuffix(
+                          deleteTarget.counts.folders
+                        )} and ${deleteTarget.counts.assets} asset${pluralSuffix(deleteTarget.counts.assets)}.`
                       : deleteTarget.kind === "asset"
                         ? "Scheduled playbacks that reference this asset."
                         : "The selected matrix rule and its share links."

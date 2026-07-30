@@ -37,10 +37,8 @@ import {
   type TimelineLane
 } from "@/components/primitives";
 import {
-  AppError,
   asEntityId,
   eventTypes,
-  toUserFacingErrorMessage,
   type AssetId,
   type EventId,
   type EventTriggerId,
@@ -69,29 +67,14 @@ import {
   useAudioPreviewPlayer,
   type AudioPreviewItem
 } from "@/features/projects/audio-preview";
-
-const messageForError = (error: unknown): string => {
-  if (error instanceof AppError) {
-    return `${toUserFacingErrorMessage(error)} ${error.message}`;
-  }
-
-  return "The local demo workspace could not be updated.";
-};
-
-const formatSeconds = (seconds: number) => `${seconds.toFixed(seconds % 1 === 0 ? 0 : 2)}s`;
+import { eventWorkspaceErrorFallback, messageForError } from "@/lib/errors";
+import { hrefWithFlashMessage } from "@/lib/flash-message";
+import { formatSeconds } from "@/lib/format";
+import { pluralSuffix } from "@/lib/plural";
 
 const shareTokenFor = (link: SharingLink) => link.url.split("/").at(-1) ?? link.id;
 
 const timelineTailSeconds = 0.45;
-
-const hrefWithFeedback = (href: string, message: string) => {
-  const [path, query = ""] = href.split("?");
-  const params = new URLSearchParams(query);
-
-  params.set("feedback", message);
-
-  return `${path}?${params.toString()}`;
-};
 
 type DeleteTarget =
   | {
@@ -432,7 +415,7 @@ export default function EventDetailPage() {
       setShareLink(generated);
       setFeedback(`Generated share link for ${label}.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
     }
   };
 
@@ -476,7 +459,7 @@ export default function EventDetailPage() {
       setShareLink(null);
       setFeedback(`Deleted share link /share/${deletedToken}.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
     }
   };
 
@@ -499,7 +482,7 @@ export default function EventDetailPage() {
       setDialog(null);
       setFeedback(`Updated ${updated.name}.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
     }
   };
 
@@ -524,7 +507,7 @@ export default function EventDetailPage() {
       setDialog(null);
       setFeedback(`Added ${trigger?.name ?? "interaction"} to ${selectedEvent.event.name}.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
     }
   };
 
@@ -548,7 +531,7 @@ export default function EventDetailPage() {
       setDialog(null);
       setFeedback(`Scheduled ${asset?.name ?? "asset"} at ${formatSeconds(created.startOffset)}.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
     }
   };
 
@@ -572,7 +555,7 @@ export default function EventDetailPage() {
       setDialog(null);
       setFeedback(`Updated ${asset?.name ?? "asset"} at ${formatSeconds(updated.startOffset)}.`);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
     }
   };
 
@@ -583,7 +566,7 @@ export default function EventDetailPage() {
       await updateEventTrigger.mutateAsync({ eventTriggerId, isEnabled });
       setFeedback(isEnabled ? "Interaction enabled for preview." : "Interaction disabled for preview.");
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
     }
   };
 
@@ -597,9 +580,9 @@ export default function EventDetailPage() {
     try {
       await deleteEvent.mutateAsync(selectedEvent.event.id);
       setDeleteEventIsOpen(false);
-      router.push(hrefWithFeedback(backHref, `Deleted event ${selectedEvent.event.name}.`));
+      router.push(hrefWithFlashMessage(backHref, `Deleted event ${selectedEvent.event.name}.`));
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
     }
   };
 
@@ -622,7 +605,7 @@ export default function EventDetailPage() {
 
       setDeleteTarget(null);
     } catch (error) {
-      setFeedback(messageForError(error));
+      setFeedback(messageForError(error, eventWorkspaceErrorFallback));
     }
   };
 
@@ -650,7 +633,7 @@ export default function EventDetailPage() {
         <ErrorState
           action={<Button onClick={() => void workspaceQuery.refetch()}>Retry</Button>}
           title="Event could not load"
-          description={messageForError(workspaceQuery.error)}
+          description={messageForError(workspaceQuery.error, eventWorkspaceErrorFallback)}
         />
       </section>
     );
@@ -797,9 +780,7 @@ export default function EventDetailPage() {
           title={deleteTarget.type === "eventTrigger" ? "Delete interaction?" : "Delete playback?"}
           cascadeSummary={
             deleteTarget.type === "eventTrigger"
-              ? `${deleteTarget.playbacksCount} scheduled playback${
-                  deleteTarget.playbacksCount === 1 ? "" : "s"
-                }.`
+              ? `${deleteTarget.playbacksCount} scheduled playback${pluralSuffix(deleteTarget.playbacksCount)}.`
               : "No dependent records."
           }
         >
