@@ -228,14 +228,14 @@ Goal: the scope-not-data context, plus the header, sidebar, tab bar, and mobile 
 - [x] Actions object `useMemo(..., [])`; selection object `useMemo` over its scalar fields.
 - [x] **Move the 6 matrix state fields from the page into the value context** — they must survive the tab body unmounting.
 - [x] Fold `openDialog` and `requestDelete` into the actions context, replacing the 7 `openDelete*` (673-755) and 6 `open*Dialog` (618-671) functions. `requestDelete` calls `clearFeedback()` internally.
-- [~] The provider owns `dialog` and `deleteTarget` state and computes each request's seed values.
+- [x] The provider owns `dialog` and `deleteTarget` state and computes each request's seed values.
 - [x] Keep `useSearchParams` inside a Suspense boundary — `pnpm lint` enforces this.
 - [x] `workspace-header.tsx` — calls `useProjectWorkspaceQuery` itself; takes `shareController` as a prop.
 - [x] `workspace-sidebar.tsx` (replaces 1386-1538) — **`data-testid="device-list"` (1444) and `data-testid="collection-list"` (1515) stay on the same `div`s**. Keep the "Systems" and "Collections" headings verbatim. Owns the search input and its filtering (today 1309-1320).
 - [x] `workspace-mobile-controls.tsx` — the two mobile `<select>` blocks (1579-1613).
 - [x] `workspace-tab-bar.tsx` — reproduces the **existing** markup exactly, used at both desktop (1387-1421) and mobile (1542-1576). Do **not** switch to the `Tabs` primitive.
 - [x] `workspace-empty-state.tsx` — today's `EmptyProjectWorkspace` (239-278), lifted verbatim.
-- [~] `workspace-layout.tsx` — the `<section>` grid, header, sidebar, main, tab switch, and dialog layer, mounted as a sibling **under** the providers.
+- [x] `workspace-layout.tsx` — the `<section>` grid, header, sidebar, main, tab switch, and dialog layer, mounted as a sibling **under** the providers.
 
 Stage gate:
 

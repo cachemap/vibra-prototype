@@ -78,10 +78,8 @@ import {
   useAudioPreviewActions
 } from "@/features/projects/audio-preview-context";
 import { MatrixTab } from "@/features/matrix/matrix-tab";
-import { WorkspaceHeader } from "@/features/project-workspace/workspace-header";
-import { WorkspaceMobileControls } from "@/features/project-workspace/workspace-mobile-controls";
-import { WorkspaceSidebar } from "@/features/project-workspace/workspace-sidebar";
 import { EmptyProjectWorkspace } from "@/features/project-workspace/workspace-empty-state";
+import { WorkspaceLayout } from "@/features/project-workspace/workspace-layout";
 import {
   ProjectWorkspaceScopeProvider,
   type DeleteTarget,
@@ -803,25 +801,14 @@ function ProjectWorkspace() {
     null;
 
   return (
-    <section className="grid min-h-[calc(100vh-64px)] grid-rows-[auto_1fr] bg-gray-25">
-      <WorkspaceHeader projectId={projectId} shareController={shareController} />
-
-      <div className="grid min-h-0 md:grid-cols-[268px_1fr]">
-        <WorkspaceSidebar
-          onAddCollection={openCreateCollection}
-          onAddDevice={openCreateDevice}
-          projectId={projectId}
-          selectedCollectionId={selectedCollection?.collection.id ?? null}
-          selectedDevice={selectedDevice}
-        />
-
-        <main className="grid min-w-0 content-start gap-4 px-4 py-3 md:py-4">
-          <WorkspaceMobileControls
-            projectId={projectId}
-            selectedCollectionId={selectedCollection?.collection.id ?? null}
-            selectedDevice={selectedDevice}
-          />
-
+    <WorkspaceLayout
+      onAddCollection={openCreateCollection}
+      onAddDevice={openCreateDevice}
+      projectId={projectId}
+      selectedCollectionId={selectedCollection?.collection.id ?? null}
+      selectedDevice={selectedDevice}
+      shareController={shareController}
+    >
           {!selectedDevice ? (
             <EmptyProjectWorkspace onAddDevice={openCreateDevice} />
           ) : (
@@ -1345,9 +1332,6 @@ function ProjectWorkspace() {
               )}
             </>
           )}
-        </main>
-      </div>
-
       {deleteTarget ? (
         <ConfirmDialog
           confirmLabel={deleteActionLabelFor(deleteTarget)}
@@ -1569,6 +1553,6 @@ function ProjectWorkspace() {
         open={dialog === "asset"}
       />
       </DialogOverlay>
-    </section>
+    </WorkspaceLayout>
   );
 }

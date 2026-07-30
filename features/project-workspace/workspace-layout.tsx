@@ -8,7 +8,7 @@ import { WorkspaceSidebar } from "./workspace-sidebar";
 
 type WorkspaceLayoutProps = {
   children: ReactNode;
-  dialogLayer: ReactNode;
+  dialogLayer?: ReactNode;
   onAddCollection: () => void;
   onAddDevice: () => void;
   projectId: ProjectId;
@@ -19,7 +19,7 @@ type WorkspaceLayoutProps = {
 
 export function WorkspaceLayout({
   children,
-  dialogLayer,
+  dialogLayer = null,
   onAddCollection,
   onAddDevice,
   projectId,
@@ -54,4 +54,3 @@ export function WorkspaceLayout({
     </section>
   );
 }
-
