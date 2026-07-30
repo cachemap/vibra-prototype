@@ -79,6 +79,7 @@ export function RowActionsMenu({
       label={label}
       onOpenChange={setMenuOpen}
       open={open}
+      placement={size === "compact" ? "side" : "dropdown"}
       size={size}
     >
       {grouped ? <MenuGroup>{menuItems}</MenuGroup> : menuItems}

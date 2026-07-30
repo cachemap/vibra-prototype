@@ -402,4 +402,4 @@ Real issues found during analysis. Each is a behavior or visual change and must 
 - [x] The share route renders inside `WorkspaceShell`, so an unauthenticated viewer sees the app nav and the "Reset demo" button.
 - [x] Every mutation invalidates `projectQueryKeys.all`, making the preceding targeted invalidations dead weight; no mutation is optimistic.
 - [x] Convert the workspace tab bar to the existing unused `Tabs` primitive.
-- [ ] Action menu placement can physically cover the next dense row's trigger; a positioning pass should keep one-click switching possible for adjacent rows too.
+- [x] Action menu placement can physically cover the next dense row's trigger; a positioning pass should keep one-click switching possible for adjacent rows too.

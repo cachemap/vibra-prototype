@@ -21,6 +21,7 @@ type ActionMenuProps = {
   label: string;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  placement?: "dropdown" | "side";
   size?: "compact" | "default";
 };
 
@@ -28,6 +29,79 @@ const subscribeToNothing = () => () => {};
 const viewportPadding = 8;
 const triggerGap = 6;
 const fallbackMenuWidth = 150;
+
+type ActionMenuPositionInput = {
+  align: "end" | "start";
+  menuSize: { height: number; width: number };
+  placement: "dropdown" | "side";
+  triggerRect: DOMRect;
+  viewportHeight: number;
+  viewportWidth: number;
+};
+
+export function positionActionMenu({
+  align,
+  menuSize,
+  placement,
+  triggerRect,
+  viewportHeight,
+  viewportWidth
+}: ActionMenuPositionInput) {
+  const measuredWidth = menuSize.width || fallbackMenuWidth;
+  const measuredHeight = menuSize.height || 0;
+  const maxLeft = viewportWidth - measuredWidth - viewportPadding;
+  const clampLeft = (left: number) =>
+    Math.min(Math.max(viewportPadding, left), Math.max(viewportPadding, maxLeft));
+  const clampTop = (top: number) => {
+    if (measuredHeight === 0) {
+      return Math.max(viewportPadding, top);
+    }
+
+    const maxTop = viewportHeight - measuredHeight - viewportPadding;
+
+    return Math.min(Math.max(viewportPadding, top), Math.max(viewportPadding, maxTop));
+  };
+
+  if (placement === "side") {
+    const sideCandidates =
+      align === "end"
+        ? [
+            triggerRect.left - measuredWidth - triggerGap,
+            triggerRect.right + triggerGap
+          ]
+        : [
+            triggerRect.right + triggerGap,
+            triggerRect.left - measuredWidth - triggerGap
+          ];
+    const sideLeft = sideCandidates.find(
+      (candidate) =>
+        candidate >= viewportPadding &&
+        candidate + measuredWidth <= viewportWidth - viewportPadding
+    );
+
+    if (sideLeft !== undefined) {
+      return {
+        left: sideLeft,
+        top: clampTop(triggerRect.top)
+      };
+    }
+  }
+
+  const spaceBelow = viewportHeight - triggerRect.bottom;
+  const spaceAbove = triggerRect.top;
+  const requiredHeight = measuredHeight + triggerGap + viewportPadding;
+  const placeAbove =
+    measuredHeight > 0 && spaceBelow < requiredHeight && spaceAbove > requiredHeight;
+  const top = placeAbove
+    ? triggerRect.top - measuredHeight - triggerGap
+    : triggerRect.bottom + triggerGap;
+  const preferredLeft = align === "end" ? triggerRect.right - measuredWidth : triggerRect.left;
+
+  return {
+    left: clampLeft(preferredLeft),
+    top: clampTop(top)
+  };
+}
 
 /**
  * Row/tile overflow menu. The menu is portalled to the document body and positioned
@@ -42,6 +116,7 @@ export function ActionMenu({
   label,
   onOpenChange,
   open,
+  placement = "dropdown",
   size = "default"
 }: ActionMenuProps) {
   const triggerRef = useRef<HTMLSpanElement>(null);
@@ -139,19 +214,14 @@ export function ActionMenu({
       return null;
     }
 
-    const measuredWidth = menuSize.width || fallbackMenuWidth;
-    const spaceBelow = window.innerHeight - triggerRect.bottom;
-    const spaceAbove = triggerRect.top;
-    const requiredHeight = menuSize.height + triggerGap + viewportPadding;
-    const placeAbove =
-      menuSize.height > 0 && spaceBelow < requiredHeight && spaceAbove > requiredHeight;
-    const top = placeAbove
-      ? triggerRect.top - menuSize.height - triggerGap
-      : triggerRect.bottom + triggerGap;
-    const preferredLeft =
-      align === "end" ? triggerRect.right - measuredWidth : triggerRect.left;
-    const maxLeft = window.innerWidth - measuredWidth - viewportPadding;
-    const left = Math.min(Math.max(viewportPadding, preferredLeft), Math.max(viewportPadding, maxLeft));
+    const { left, top } = positionActionMenu({
+      align,
+      menuSize,
+      placement,
+      triggerRect,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth
+    });
 
     return createPortal(
       <div
