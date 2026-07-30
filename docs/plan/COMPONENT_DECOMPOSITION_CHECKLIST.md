@@ -250,20 +250,20 @@ Stage gate:
 
 Goal: the two remaining tab bodies, plus the row models that kill the double-compute.
 
-- [ ] `features/assets/asset-folder-tree.ts` — **one** implementation over `lib/tree.ts` replacing both identical sets (libraries 93-152, project detail 288-339).
-- [ ] `features/assets/asset-metadata.ts` — `assetExtensionFor`, `assetSourceLabelFor`; replaces both copies.
-- [ ] `features/assets/asset-cells.tsx` — `AssetNameCell`, `AssetPreviewCell({ asset, fallbackLabel, previewKeyPrefix })`. `fallbackLabel` carries the "Visual only" vs "Visual" divergence.
-- [ ] `features/project-workspace/assets-tab.tsx` — **`data-testid="project-asset-libraries"` stays on the same element** (1953).
-- [ ] `features/project-workspace/asset-library-rail.tsx` and `project-asset-table.tsx`.
-- [ ] `features/project-workspace/event-row-model.ts` — `EventRowModel` with `playbackCount` and `triggerCount` computed **once**, replacing the reduce that currently runs in both branches.
-- [ ] `features/project-workspace/events-tab.tsx`, `events-table.tsx` (2313-2371), `events-cards.tsx` (2381-2424) — two branches, one row model.
+- [x] `features/assets/asset-folder-tree.ts` — **one** implementation over `lib/tree.ts` replacing both identical sets (libraries 93-152, project detail 288-339).
+- [x] `features/assets/asset-metadata.ts` — `assetExtensionFor`, `assetSourceLabelFor`; replaces both copies.
+- [x] `features/assets/asset-cells.tsx` — `AssetNameCell`, `AssetPreviewCell({ asset, fallbackLabel, previewKeyPrefix })`. `fallbackLabel` carries the "Visual only" vs "Visual" divergence.
+- [x] `features/project-workspace/assets-tab.tsx` — **`data-testid="project-asset-libraries"` stays on the same element** (1953).
+- [x] `features/project-workspace/asset-library-rail.tsx` and `project-asset-table.tsx`.
+- [x] `features/project-workspace/event-row-model.ts` — `EventRowModel` with `playbackCount` and `triggerCount` computed **once**, replacing the reduce that currently runs in both branches.
+- [x] `features/project-workspace/events-tab.tsx`, `events-table.tsx` (2313-2371), `events-cards.tsx` (2381-2424) — two branches, one row model.
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] Event counts match between the desktop table and the mobile cards at the same breakpoint boundary.
-- [ ] Navigate into an asset folder, back up via breadcrumb, switch libraries, preview an asset, open an event.
-- [ ] Re-capture and diff `project-{assets,events}-{desktop,mobile}`, `event-list.png`, `asset-library-explorer-{list,tile}-view.png`.
+- [x] Four gates green.
+- [x] Event counts match between the desktop table and the mobile cards at the same breakpoint boundary.
+- [x] Navigate into an asset folder, back up via breadcrumb, switch libraries, preview an asset, open an event.
+- [x] Re-capture and diff `project-{assets,events}-{desktop,mobile}`, `event-list.png`, `asset-library-explorer-{list,tile}-view.png`.
 
 ---
 

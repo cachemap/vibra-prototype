@@ -44,7 +44,7 @@ import {
   type AssetLibraryFolderId,
   type AssetLibraryId
 } from "@/domain";
-import type { Asset, AssetLibraryFolder } from "@/domain";
+import type { Asset } from "@/domain";
 import type { AssetLibraryFolderNode, AssetLibrarySummary } from "@/data/repositories/project-repository";
 import {
   useAssetLibrariesQuery,
@@ -57,7 +57,6 @@ import {
   useDeleteAssetMutation
 } from "@/features/projects/queries";
 import {
-  AudioPreviewButton,
   AudioPreviewProvider,
   useAudioPreviewActions,
   useAudioPreviewState
@@ -66,6 +65,13 @@ import {
   CreateAssetDialog,
   CreateAssetFolderDialog
 } from "@/features/assets/asset-authoring-dialogs";
+import { AssetNameCell, AssetPreviewCell } from "@/features/assets/asset-cells";
+import {
+  countAssetFolderDescendants,
+  findAssetFolderNode,
+  pathForAssetFolder
+} from "@/features/assets/asset-folder-tree";
+import { assetExtensionFor, assetSourceLabelFor } from "@/features/assets/asset-metadata";
 import {
   FeedbackProvider,
   FeedbackText,
@@ -84,75 +90,6 @@ const iconMap = {
   "mouse-pointer-click": MousePointerClick,
   sparkles: Sparkles
 } as const;
-
-const assetExtensionFor = (asset: Asset) =>
-  asset.originalFilename.includes(".") ? `.${asset.originalFilename.split(".").pop()}` : asset.mediaKind;
-
-const assetSourceLabelFor = (asset: Asset) =>
-  asset.playbackUrl.startsWith("blob:") || asset.playbackUrl.includes("/assets/uploaded/")
-    ? `Uploaded ${asset.mediaKind}`
-    : `Demo ${asset.mediaKind}`;
-
-const flattenFolders = (node: AssetLibraryFolderNode): AssetLibraryFolderNode[] => [
-  node,
-  ...node.childFolders.flatMap(flattenFolders)
-];
-
-type FolderDescendantCounts = {
-  assets: number;
-  folders: number;
-};
-
-const countFolderDescendants = (node: AssetLibraryFolderNode): FolderDescendantCounts => {
-  const childCounts = node.childFolders.reduce(
-    (counts: FolderDescendantCounts, child): FolderDescendantCounts => {
-      const next = countFolderDescendants(child);
-
-      return {
-        assets: counts.assets + next.assets,
-        folders: counts.folders + 1 + next.folders
-      };
-    },
-    { assets: node.assets.length, folders: 0 }
-  );
-
-  return childCounts;
-};
-
-const findFolderNode = (
-  node: AssetLibraryFolderNode,
-  folderId: AssetLibraryFolderId
-): AssetLibraryFolderNode | null => {
-  if (node.folder.id === folderId) {
-    return node;
-  }
-
-  for (const child of node.childFolders) {
-    const matched = findFolderNode(child, folderId);
-
-    if (matched) {
-      return matched;
-    }
-  }
-
-  return null;
-};
-
-const pathForFolder = (
-  folders: AssetLibraryFolder[],
-  folderId: AssetLibraryFolderId
-): AssetLibraryFolder[] => {
-  const byId = new Map(folders.map((folder) => [folder.id, folder]));
-  const path: AssetLibraryFolder[] = [];
-  let current = byId.get(folderId) ?? null;
-
-  while (current) {
-    path.unshift(current);
-    current = current.parentFolderId ? byId.get(current.parentFolderId) ?? null : null;
-  }
-
-  return path;
-};
 
 export default function LibrariesPage() {
   return (
@@ -226,17 +163,13 @@ function LibrariesWorkspace() {
       }
     | null
   >(null);
-  const folders = useMemo(
-    () => (treeQuery.data ? flattenFolders(treeQuery.data.rootFolder).map((node) => node.folder) : []),
-    [treeQuery.data]
-  );
   const selectedFolder = useMemo(() => {
     if (!treeQuery.data) {
       return null;
     }
 
     if (selectedFolderParam) {
-      const matched = findFolderNode(
+      const matched = findAssetFolderNode(
         treeQuery.data.rootFolder,
         asEntityId<AssetLibraryFolderId>(selectedFolderParam)
       );
@@ -249,8 +182,11 @@ function LibrariesWorkspace() {
     return treeQuery.data.rootFolder;
   }, [selectedFolderParam, treeQuery.data]);
   const folderPath = useMemo(
-    () => (selectedFolder ? pathForFolder(folders, selectedFolder.folder.id) : []),
-    [folders, selectedFolder]
+    () =>
+      selectedFolder && treeQuery.data
+        ? pathForAssetFolder(treeQuery.data.rootFolder, selectedFolder.folder.id).map((node) => node.folder)
+        : [],
+    [selectedFolder, treeQuery.data]
   );
   const visibleItems = useMemo(() => {
     if (!selectedFolder) {
@@ -308,7 +244,7 @@ function LibrariesWorkspace() {
   const openDeleteFolder = (node: AssetLibraryFolderNode) => {
     clearFeedback();
     setDeleteTarget({
-      counts: countFolderDescendants(node),
+      counts: countAssetFolderDescendants(node),
       folderId: node.folder.id,
       kind: "folder",
       name: node.folder.name
@@ -668,32 +604,20 @@ function LibrariesWorkspace() {
                       );
                     }
 
-                    const Icon = item.asset.mediaKind === "audio" ? FileAudio : Waves;
-
                     return (
                       <TableRow key={item.asset.id}>
                         <TableCell className="font-medium">
-                          <span className="flex items-center gap-2">
-                            <Icon className="size-4 text-gray-600" strokeWidth={1.8} />
-                            {item.asset.name}
-                          </span>
+                          <AssetNameCell asset={item.asset} />
                         </TableCell>
                         <TableCell>{assetExtensionFor(item.asset)}</TableCell>
                         <TableCell>{assetSourceLabelFor(item.asset)}</TableCell>
                         <TableCell>{formatAssetDate(item.asset.uploadedAt)}</TableCell>
                         <TableCell>
-                          {item.asset.mediaKind === "audio" ? (
-                            <AudioPreviewButton
-                              item={{
-                                asset: item.asset,
-                                isEnabled: true,
-                                key: `library-${item.asset.id}`,
-                                startOffset: 0
-                              }}
-                            />
-                          ) : (
-                            <span className="text-xs text-gray-500">Visual only</span>
-                          )}
+                          <AssetPreviewCell
+                            asset={item.asset}
+                            fallbackLabel="Visual only"
+                            previewKeyPrefix="library"
+                          />
                         </TableCell>
                         <TableCell>
                           {renderActionsMenu(
@@ -776,18 +700,11 @@ function LibrariesWorkspace() {
                         <span className="block truncate text-xs text-gray-500">Modified {formatAssetDate(item.asset.uploadedAt)}</span>
                       </span>
                       <span className="flex min-h-[30px] items-center">
-                        {item.asset.mediaKind === "audio" ? (
-                          <AudioPreviewButton
-                            item={{
-                              asset: item.asset,
-                              isEnabled: true,
-                              key: `library-${item.asset.id}`,
-                              startOffset: 0
-                            }}
-                          />
-                        ) : (
-                          <span className="text-xs font-normal text-gray-500">Visual only</span>
-                        )}
+                        <AssetPreviewCell
+                          asset={item.asset}
+                          fallbackLabel="Visual only"
+                          previewKeyPrefix="library"
+                        />
                       </span>
                     </div>
                   );

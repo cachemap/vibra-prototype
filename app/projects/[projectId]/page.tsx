@@ -1,45 +1,26 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { Fragment, FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import {
-  ArrowRight,
-  BookOpen,
-  Edit3,
-  FileAudio,
-  FolderPlus,
-  MoreVertical,
-  Plus,
-  Trash2,
-  Waves
-} from "lucide-react";
-import {
-  Badge,
   Button,
+  CardGrid,
   ConfirmDialog,
+  DeviceGlyph,
   DialogOverlay,
-  EmptyState,
   ErrorState,
   FormDialog,
-  IconButton,
   LoadingState,
   PageStateScaffold,
-  RowActionsMenu,
   Select,
+  SelectableCard,
   Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
   TextInput
 } from "@/components/primitives";
 import {
   asEntityId,
   eventTypes,
   type Asset,
-  type AssetLibraryFolder,
   type AssetLibraryFolderId,
   type AssetLibraryId,
   type CollisionMatrixEntry,
@@ -69,16 +50,12 @@ import {
   useUpdateDeviceMutation,
   useDeleteCollisionMatrixEntryMutation
 } from "@/features/projects/queries";
-import {
-  type AudioPreviewItem
-} from "@/features/projects/audio-preview";
-import {
-  AudioPreviewButton,
-  AudioPreviewProvider,
-  useAudioPreviewActions
-} from "@/features/projects/audio-preview-context";
+import { AudioPreviewProvider, useAudioPreviewActions } from "@/features/projects/audio-preview-context";
 import { MatrixTab } from "@/features/matrix/matrix-tab";
 import { EmptyProjectWorkspace } from "@/features/project-workspace/workspace-empty-state";
+import { AssetsTab } from "@/features/project-workspace/assets-tab";
+import { eventRowModelsFor } from "@/features/project-workspace/event-row-model";
+import { EventsTab } from "@/features/project-workspace/events-tab";
 import { WorkspaceLayout } from "@/features/project-workspace/workspace-layout";
 import {
   ProjectWorkspaceScopeProvider,
@@ -93,10 +70,10 @@ import {
   CreateAssetFolderDialog
 } from "@/features/assets/asset-authoring-dialogs";
 import {
-  CardGrid,
-  DeviceGlyph,
-  SelectableCard
-} from "@/components/primitives";
+  countAssetFolderDescendants,
+  findAssetFolderNode,
+  pathForAssetFolder
+} from "@/features/assets/asset-folder-tree";
 import {
   FeedbackProvider,
   FeedbackText,
@@ -129,67 +106,6 @@ const deleteActionLabelFor = (target: DeleteTarget) => {
   return `Delete ${target.kind}`;
 };
 
-
-const assetExtensionFor = (asset: Asset) =>
-  asset.originalFilename.includes(".") ? `.${asset.originalFilename.split(".").pop()}` : asset.mediaKind;
-
-const assetSourceLabelFor = (asset: Asset) =>
-  asset.playbackUrl.startsWith("blob:") || asset.playbackUrl.includes("/assets/uploaded/")
-    ? `Uploaded ${asset.mediaKind}`
-    : `Demo ${asset.mediaKind}`;
-
-const flattenAssetFolders = (node: AssetLibraryFolderNode): AssetLibraryFolderNode[] => [
-  node,
-  ...node.childFolders.flatMap(flattenAssetFolders)
-];
-
-const countAssetFolderDescendants = (node: AssetLibraryFolderNode): { assets: number; folders: number } =>
-  node.childFolders.reduce(
-    (counts, child) => {
-      const childCounts = countAssetFolderDescendants(child);
-
-      return {
-        assets: counts.assets + childCounts.assets,
-        folders: counts.folders + 1 + childCounts.folders
-      };
-    },
-    { assets: node.assets.length, folders: 0 }
-  );
-
-const findAssetFolderNode = (
-  node: AssetLibraryFolderNode,
-  folderId: AssetLibraryFolderId
-): AssetLibraryFolderNode | null => {
-  if (node.folder.id === folderId) {
-    return node;
-  }
-
-  for (const child of node.childFolders) {
-    const matched = findAssetFolderNode(child, folderId);
-
-    if (matched) {
-      return matched;
-    }
-  }
-
-  return null;
-};
-
-const pathForAssetFolder = (
-  folders: AssetLibraryFolder[],
-  folderId: AssetLibraryFolderId
-): AssetLibraryFolder[] => {
-  const byId = new Map(folders.map((folder) => [folder.id, folder]));
-  const path: AssetLibraryFolder[] = [];
-  let current = byId.get(folderId) ?? null;
-
-  while (current) {
-    path.unshift(current);
-    current = current.parentFolderId ? byId.get(current.parentFolderId) ?? null : null;
-  }
-
-  return path;
-};
 
 export default function ProjectPage() {
   const { projectId: projectIdParam } = useParams<{ projectId: string }>();
@@ -304,7 +220,10 @@ function ProjectWorkspace() {
 
     return collections[0] ?? null;
   }, [deviceWorkspaceQuery.data?.collections, selectedCollectionId]);
-  const eventRows = useMemo(() => selectedCollection?.events ?? [], [selectedCollection?.events]);
+  const eventRows = useMemo(
+    () => eventRowModelsFor(selectedCollection?.events ?? []),
+    [selectedCollection?.events]
+  );
   const importedLibraryIds = useMemo(
     () => new Set((workspaceQuery.data?.importedAssetLibraries ?? []).map((library) => library.id)),
     [workspaceQuery.data?.importedAssetLibraries]
@@ -321,13 +240,6 @@ function ProjectWorkspace() {
         summary.library.id !== workspace.defaultAssetLibrary.id && !importedLibraryIds.has(summary.library.id)
     );
   }, [assetLibrariesQuery.data?.libraries, importedLibraryIds, workspaceQuery.data]);
-  const projectAssetFolders = useMemo(
-    () =>
-      projectAssetTreeQuery.data
-        ? flattenAssetFolders(projectAssetTreeQuery.data.rootFolder).map((node) => node.folder)
-        : [],
-    [projectAssetTreeQuery.data]
-  );
   const selectedProjectAssetFolder = useMemo(() => {
     if (!projectAssetTreeQuery.data) {
       return null;
@@ -348,10 +260,13 @@ function ProjectWorkspace() {
   }, [projectAssetTreeQuery.data, selectedProjectAssetFolderId]);
   const projectAssetFolderPath = useMemo(
     () =>
-      selectedProjectAssetFolder
-        ? pathForAssetFolder(projectAssetFolders, selectedProjectAssetFolder.folder.id)
+      selectedProjectAssetFolder && projectAssetTreeQuery.data
+        ? pathForAssetFolder(
+            projectAssetTreeQuery.data.rootFolder,
+            selectedProjectAssetFolder.folder.id
+          ).map((node) => node.folder)
         : [],
-    [projectAssetFolders, selectedProjectAssetFolder]
+    [projectAssetTreeQuery.data, selectedProjectAssetFolder]
   );
   const visibleProjectAssetItems = useMemo(() => {
     if (!selectedProjectAssetFolder) {
@@ -882,451 +797,40 @@ function ProjectWorkspace() {
                       }
                     />
                   ) : activeWorkspaceTab === "assets" ? (
-                    <div className="grid gap-4" data-testid="project-asset-libraries">
-                      <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <BookOpen className="size-4 text-gray-500" />
-                            Asset Libraries
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            Libraries available to events on {selectedDevice.device.name}.
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {selectedProjectAssetFolder?.folder.parentFolderId ? (
-                            <RowActionsMenu
-                              grouped
-                              icon={MoreVertical}
-                              items={[
-                                {
-                                  destructive: true,
-                                  icon: <Trash2 aria-hidden="true" className="size-4" />,
-                                  label: "Delete folder",
-                                  onSelect: () =>
-                                    openDeleteProjectAssetFolder(selectedProjectAssetFolder)
-                                }
-                              ]}
-                              label={`Open actions for ${selectedProjectAssetFolder.folder.name}`}
-                            />
-                          ) : null}
-                          <Button
-                            disabled={!selectedProjectAssetFolder}
-                            leftIcon={<FolderPlus className="size-4" />}
-                            onClick={openCreateAssetFolder}
-                          >
-                            New folder
-                          </Button>
-                          <Button
-                            disabled={!selectedProjectAssetFolder}
-                            leftIcon={<Plus className="size-4" />}
-                            onClick={openCreateAsset}
-                            variant="primary"
-                          >
-                            New asset
-                          </Button>
-                          <Button
-                            disabled={!importCandidates.length || assetLibrariesQuery.isLoading}
-                            leftIcon={<Plus className="size-4" />}
-                            onClick={openImportLibrary}
-                          >
-                            Import library
-                          </Button>
-                        </div>
-                      </div>
-
-                      {projectAssetLibraries.length ? (
-                        <div className="grid gap-4 xl:grid-cols-[268px_1fr]">
-                          <aside className="grid content-start gap-2 border-y border-gray-300 bg-gray-50 px-3 py-3">
-                            {projectAssetLibraries.map(({ library, status }) => {
-                              const summary = librarySummaryById.get(library.id);
-                              const selected = selectedProjectAssetLibrary?.library.id === library.id;
-
-                              return (
-                                <button
-                                  className={`grid rounded-xl border px-3 py-3 text-left transition-colors ${
-                                    selected
-                                      ? "border-gray-200 bg-gray-200 text-gray-700"
-                                      : "border-gray-300 bg-gray-25 text-gray-600 hover:bg-gray-100"
-                                  }`}
-                                  key={library.id}
-                                  onClick={() => goToProjectAssetLibrary(library.id)}
-                                  type="button"
-                                >
-                                  <span className="flex min-w-0 items-start justify-between gap-3">
-                                    <span className="min-w-0">
-                                      <span className="block truncate text-sm font-medium text-gray-700">
-                                        {library.name}
-                                      </span>
-                                      <span className="mt-1 block text-xs text-gray-500">
-                                        {summary?.assetCount ?? 0} assets, {summary?.folderCount ?? 0} folders
-                                      </span>
-                                    </span>
-                                    <BookOpen className="size-4 shrink-0 text-gray-600" strokeWidth={1.8} />
-                                  </span>
-                                  <span className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-medium text-gray-600">
-                                    <Badge>{status}</Badge>
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </aside>
-
-                          <div className="grid min-w-0 content-start gap-3">
-                            <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-1 text-sm text-gray-500">
-                                  <span className="truncate font-medium text-gray-600">
-                                    {selectedProjectAssetLibrary?.library.name ?? "Asset library"}
-                                  </span>
-                                  {projectAssetFolderPath.map((folder) => (
-                                    <Fragment key={folder.id}>
-                                      <span aria-hidden="true">/</span>
-                                      <button
-                                        className="max-w-[220px] truncate rounded-md px-1 font-medium text-gray-600 hover:bg-gray-100"
-                                        onClick={() => goToProjectAssetFolder(folder.id)}
-                                        type="button"
-                                      >
-                                        {folder.name}
-                                      </button>
-                                    </Fragment>
-                                  ))}
-                                </div>
-                                <h4 className="truncate text-md font-semibold text-gray-700">
-                                  {selectedProjectAssetFolder?.folder.name ?? "Library contents"}
-                                </h4>
-                                <p className="text-xs text-gray-500">
-                                  {selectedProjectAssetFolderItemCount} item
-                                  {pluralSuffix(selectedProjectAssetFolderItemCount)} available for playback
-                                  scheduling.
-                                </p>
-                              </div>
-                            </div>
-
-                            {projectAssetTreeQuery.isLoading ? (
-                              <LoadingState title="Loading asset library" description="Reading folders and assets." />
-                            ) : null}
-                            {projectAssetTreeQuery.isError ? (
-                              <ErrorState
-                                title="Asset library unavailable"
-                                description={messageForError(projectAssetTreeQuery.error, workspaceErrorFallback)}
-                              />
-                            ) : null}
-
-                            {!projectAssetTreeQuery.isLoading &&
-                            !projectAssetTreeQuery.isError &&
-                            visibleProjectAssetItems.length === 0 ? (
-                              <EmptyState
-                                action={
-                                  <Button onClick={openCreateAsset} variant="primary">
-                                    Create asset
-                                  </Button>
-                                }
-                                title="This folder is empty"
-                                description="Upload an audio or haptic asset to make it available for playback scheduling."
-                              />
-                            ) : null}
-
-                            {!projectAssetTreeQuery.isLoading &&
-                            !projectAssetTreeQuery.isError &&
-                            visibleProjectAssetItems.length > 0 ? (
-                              <Table>
-                                <TableHead>
-                                  <TableRow>
-                                    <TableHeaderCell>Name</TableHeaderCell>
-                                    <TableHeaderCell>Type</TableHeaderCell>
-                                    <TableHeaderCell>Source</TableHeaderCell>
-                                    <TableHeaderCell>Preview</TableHeaderCell>
-                                    <TableHeaderCell className="w-12 text-right">Actions</TableHeaderCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {visibleProjectAssetItems.map((item) => {
-                                    if (item.kind === "folder") {
-                                      return (
-                                        <TableRow
-                                          className="cursor-pointer hover:bg-gray-50"
-                                          key={item.node.folder.id}
-                                          onClick={() => goToProjectAssetFolder(item.node.folder.id)}
-                                        >
-                                          <TableCell className="font-medium">
-                                            <span className="flex items-center gap-2">
-                                              <BookOpen className="size-4 text-gray-600" strokeWidth={1.8} />
-                                              {item.node.folder.name}
-                                            </span>
-                                          </TableCell>
-                                          <TableCell>Folder</TableCell>
-                                          <TableCell>Folder</TableCell>
-                                          <TableCell>-</TableCell>
-                                          <TableCell>
-                                            <div
-                                              className="flex justify-end"
-                                              onClick={(event) => event.stopPropagation()}
-                                            >
-                                              <RowActionsMenu
-                                                grouped
-                                                icon={MoreVertical}
-                                                items={[
-                                                  {
-                                                    destructive: true,
-                                                    icon: <Trash2 aria-hidden="true" className="size-4" />,
-                                                    label: "Delete folder",
-                                                    onSelect: () =>
-                                                      openDeleteProjectAssetFolder(item.node)
-                                                  }
-                                                ]}
-                                                label={`Open actions for ${item.node.folder.name}`}
-                                                size="compact"
-                                              />
-                                            </div>
-                                          </TableCell>
-                                        </TableRow>
-                                      );
-                                    }
-
-                                    const Icon = item.asset.mediaKind === "audio" ? FileAudio : Waves;
-                                    const previewItem: AudioPreviewItem = {
-                                      asset: item.asset,
-                                      isEnabled: item.asset.mediaKind === "audio",
-                                      key: `asset-library-${item.asset.id}`,
-                                      startOffset: 0
-                                    };
-
-                                    return (
-                                      <TableRow key={item.asset.id}>
-                                        <TableCell className="font-medium">
-                                          <span className="flex items-center gap-2">
-                                            <Icon className="size-4 text-gray-600" strokeWidth={1.8} />
-                                            {item.asset.name}
-                                          </span>
-                                        </TableCell>
-                                        <TableCell>{assetExtensionFor(item.asset)}</TableCell>
-                                        <TableCell>{assetSourceLabelFor(item.asset)}</TableCell>
-                                        <TableCell>
-                                          {item.asset.mediaKind === "audio" ? (
-                                            <AudioPreviewButton item={previewItem} />
-                                          ) : (
-                                            <span className="text-xs text-gray-500">Visual</span>
-                                          )}
-                                        </TableCell>
-                                        <TableCell>
-                                          <div className="flex justify-end">
-                                            <RowActionsMenu
-                                              grouped
-                                              icon={MoreVertical}
-                                              items={[
-                                                {
-                                                  destructive: true,
-                                                  icon: <Trash2 aria-hidden="true" className="size-4" />,
-                                                  label: "Delete asset",
-                                                  onSelect: () => openDeleteProjectAsset(item.asset)
-                                                }
-                                              ]}
-                                              label={`Open actions for ${item.asset.name}`}
-                                              size="compact"
-                                            />
-                                          </div>
-                                        </TableCell>
-                                      </TableRow>
-                                    );
-                                  })}
-                                </TableBody>
-                              </Table>
-                            ) : null}
-                          </div>
-                        </div>
-                      ) : (
-                        <EmptyState
-                          title="No matching libraries"
-                          description="Clear search to show this project's asset libraries."
-                        />
-                      )}
-                    </div>
+                    <AssetsTab
+                      assetLibrariesLoading={assetLibrariesQuery.isLoading}
+                      deviceName={selectedDevice.device.name}
+                      importCandidateCount={importCandidates.length}
+                      itemCount={selectedProjectAssetFolderItemCount}
+                      items={visibleProjectAssetItems}
+                      librarySummaryById={librarySummaryById}
+                      onCreateAsset={openCreateAsset}
+                      onCreateFolder={openCreateAssetFolder}
+                      onDeleteAsset={openDeleteProjectAsset}
+                      onDeleteFolder={openDeleteProjectAssetFolder}
+                      onImportLibrary={openImportLibrary}
+                      onOpenFolder={goToProjectAssetFolder}
+                      onSelectLibrary={goToProjectAssetLibrary}
+                      projectAssetLibraries={projectAssetLibraries}
+                      selectedFolder={selectedProjectAssetFolder}
+                      selectedFolderPath={projectAssetFolderPath}
+                      selectedLibrary={selectedProjectAssetLibrary}
+                      treeError={projectAssetTreeQuery.error}
+                      treeIsError={projectAssetTreeQuery.isError}
+                      treeIsLoading={projectAssetTreeQuery.isLoading}
+                    />
                   ) : (
-                  <>
-                  <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700">
-                        {selectedCollection?.collection.name ?? "No collection selected"}
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        Collections are scoped to {selectedDevice.device.name}.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        disabled={!selectedCollection}
-                        leftIcon={<Edit3 className="size-4" />}
-                        onClick={openEditCollection}
-                      >
-                        Rename
-                      </Button>
-                      <RowActionsMenu
-                        disabled={!selectedCollection}
-                        grouped
-                        icon={MoreVertical}
-                        items={[
-                          {
-                            destructive: true,
-                            icon: <Trash2 aria-hidden="true" className="size-4" />,
-                            label: "Delete collection",
-                            onSelect: openDeleteCollection
-                          }
-                        ]}
-                        label={`Open actions for ${selectedCollection?.collection.name ?? "collection"}`}
-                      />
-                      <Button leftIcon={<Plus className="size-4" />} onClick={openCreateCollection}>
-                        Collection
-                      </Button>
-                      <Button
-                        disabled={!selectedCollection}
-                        leftIcon={<Plus className="size-4" />}
-                        onClick={openCreateEvent}
-                        variant="primary"
-                      >
-                        Add event
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4">
-                    <div className="min-w-0">
-                      <div className="hidden md:block">
-                        <Table>
-                          <TableHead>
-                            <TableRow>
-                              <TableHeaderCell>Event</TableHeaderCell>
-                              <TableHeaderCell>Event type</TableHeaderCell>
-                              <TableHeaderCell>Interactions</TableHeaderCell>
-                              <TableHeaderCell>Scheduled playbacks</TableHeaderCell>
-                              <TableHeaderCell className="w-24" />
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {eventRows.map((row) => {
-                              const triggerCount = row.eventTriggers.length;
-                              const playbackCount = row.eventTriggers.reduce(
-                                (total, trigger) => total + trigger.playbacks.length,
-                                0
-                              );
-                              return (
-                                <TableRow className="hover:bg-gray-50" key={row.event.id}>
-                                  <TableCell className="font-medium">
-                                    <button
-                                      className="grid w-full min-w-0 gap-0.5 text-left text-gray-700"
-                                      onClick={() => goToEvent(row.event.id)}
-                                      type="button"
-                                    >
-                                      <span className="truncate">{row.event.name}</span>
-                                    </button>
-                                  </TableCell>
-                                  <TableCell>
-                                    <span className="inline-flex h-[22px] items-center rounded-lg border border-gray-300 bg-gray-25 px-2 text-xs font-medium text-gray-700">
-                                      {row.event.eventType}
-                                    </span>
-                                  </TableCell>
-                                  <TableCell>
-                                    {triggerCount ? `${triggerCount} bound` : <span className="text-gray-500">Unset</span>}
-                                  </TableCell>
-                                  <TableCell>{playbackCount ? `${playbackCount} scheduled` : "0 scheduled"}</TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center justify-end gap-1">
-                                    <Button
-                                      onClick={() => goToEvent(row.event.id)}
-                                      rightIcon={<ArrowRight className="size-4" />}
-                                      size="compact"
-                                    >
-                                      Open
-                                    </Button>
-                                    <RowActionsMenu
-                                      grouped
-                                      icon={MoreVertical}
-                                      items={[
-                                        {
-                                          destructive: true,
-                                          icon: <Trash2 aria-hidden="true" className="size-4" />,
-                                          label: "Delete event",
-                                          onSelect: () => openDeleteEvent(row.event)
-                                        }
-                                      ]}
-                                      label={`Open actions for ${row.event.name}`}
-                                      size="compact"
-                                    />
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-
-                      <div className="grid border-y border-gray-300 md:hidden">
-                        <div className="grid h-10 grid-cols-[1fr_auto] items-center bg-gray-50 px-3 text-xs font-medium text-gray-500">
-                          <span>Events</span>
-                          <span>{eventRows.length}</span>
-                        </div>
-                        {eventRows.map((row) => {
-                          const triggerCount = row.eventTriggers.length;
-                          const playbackCount = row.eventTriggers.reduce(
-                            (total, trigger) => total + trigger.playbacks.length,
-                            0
-                          );
-                          return (
-                            <div
-                              className="grid gap-2 border-t border-gray-200 bg-gray-25 px-3 py-2 text-left text-gray-700"
-                              key={row.event.id}
-                            >
-                              <span className="flex min-w-0 items-center justify-between gap-2">
-                                <button
-                                  className="min-w-0 truncate text-left text-sm font-semibold"
-                                  onClick={() => goToEvent(row.event.id)}
-                                  type="button"
-                                >
-                                  {row.event.name}
-                                </button>
-                                <span className="inline-flex h-[22px] shrink-0 items-center rounded-lg border border-gray-300 bg-gray-25 px-2 text-xs font-medium text-gray-700">
-                                  {row.event.eventType}
-                                </span>
-                              </span>
-                              <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                                <span>{triggerCount ? `${triggerCount} interactions` : "Unset interactions"}</span>
-                                <span>{playbackCount ? `${playbackCount} playbacks` : "No playbacks"}</span>
-                                <button
-                                  className="ml-auto flex items-center gap-1 font-medium text-gray-700"
-                                  onClick={() => goToEvent(row.event.id)}
-                                  type="button"
-                                >
-                                  Open
-                                  <ArrowRight aria-hidden="true" className="size-3.5" />
-                                </button>
-                                <IconButton
-                                  icon={Trash2}
-                                  label={`Delete ${row.event.name}`}
-                                  onClick={() => openDeleteEvent(row.event)}
-                                  size="compact"
-                                />
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {!eventRows.length ? (
-                        <EmptyState
-                          action={
-                            <Button leftIcon={<Plus className="size-4" />} onClick={openCreateEvent} variant="primary">
-                              Add event
-                            </Button>
-                          }
-                          title="No events in this collection"
-                          description="Create the first event to schedule sound and haptic feedback."
-                        />
-                      ) : null}
-                    </div>
-
-                  </div>
-                  </>
+                    <EventsTab
+                      eventRows={eventRows}
+                      onAddCollection={openCreateCollection}
+                      onAddEvent={openCreateEvent}
+                      onDeleteCollection={openDeleteCollection}
+                      onDeleteEvent={openDeleteEvent}
+                      onOpenEvent={goToEvent}
+                      onRenameCollection={openEditCollection}
+                      selectedCollection={selectedCollection}
+                      selectedDevice={selectedDevice}
+                    />
                   )}
                 </section>
               )}
