@@ -352,19 +352,19 @@ Stage gate:
 
 Goal: decompose into separate read-only components. **No `readOnly` prop on authenticated components.**
 
-- [ ] `share-preview-header.tsx` — reproduces the current hand-built header DOM (190-207). Do **not** convert to `PageHeader`.
-- [ ] `share-preview-device.tsx` (244-265).
-- [ ] `share-preview-event.tsx` (269-306), absorbing the 56-131 derivation chain into its own `useMemo`. Reuses `formatSeconds`, `timelineTailSeconds`, and the sort comparator, but keeps its own lane builder — the aggregate shapes and `meta` output genuinely differ.
-- [ ] `share-preview-matrix.tsx` (308-347), using `features/matrix/behavior.ts` for `behaviorCopy`.
-- [ ] Mount `AudioPreviewProvider`; keep using `AudioPreviewIconButton` in lane blocks.
-- [ ] Keep the page's stripped loading and error branches as-is — they intentionally differ from `PageStateScaffold`.
-- [ ] Reduce the page to ~85 lines.
+- [x] `share-preview-header.tsx` — reproduces the current hand-built header DOM (190-207). Do **not** convert to `PageHeader`.
+- [x] `share-preview-device.tsx` (244-265).
+- [x] `share-preview-event.tsx` (269-306), absorbing the 56-131 derivation chain into its own `useMemo`. Reuses `formatSeconds`, `timelineTailSeconds`, and the sort comparator, but keeps its own lane builder — the aggregate shapes and `meta` output genuinely differ.
+- [x] `share-preview-matrix.tsx` (308-347), using `features/matrix/behavior.ts` for `behaviorCopy`.
+- [x] Mount `AudioPreviewProvider`; keep using `AudioPreviewIconButton` in lane blocks.
+- [x] Keep the page's stripped loading and error branches as-is — they intentionally differ from `PageStateScaffold`.
+- [x] Reduce the page to ~85 lines.
 
 Stage gate:
 
-- [ ] Four gates green.
-- [ ] Open a share link for each of the 3 target kinds; copy the link; play a lane on the event preview.
-- [ ] Diff against the Stage 0 share baselines.
+- [x] Four gates green.
+- [x] Open a share link for each of the 3 target kinds; copy the link; play a lane on the event preview.
+- [x] Diff against the Stage 0 share baselines.
 
 ---
 
@@ -386,7 +386,7 @@ Stage gate:
 
 - [ ] Context boundary policy: scope and UI state in context, server data via re-called query hooks; the `children` bailout rule and the split volatile-value / stable-actions shape.
 - [ ] Feature module layout: `lib/` is pure with no `@/domain`; `components/primitives/` has no data hooks; `features/<domain>/` may call query and mutation hooks.
-- [ ] Why the share preview keeps separate read-only components instead of a `readOnly` prop.
+- [x] Why the share preview keeps separate read-only components instead of a `readOnly` prop.
 - [ ] Why no generic table or record-list abstraction, and the row-model pattern adopted instead.
 
 ## Follow-Ups Deliberately Out Of Scope
