@@ -571,7 +571,7 @@ Phase gate:
 - [x] `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm test:e2e` green.
 - [x] `data-testid` grep still yields exactly 6 results, unchanged.
 - [x] ARIA/role grep matches the 12.0 baseline.
-- [ ] Visual captures diff clean against the 12.0 and `docs/plan/visual-audit-captures/` baselines.
+- [x] Visual captures diff clean against the 12.0 and `docs/plan/visual-audit-captures/` baselines.
 - [x] Matrix cell selection survives tab switches; schedule playback animates without stutter; both flash-message channels work.
 - [x] No page over ~120 lines and no file in `features/` over ~260 lines.
 - [x] The four ADRs from the detailed plan are written.

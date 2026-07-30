@@ -38,7 +38,7 @@ export function EventsTab({
           </h3>
           <p className="text-xs text-gray-500">Collections are scoped to {selectedDevice.device.name}.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
             disabled={!selectedCollection}
             leftIcon={<Edit3 className="size-4" />}

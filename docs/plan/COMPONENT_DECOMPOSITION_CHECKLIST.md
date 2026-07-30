@@ -29,7 +29,7 @@ Run all four at the end of every stage. No exceptions.
 - [x] `pnpm test:e2e`
 - [x] `grep -rn 'data-testid' app components features | sort` yields exactly 6, unchanged
 - [x] `grep -rno 'aria-label\|role="status"\|role="tab"\|aria-selected\|aria-checked' app features | sort` matches the Stage 0 baseline
-- [ ] Browser check on `http://localhost:3000` for the surfaces this stage touched; fix any drift before committing
+- [x] Browser check on `http://localhost:3000` for the surfaces this stage touched; fix any drift before committing
 
 ---
 
