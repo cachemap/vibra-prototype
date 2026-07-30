@@ -153,6 +153,7 @@ export function ActionMenu({
       <div
         className="fixed z-50"
         onClick={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
         ref={menuRef}
         style={{ left, top }}
       >

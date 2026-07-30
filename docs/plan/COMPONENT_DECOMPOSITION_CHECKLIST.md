@@ -37,16 +37,16 @@ Run all four at the end of every stage. No exceptions.
 
 Goal: make regressions detectable before anything moves.
 
-- [~] Record the sorted `data-testid` list from `main` into `docs/memory/`. Expect exactly: `matrix-axis-filter`, `timeline-playhead`, `project-asset-libraries`, `device-list`, `collection-list`, `collision-matrix-grid`.
-- [ ] Record the sorted ARIA/role grep output from `main` into `docs/memory/` as the diff baseline for every later stage.
-- [ ] Record current page line counts (2757 / 1042 / 948 / 813 / 354).
-- [ ] Capture `projects-list` baselines at desktop, tablet, and mobile into `docs/plan/visual-audit-captures/`.
-- [ ] Capture `share-preview` baselines for all three target kinds (project, event, collisionMatrixEntry) at desktop and mobile.
-- [ ] Confirm `pnpm test` and `pnpm test:e2e` are green on `main` before starting.
+- [x] Record the sorted `data-testid` list from `main` into `docs/memory/`. Expect exactly: `matrix-axis-filter`, `timeline-playhead`, `project-asset-libraries`, `device-list`, `collection-list`, `collision-matrix-grid`.
+- [x] Record the sorted ARIA/role grep output from `main` into `docs/memory/` as the diff baseline for every later stage.
+- [x] Record current page line counts (2757 / 1042 / 948 / 813 / 354).
+- [x] Capture `projects-list` baselines at desktop, tablet, and mobile into `docs/plan/visual-audit-captures/`.
+- [x] Capture `share-preview` baselines for all three target kinds (project, event, collisionMatrixEntry) at desktop and mobile.
+- [x] Confirm `pnpm test` and `pnpm test:e2e` are green on `main` before starting.
 
 Stage gate:
 
-- [ ] Baselines committed; every later stage has something to diff against.
+- [x] Baselines committed; every later stage has something to diff against.
 
 ---
 

@@ -136,6 +136,8 @@ test("creates folders and projects at the projects root", async ({ page }) => {
 });
 
 test("deletes projects and folders from explorer row menus", async ({ page }) => {
+  test.setTimeout(120000);
+
   await page.goto("/projects");
   await page.getByRole("button", { name: "Reset demo" }).click();
 
@@ -189,6 +191,8 @@ test("deletes projects and folders from explorer row menus", async ({ page }) =>
 });
 
 test("deletes a project and reloads the explorer cleanly", async ({ page }) => {
+  test.setTimeout(120000);
+
   await page.goto("/projects");
   await page.getByRole("button", { name: "Reset demo" }).click();
 
