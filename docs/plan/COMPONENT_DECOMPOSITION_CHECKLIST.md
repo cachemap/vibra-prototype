@@ -101,17 +101,17 @@ Stage gate:
 
 Goal: add four primitives with no call sites changed. Additive only.
 
-- [ ] `components/primitives/badge.tsx` — `{ children, className?, variant?: "outline" | "solid" }`. `solid` = `rounded-lg bg-gray-100 px-2 py-1`; `outline` = the share-page variant.
-- [ ] `components/primitives/row-actions-menu.tsx` — owns its own `open` state; `{ align?, disabled?, grouped?, icon?, items, label, size? }`. No wrapper element of its own.
-- [ ] Inspect `components/primitives/menu.tsx` first: does `MenuGroup` add a DOM node or class? If yes, keep `grouped?`; if no, drop it.
-- [ ] `components/primitives/form-dialog.tsx` — renders a bare `Dialog`, **never** its own `DialogOverlay`.
-- [ ] `components/primitives/page-state.tsx` — `PageStateScaffold({ breadcrumbs, children })`.
-- [ ] Export all four from `components/primitives/index.ts` in alphabetical position.
-- [ ] Add `"use client"` only to files that use hooks.
+- [x] `components/primitives/badge.tsx` — `{ children, className?, variant?: "outline" | "solid" }`. `solid` = `rounded-lg bg-gray-100 px-2 py-1`; `outline` = the share-page variant.
+- [x] `components/primitives/row-actions-menu.tsx` — owns its own `open` state; `{ align?, disabled?, grouped?, icon?, items, label, size? }`. No wrapper element of its own.
+- [x] Inspect `components/primitives/menu.tsx` first: does `MenuGroup` add a DOM node or class? If yes, keep `grouped?`; if no, drop it.
+- [x] `components/primitives/form-dialog.tsx` — renders a bare `Dialog`, **never** its own `DialogOverlay`.
+- [x] `components/primitives/page-state.tsx` — `PageStateScaffold({ breadcrumbs, children })`.
+- [x] Export all four from `components/primitives/index.ts` in alphabetical position.
+- [x] Add `"use client"` only to files that use hooks.
 
 Stage gate:
 
-- [ ] Four gates green. No call site changed in this stage.
+- [x] Four gates green. No call site changed in this stage.
 
 ---
 

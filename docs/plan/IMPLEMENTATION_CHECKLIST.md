@@ -552,7 +552,7 @@ One commit per stage, each independently green against all four gates plus the s
 - [x] 12.0 Capture baselines: test ids, ARIA/role grep, page line counts, projects-list and share captures.
 - [x] 12.1 Add `lib/` pure utilities plus unit tests, no call sites changed.
 - [x] 12.2 Adopt `lib/` utilities across the pages.
-- [ ] 12.3 Add `Badge`, `FormDialog`, `PageStateScaffold`, and `RowActionsMenu` primitives.
+- [x] 12.3 Add `Badge`, `FormDialog`, `PageStateScaffold`, and `RowActionsMenu` primitives.
 - [ ] 12.4 Adopt the new primitives at existing call sites; delete the 7 menu-open state slots.
 - [ ] 12.5 Extract `features/sharing/` from its verbatim duplication across two pages.
 - [ ] 12.6 Add the feedback and audio-preview contexts; `runWithFeedback` replaces ~25 try/catch blocks.
