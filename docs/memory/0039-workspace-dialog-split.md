@@ -32,3 +32,32 @@
 ## Recommended Next Group
 
 - Continue Stage 15 by splitting `matrix-tab.tsx` or `workspace-scope-context.tsx` before taking on the larger `features/projects/queries.ts` split.
+
+## Follow-up Chunk: Matrix Tab Split
+
+## Changed
+
+- Continued Stage 15 feature-file cleanup.
+- Split `features/matrix/matrix-tab.tsx` into:
+  - `matrix-tab-model.ts` for derived matrix events, row/column sets, entry lookup, coverage, and selected-entry label.
+  - `matrix-tab-types.ts` for the public `MatrixTabProps` shape.
+- Reduced `matrix-tab.tsx` from 317 lines to 250 lines.
+- Left the Stage 15 "no file in `features/` exceeds ~260 lines" checklist item as `[~]` because other feature files still exceed the target.
+
+## Verification
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed with existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- `pnpm test` passed: 109 tests.
+- `pnpm test:e2e` passed: 17 tests.
+- `grep -rn 'data-testid' app components features | sort` still yields exactly 6 results.
+- ARIA/role grep is unchanged for the touched matrix surface.
+- Remaining feature files above the approximate 260-line target:
+  - `features/projects/queries.ts`
+  - `features/project-workspace/workspace-scope-context.tsx`
+  - `features/matrix/matrix-axis-filter.tsx`
+  - `features/projects/audio-preview.tsx`
+
+## Recommended Next Group
+
+- Continue Stage 15 by splitting `workspace-scope-context.tsx` or `matrix-axis-filter.tsx`; leave the broader `features/projects/queries.ts` split for a separate chunk.

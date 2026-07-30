@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
-import { asEntityId, type CollisionMatrixEntry, type DeviceId, type EventId, type ResolutionBehaviorName } from "@/domain";
+import { asEntityId, type EventId } from "@/domain";
 import {
   useDeselectCollisionMatrixColumnMutation,
   useDeselectCollisionMatrixRowMutation,
@@ -14,27 +13,10 @@ import { useFeedbackActions } from "@/features/feedback/feedback-context";
 import { MatrixGrid, matrixEntryKeyFor } from "./matrix-grid";
 import { MatrixResolutionPanel } from "./matrix-resolution-panel";
 import { MatrixToolbar } from "./matrix-toolbar";
-import type { MatrixAxis, MatrixFilterCollection } from "./matrix-axis-filter";
+import type { MatrixAxis } from "./matrix-axis-filter";
 import type { MatrixFilterAnchor } from "./matrix-axis-filter-anchor";
-
-type MatrixTabProps = {
-  deviceId: DeviceId;
-  deviceName: string;
-  matrixBehavior: ResolutionBehaviorName;
-  matrixFilterAnchor: MatrixFilterAnchor | null;
-  matrixFilterAxis: MatrixAxis;
-  matrixTargetEventId: string;
-  onClearEntry: (entry: CollisionMatrixEntry, label: string) => void;
-  onShareEntry: (entry: CollisionMatrixEntry, label: string) => void;
-  selectedIncomingEventId: EventId | null;
-  selectedPlayingEventId: EventId | null;
-  setMatrixBehavior: (behavior: ResolutionBehaviorName) => void;
-  setMatrixFilterAnchor: (anchor: MatrixFilterAnchor | null | ((current: MatrixFilterAnchor | null) => MatrixFilterAnchor | null)) => void;
-  setMatrixFilterAxis: (axis: MatrixAxis) => void;
-  setMatrixTargetEventId: (eventId: string) => void;
-  setSelectedIncomingEventId: (eventId: EventId | null) => void;
-  setSelectedPlayingEventId: (eventId: EventId | null) => void;
-};
+import { useMatrixTabModel } from "./matrix-tab-model";
+import type { MatrixTabProps } from "./matrix-tab-types";
 
 export function MatrixTab({
   deviceId,
@@ -61,63 +43,20 @@ export function MatrixTab({
   const deselectMatrixRow = useDeselectCollisionMatrixRowMutation();
   const deselectMatrixColumn = useDeselectCollisionMatrixColumnMutation();
   const upsertMatrixEntry = useUpsertCollisionMatrixEntryMutation();
-  const matrixEvents = useMemo(
-    () =>
-      (deviceWorkspaceQuery.data?.collections ?? []).flatMap((collection) =>
-        collection.events.map((event) => event.event)
-      ),
-    [deviceWorkspaceQuery.data?.collections]
-  );
-  const matrixEventById = useMemo(
-    () => new Map(matrixEvents.map((event) => [event.id, event])),
-    [matrixEvents]
-  );
-  const matrixFilterCollections = useMemo<MatrixFilterCollection[]>(
-    () =>
-      (deviceWorkspaceQuery.data?.collections ?? []).map((collection) => ({
-        id: collection.collection.id,
-        name: collection.collection.name,
-        events: collection.events.map((event) => ({ id: event.event.id, name: event.event.name }))
-      })),
-    [deviceWorkspaceQuery.data?.collections]
-  );
-  const matrixRowEventIds = useMemo(
-    () => new Set((deviceWorkspaceQuery.data?.matrixRows ?? []).map((row) => row.eventId)),
-    [deviceWorkspaceQuery.data?.matrixRows]
-  );
-  const matrixColumnEventIds = useMemo(
-    () => new Set((deviceWorkspaceQuery.data?.matrixColumns ?? []).map((column) => column.eventId)),
-    [deviceWorkspaceQuery.data?.matrixColumns]
-  );
-  const matrixEntryByPair = useMemo(
-    () =>
-      new Map(
-        (deviceWorkspaceQuery.data?.matrixEntries ?? []).map((entry) => [
-          matrixEntryKeyFor(entry.playingEventId, entry.incomingEventId),
-          entry
-        ])
-      ),
-    [deviceWorkspaceQuery.data?.matrixEntries]
-  );
-  const selectedMatrixEntry =
-    selectedPlayingEventId && selectedIncomingEventId
-      ? matrixEntryByPair.get(matrixEntryKeyFor(selectedPlayingEventId, selectedIncomingEventId))
-      : undefined;
-  const matrixCoverage = useMemo(() => {
-    const rowCount = deviceWorkspaceQuery.data?.matrixRows.length ?? 0;
-    const columnCount = deviceWorkspaceQuery.data?.matrixColumns.length ?? 0;
-    const possibleCells = rowCount * columnCount;
-
-    if (!possibleCells) {
-      return 0;
-    }
-
-    return Math.round(((deviceWorkspaceQuery.data?.matrixEntries.length ?? 0) / possibleCells) * 100);
-  }, [
-    deviceWorkspaceQuery.data?.matrixColumns,
-    deviceWorkspaceQuery.data?.matrixEntries,
-    deviceWorkspaceQuery.data?.matrixRows
-  ]);
+  const {
+    matrixColumnEventIds,
+    matrixCoverage,
+    matrixEntryByPair,
+    matrixEventById,
+    matrixFilterCollections,
+    matrixRowEventIds,
+    selectedEntryLabel,
+    selectedMatrixEntry
+  } = useMatrixTabModel({
+    data: deviceWorkspaceQuery.data,
+    selectedIncomingEventId,
+    selectedPlayingEventId
+  });
   const matrixMutationsPending =
     selectMatrixRow.isPending ||
     selectMatrixColumn.isPending ||
@@ -233,12 +172,6 @@ export function MatrixTab({
         } to ${entry.resolutionBehavior.behaviorName}.`
     });
   };
-
-  const selectedEntryLabel = selectedMatrixEntry
-    ? `${matrixEventById.get(selectedMatrixEntry.playingEventId)?.name ?? "Playing event"} x ${
-        matrixEventById.get(selectedMatrixEntry.incomingEventId)?.name ?? "incoming event"
-      }`
-    : "";
 
   return (
     <div className="grid gap-4">
