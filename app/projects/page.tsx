@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 import {
   Boxes,
   Bell,
@@ -183,6 +183,14 @@ function MemberStack() {
 }
 
 export default function ProjectsPage() {
+  return (
+    <Suspense fallback={<LoadingState title="Loading projects" />}>
+      <ProjectsWorkspace />
+    </Suspense>
+  );
+}
+
+function ProjectsWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedFolderParam = searchParams.get("folder");

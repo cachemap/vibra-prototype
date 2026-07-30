@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AudioLines,
@@ -186,6 +186,14 @@ const searchParamsFor = (
 };
 
 export default function LibrariesPage() {
+  return (
+    <Suspense fallback={<LoadingState title="Loading asset libraries" />}>
+      <LibrariesWorkspace />
+    </Suspense>
+  );
+}
+
+function LibrariesWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedLibraryParam = searchParams.get("library");
