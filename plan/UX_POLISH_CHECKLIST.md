@@ -79,6 +79,9 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Update E2E selectors that previously opened the collection action menu.
 - [x] Verify the cascade confirmation copy and cancellation behavior are unchanged.
 
+# SIDE QUEST
+- [ ] Playback is broken on the Assets tab view for sounds that have been uploaded
+
 ## 5. Persistent event order
 
 ### Domain and schema
