@@ -1,4 +1,4 @@
-import type { HTMLAttributes, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
+import { forwardRef, type HTMLAttributes, type TableHTMLAttributes, type TdHTMLAttributes, type ThHTMLAttributes } from "react";
 import { cx } from "./class-names";
 
 export function Table({ className, ...props }: TableHTMLAttributes<HTMLTableElement>) {
@@ -17,9 +17,11 @@ export function TableBody(props: HTMLAttributes<HTMLTableSectionElement>) {
   return <tbody className="divide-y divide-gray-200 bg-gray-25" {...props} />;
 }
 
-export function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cx("h-10 transition-colors", className)} {...props} />;
-}
+export const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTableRowElement>>(
+  ({ className, ...props }, ref) => <tr className={cx("h-10 transition-colors", className)} ref={ref} {...props} />
+);
+
+TableRow.displayName = "TableRow";
 
 export function TableHeaderCell({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (

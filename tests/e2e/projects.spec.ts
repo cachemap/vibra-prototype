@@ -342,6 +342,47 @@ test("deletes collections and events from the workspace", async ({ page }) => {
   await expect(page.getByRole("cell", { name: "Detail Delete", exact: true })).toHaveCount(0);
 });
 
+test("reorders collection events with pointer and keyboard controls", async ({ page }) => {
+  await page.goto("/projects");
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.goto("/projects/project_checkout-system");
+
+  const rowOrder = () =>
+    page
+      .locator('[data-testid^="event-row-"]')
+      .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-testid")));
+  const payNowHandle = page.getByRole("button", { name: "Reorder Pay Now" });
+  const saveCardHandle = page.getByRole("button", { name: "Reorder Save Card" });
+
+  await expect.poll(rowOrder).toEqual(["event-row-event_ios-pay-now", "event-row-event_ios-save-card"]);
+  const sourceBox = await payNowHandle.boundingBox();
+  const destinationBox = await saveCardHandle.boundingBox();
+
+  if (!sourceBox || !destinationBox) {
+    throw new Error("Event reorder handles must be visible before dragging.");
+  }
+
+  await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(destinationBox.x + destinationBox.width / 2, destinationBox.y + destinationBox.height - 2, {
+    steps: 8
+  });
+  await page.mouse.up();
+  await expect.poll(rowOrder).toEqual(["event-row-event_ios-save-card", "event-row-event_ios-pay-now"]);
+
+  await page.reload();
+  await expect.poll(rowOrder).toEqual(["event-row-event_ios-save-card", "event-row-event_ios-pay-now"]);
+
+  await page.getByRole("button", { name: "Reorder Pay Now" }).focus();
+  await page.keyboard.press("Space");
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("Space");
+  await expect.poll(rowOrder).toEqual(["event-row-event_ios-pay-now", "event-row-event_ios-save-card"]);
+
+  await page.reload();
+  await expect.poll(rowOrder).toEqual(["event-row-event_ios-pay-now", "event-row-event_ios-save-card"]);
+});
+
 test("creates an event with an interaction playback", async ({ page }) => {
   await page.goto("/projects");
   await page.getByRole("button", { name: "Reset demo" }).click();

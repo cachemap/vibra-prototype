@@ -2,6 +2,8 @@ import { Edit3, Plus, Trash2 } from "lucide-react";
 import { Button, EmptyState } from "@/components/primitives";
 import type { Collection, EventId } from "@/domain";
 import type { DeviceSummary } from "@/data/repositories/project-repository";
+import { useFeedbackActions } from "@/features/feedback/feedback-context";
+import { useReorderCollectionEventsMutation } from "@/features/projects/queries";
 import type { EventRowModel } from "./event-row-model";
 import { EventsCards } from "./events-cards";
 import { EventsTable } from "./events-table";
@@ -29,6 +31,23 @@ export function EventsTab({
   selectedCollection,
   selectedDevice
 }: EventsTabProps) {
+  const reorderEvents = useReorderCollectionEventsMutation();
+  const { runWithFeedback } = useFeedbackActions();
+
+  const reorderCollectionEvents = (orderedEventIds: EventId[]) => {
+    if (!selectedCollection || reorderEvents.isPending) {
+      return;
+    }
+
+    void runWithFeedback({
+      work: () =>
+        reorderEvents.mutateAsync({
+          collectionId: selectedCollection.collection.id,
+          orderedEventIds
+        })
+    });
+  };
+
   return (
     <>
       <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-3">
@@ -69,7 +88,13 @@ export function EventsTab({
 
       <div className="grid gap-4">
         <div className="min-w-0">
-          <EventsTable eventRows={eventRows} onDeleteEvent={onDeleteEvent} onOpenEvent={onOpenEvent} />
+          <EventsTable
+            eventRows={eventRows}
+            onDeleteEvent={onDeleteEvent}
+            onOpenEvent={onOpenEvent}
+            onReorder={reorderCollectionEvents}
+            reorderPending={reorderEvents.isPending}
+          />
           <EventsCards eventRows={eventRows} onDeleteEvent={onDeleteEvent} onOpenEvent={onOpenEvent} />
 
           {!eventRows.length ? (

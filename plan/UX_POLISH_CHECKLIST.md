@@ -82,7 +82,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 # SIDE QUEST
 - [ ] Playback is broken on the Assets tab view for sounds that have been uploaded
 
-## 5. Persistent event order [~]
+## 5. Persistent event order [x]
 
 ### Domain and schema [x]
 
@@ -119,39 +119,39 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Verify event delete and reset behavior with ordered events.
 - [x] Check Matrix filters and event lookups for accidental name sorting.
 
-### Query layer [~]
+### Query layer [x]
 
 - [x] Add and export `useReorderCollectionEventsMutation`.
 - [x] Optimistically reorder the affected device-workspace cache.
 - [x] Snapshot and roll back the cache on error.
 - [x] Invalidate the device workspace after settle/success.
 - [x] Invalidate any project/matrix aggregates that expose event order.
-- [ ] Surface persistence errors through the existing feedback context.
+- [x] Surface persistence errors through the existing feedback context.
 
-## 6. Drag-and-drop rows
+## 6. Drag-and-drop rows [x]
 
-- [ ] Add `@dnd-kit/core`.
-- [ ] Add `@dnd-kit/sortable`.
-- [ ] Add `@dnd-kit/utilities`.
-- [ ] Add a drag-handle header column to `EventsTable`.
-- [ ] Add a `GripVertical` button at the left edge of every event row.
-- [ ] Give each handle an event-specific accessible label.
-- [ ] Restrict drag listeners to the handle.
-- [ ] Add pointer/touch activation distance to prevent accidental drags.
-- [ ] Add a keyboard sensor with sortable keyboard coordinates.
-- [ ] Use vertical-list sorting.
-- [ ] Apply transform-only row movement.
-- [ ] Add a lifted/dragging visual state that works in both themes.
-- [ ] Remove transform motion under reduced-motion preference.
-- [ ] Ignore cancelled and same-position drops.
-- [ ] Call the reorder mutation only once per completed reorder.
-- [ ] Disable or serialize overlapping reorder writes.
-- [ ] Verify Open, Delete, and row links remain independently clickable.
-- [ ] Verify mobile cards display the persisted order.
-- [ ] If mobile reordering is included, use a separate sortable context and left-edge handles.
-- [ ] Add component/E2E coverage for pointer reorder.
-- [ ] Add component/E2E coverage for keyboard reorder.
-- [ ] Reload after a reorder and confirm persistence.
+- [x] Add `@dnd-kit/core`.
+- [x] Add `@dnd-kit/sortable`.
+- [x] Add `@dnd-kit/utilities`.
+- [x] Add a drag-handle header column to `EventsTable`.
+- [x] Add a `GripVertical` button at the left edge of every event row.
+- [x] Give each handle an event-specific accessible label.
+- [x] Restrict drag listeners to the handle.
+- [x] Add pointer/touch activation distance to prevent accidental drags.
+- [x] Add a keyboard sensor with sortable keyboard coordinates.
+- [x] Use vertical-list sorting.
+- [x] Apply transform-only row movement.
+- [x] Add a lifted/dragging visual state that works in both themes.
+- [x] Remove transform motion under reduced-motion preference.
+- [x] Ignore cancelled and same-position drops.
+- [x] Call the reorder mutation only once per completed reorder.
+- [x] Disable or serialize overlapping reorder writes.
+- [x] Verify Open, Delete, and row links remain independently clickable.
+- [x] Verify mobile cards display the persisted order.
+- [x] If mobile reordering is included, use a separate sortable context and left-edge handles.
+- [x] Add component/E2E coverage for pointer reorder.
+- [x] Add component/E2E coverage for keyboard reorder.
+- [x] Reload after a reorder and confirm persistence.
 
 ## 7. Collision Matrix hover UX
 
