@@ -1,17 +1,22 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/primitives";
 import type { DeviceWorkspaceAggregate } from "@/data/repositories/project-repository";
-import type {
-  CollisionMatrixEntry,
-  Event,
-  EventId,
-  InterruptionRecovery,
-  ResolutionBehaviorName
+import {
+  resolutionBehaviorDefinitions,
+  type CollisionMatrixEntry,
+  type Event,
+  type EventId,
+  type InterruptionRecovery,
+  type ResolutionBehaviorName
 } from "@/domain";
 import { CollisionPreviewTimeline } from "./collision-preview-timeline";
-import { MatrixResolutionPanel } from "./matrix-resolution-panel";
+import {
+  MatrixResolutionPanel,
+  type MatrixTargetPosition
+} from "./matrix-resolution-panel";
 
 export type MatrixResolutionEditorProps = {
   behavior: ResolutionBehaviorName;
@@ -32,7 +37,57 @@ export type MatrixResolutionEditorProps = {
   workspace: DeviceWorkspaceAggregate | undefined;
 };
 
+function targetPositionFor({
+  behavior,
+  incomingEventId,
+  playingEventId,
+  targetEventId
+}: {
+  behavior: ResolutionBehaviorName;
+  incomingEventId: EventId | null;
+  playingEventId: EventId | null;
+  targetEventId: string;
+}): MatrixTargetPosition | null {
+  if (resolutionBehaviorDefinitions[behavior].target === "forbidden" || !targetEventId) {
+    return null;
+  }
+
+  const matchesPlaying = targetEventId === playingEventId;
+  const matchesIncoming = targetEventId === incomingEventId;
+
+  if (matchesPlaying && matchesIncoming) {
+    return resolutionBehaviorDefinitions[behavior].defaultTarget;
+  }
+
+  return matchesPlaying ? "playing" : matchesIncoming ? "incoming" : null;
+}
+
 export function MatrixResolutionEditor({ onBack, ...panelProps }: MatrixResolutionEditorProps) {
+  const targetSelectionKey = [
+    panelProps.behavior,
+    panelProps.selectedPlayingEventId,
+    panelProps.selectedIncomingEventId,
+    panelProps.targetEventId
+  ].join(":");
+  const derivedTargetPosition = targetPositionFor({
+    behavior: panelProps.behavior,
+    incomingEventId: panelProps.selectedIncomingEventId,
+    playingEventId: panelProps.selectedPlayingEventId,
+    targetEventId: panelProps.targetEventId
+  });
+  const [localTargetSelection, setLocalTargetSelection] = useState<{
+    key: string;
+    position: MatrixTargetPosition | null;
+  }>({ key: targetSelectionKey, position: derivedTargetPosition });
+  // A diagonal cell stores the same event ID for both sides, so preserve the chosen side locally.
+  const targetPosition =
+    localTargetSelection.key === targetSelectionKey
+      ? localTargetSelection.position
+      : derivedTargetPosition;
+  const setTargetPosition = (position: MatrixTargetPosition) => {
+    setLocalTargetSelection({ key: targetSelectionKey, position });
+  };
+
   return (
     <section aria-label="Collision Matrix resolution editor" className="grid gap-5">
       <div>
@@ -46,10 +101,14 @@ export function MatrixResolutionEditor({ onBack, ...panelProps }: MatrixResoluti
         incomingEventId={panelProps.selectedIncomingEventId}
         postInterruptionRecovery={panelProps.postInterruptionRecovery}
         playingEventId={panelProps.selectedPlayingEventId}
-        targetEventId={panelProps.targetEventId}
+        targetLane={targetPosition}
         workspace={panelProps.workspace}
       />
-      <MatrixResolutionPanel {...panelProps} />
+      <MatrixResolutionPanel
+        {...panelProps}
+        onTargetPositionChange={setTargetPosition}
+        targetPosition={targetPosition}
+      />
     </section>
   );
 }

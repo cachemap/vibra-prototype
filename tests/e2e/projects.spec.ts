@@ -800,9 +800,31 @@ test("keeps collision audition offsets out of authored event playback schedules"
     .click();
 
   const editor = page.getByRole("region", { name: "Collision Matrix resolution editor" });
+  const timeline = editor.getByTestId("collision-preview-timeline");
   await editor.getByLabel("Playing offset in milliseconds").fill("420");
   await editor.getByLabel("Incoming offset in milliseconds").fill("670");
   await expect(editor.getByLabel(/Collision preview timeline, Playing starts at 420 milliseconds and Incoming starts at 670 milliseconds/)).toBeVisible();
+  const timelineWidths = await timeline.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth
+  }));
+  expect(timelineWidths.scrollWidth).toBeGreaterThanOrEqual(12_176);
+  expect(timelineWidths.scrollWidth).toBeGreaterThan(timelineWidths.clientWidth);
+
+  const incomingDragHandle = editor.getByRole("button", { name: "Move Incoming sound" });
+  const dragBox = await incomingDragHandle.boundingBox();
+
+  if (!dragBox) {
+    throw new Error("Incoming collision-preview drag handle was not rendered.");
+  }
+
+  await page.mouse.move(dragBox.x + dragBox.width / 2, dragBox.y + dragBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dragBox.x + dragBox.width / 2 + 120, dragBox.y + dragBox.height / 2, {
+    steps: 8
+  });
+  await page.mouse.up();
+  await expect(editor.getByLabel("Incoming offset in milliseconds")).toHaveValue("970");
 
   await editor.getByRole("button", { name: "Save collision rule" }).click();
   await expect.poll(() =>
@@ -888,7 +910,9 @@ test("stops active collision audio when returning to Matrix", async ({ page }) =
 
   const editor = page.getByRole("region", { name: "Collision Matrix resolution editor" });
   await editor.getByRole("button", { name: "Tap to preview collision" }).click();
-  await expect(editor.getByText(/^Previewing at /)).toBeVisible();
+  await expect(editor.getByText(/^Previewing(?: at)?/)).toHaveCount(0);
+  await expect(editor.getByRole("button", { name: "Stop collision preview" })).toBeVisible();
+  await expect(editor.getByTestId("collision-preview-playhead")).toBeVisible();
   await expect.poll(() =>
     page.evaluate(() =>
       (window as unknown as Window & { __collisionPreviewSources: Array<{ stopCalls: number }> })

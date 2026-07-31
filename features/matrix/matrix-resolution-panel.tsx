@@ -23,6 +23,7 @@ type MatrixResolutionPanelProps = {
   onSaveEntry: () => void;
   onPostInterruptionRecoveryChange: (recovery: InterruptionRecovery | null) => void;
   onSystemInterruptionRecoveryChange: (recovery: InterruptionRecovery | null) => void;
+  onTargetPositionChange?: (position: MatrixTargetPosition) => void;
   onTargetEventIdChange: (eventId: string) => void;
   postInterruptionRecovery: InterruptionRecovery | null;
   selectedEntry: CollisionMatrixEntry | undefined;
@@ -30,7 +31,10 @@ type MatrixResolutionPanelProps = {
   selectedPlayingEventId: EventId | null;
   systemInterruptionRecovery: InterruptionRecovery | null;
   targetEventId: string;
+  targetPosition?: MatrixTargetPosition | null;
 };
+
+export type MatrixTargetPosition = "playing" | "incoming";
 
 type SegmentedControlProps<T extends string> = {
   description: string;
@@ -105,16 +109,29 @@ export function MatrixResolutionPanel({
   onPostInterruptionRecoveryChange,
   onSaveEntry,
   onSystemInterruptionRecoveryChange,
+  onTargetPositionChange,
   onTargetEventIdChange,
   postInterruptionRecovery,
   selectedEntry,
   selectedIncomingEventId,
   selectedPlayingEventId,
   systemInterruptionRecovery,
-  targetEventId
+  targetEventId,
+  targetPosition
 }: MatrixResolutionPanelProps) {
   const definition = resolutionBehaviorDefinitions[behavior];
   const selectedPair = selectedPlayingEventId && selectedIncomingEventId;
+  const targetMatchesPlaying = Boolean(targetEventId && targetEventId === selectedPlayingEventId);
+  const targetMatchesIncoming = Boolean(targetEventId && targetEventId === selectedIncomingEventId);
+  const resolvedTargetPosition =
+    targetPosition ??
+    (targetMatchesPlaying && targetMatchesIncoming
+      ? definition.defaultTarget
+      : targetMatchesPlaying
+        ? "playing"
+        : targetMatchesIncoming
+          ? "incoming"
+          : null);
   const ruleIsValid = selectedPair
     ? canUseResolutionBehavior(
         {
@@ -159,16 +176,26 @@ export function MatrixResolutionPanel({
             description="Choose which event this rule affects: the event already playing or the event that arrives next."
             id="matrix-target"
             label="Target"
-            onChange={onTargetEventIdChange}
+            onChange={(position) => {
+              onTargetPositionChange?.(position);
+              const eventId =
+                position === "playing" ? selectedPlayingEventId : selectedIncomingEventId;
+
+              if (eventId) {
+                onTargetEventIdChange(eventId);
+              }
+            }}
             options={[
               selectedPlayingEventId
-                ? { label: "Playing", value: selectedPlayingEventId }
+                ? { label: "Playing", value: "playing" as const }
                 : null,
               selectedIncomingEventId
-                ? { label: "Incoming", value: selectedIncomingEventId }
+                ? { label: "Incoming", value: "incoming" as const }
                 : null
-            ].filter((option): option is { label: string; value: EventId } => option !== null)}
-            value={targetEventId || null}
+            ].filter(
+              (option): option is { label: string; value: MatrixTargetPosition } => option !== null
+            )}
+            value={resolvedTargetPosition}
           />
         ) : (
           <div aria-live="polite" className="grid content-end text-xs text-gray-500">

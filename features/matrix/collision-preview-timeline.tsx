@@ -24,7 +24,7 @@ type CollisionPreviewTimelineProps = {
   incomingEventId: EventId | null;
   postInterruptionRecovery: "Resume" | "Stay stopped" | null;
   playingEventId: EventId | null;
-  targetEventId: string;
+  targetLane: CollisionPreviewLaneName | null;
   workspace: DeviceWorkspaceAggregate | undefined;
 };
 
@@ -34,8 +34,14 @@ type PreviewOffsets = Record<LaneName, number>;
 
 const defaultPreviewOffsets: PreviewOffsets = { incoming: 150, playing: 0 };
 const offsetSnapMilliseconds = 10;
-const minimumTimelineMilliseconds = 600;
+const timelineDurationMilliseconds = 30_000;
+const timelinePixelsPerMillisecond = 0.4;
+const timelineCanvasWidth = timelineDurationMilliseconds * timelinePixelsPerMillisecond;
 const soundBlockDurationMilliseconds = 250;
+const maximumPreviewOffset = timelineDurationMilliseconds - soundBlockDurationMilliseconds;
+const timelineControlWidth = 176;
+const timelineRulerHeight = 34;
+const timelineLaneHeight = 112;
 
 const useReducedMotion = () => {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -58,11 +64,13 @@ const useReducedMotion = () => {
 };
 
 function clampOffset(milliseconds: number) {
-  return Math.max(0, Math.round(milliseconds));
+  return Math.min(maximumPreviewOffset, Math.max(0, Math.round(milliseconds)));
 }
 
 function snappedOffset(milliseconds: number) {
-  return Math.max(0, Math.round(milliseconds / offsetSnapMilliseconds) * offsetSnapMilliseconds);
+  return clampOffset(
+    Math.round(milliseconds / offsetSnapMilliseconds) * offsetSnapMilliseconds
+  );
 }
 
 export function previewOffsetAfterPointerDrag(
@@ -110,18 +118,20 @@ type PreviewSoundBlockProps = {
   lane: LaneName;
   offset: number;
   onKeyboardMove: (lane: LaneName, direction: -1 | 1) => void;
-  timelineDuration: number;
 };
 
-function PreviewSoundBlock({ label, lane, offset, onKeyboardMove, timelineDuration }: PreviewSoundBlockProps) {
+function PreviewSoundBlock({ label, lane, offset, onKeyboardMove }: PreviewSoundBlockProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: `collision-preview-${lane}` });
-  const left = `${(offset / timelineDuration) * 100}%`;
 
   return (
     <div
-      className="absolute inset-y-1 flex w-[46%] items-center rounded-lg border border-gray-300 bg-gray-100 px-2 text-sm font-semibold text-gray-700 shadow-sm"
+      className="absolute inset-y-3 flex items-center rounded-lg border border-gray-300 bg-gray-100 px-2 text-sm font-semibold text-gray-700 shadow-sm"
       ref={setNodeRef}
-      style={{ left, transform: CSS.Translate.toString(transform) }}
+      style={{
+        left: offset * timelinePixelsPerMillisecond,
+        transform: CSS.Translate.toString(transform),
+        width: soundBlockDurationMilliseconds * timelinePixelsPerMillisecond
+      }}
     >
       <button
         {...attributes}
@@ -142,7 +152,21 @@ function PreviewSoundBlock({ label, lane, offset, onKeyboardMove, timelineDurati
         <GripVertical aria-hidden="true" className="size-4" />
       </button>
       <span className="truncate">{label}</span>
-      <span className="ml-auto pl-2 text-xs font-medium tabular-nums text-gray-500">{offset}ms</span>
+    </div>
+  );
+}
+
+function TimelinePlayhead({ milliseconds, ruler = false }: { milliseconds: number; ruler?: boolean }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-y-0 z-20 w-px bg-purple-500"
+      data-testid={ruler ? "collision-preview-playhead" : undefined}
+      style={{ left: milliseconds * timelinePixelsPerMillisecond }}
+    >
+      {ruler ? (
+        <span className="absolute -left-[7px] bottom-0 size-[15px] rounded-full border-2 border-gray-700 bg-purple-600 shadow-sm" />
+      ) : null}
     </div>
   );
 }
@@ -157,7 +181,7 @@ export function CollisionPreviewTimeline({
   incomingEventId,
   postInterruptionRecovery,
   playingEventId,
-  targetEventId,
+  targetLane,
   workspace
 }: CollisionPreviewTimelineProps) {
   const audioPreview = useAudioPreviewActions();
@@ -174,7 +198,7 @@ export function CollisionPreviewTimeline({
   });
   const [previewOffsets, setPreviewOffsets] = useState<PreviewOffsets>(defaultPreviewOffsets);
   const prefersReducedMotion = useReducedMotion();
-  const timelineCanvasRef = useRef<HTMLDivElement>(null);
+  const timelineScrollerRef = useRef<HTMLDivElement>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const selectedPlayingSource = selectedSourceFor(lanes.playing.sources, selectedSourceKey.playing);
@@ -183,8 +207,10 @@ export function CollisionPreviewTimeline({
   const deviceIsDisabled = workspace?.device.isEnabled === false;
   const scheduleKey = `collision-preview:${playingEventId ?? "none"}:${incomingEventId ?? "none"}`;
   const isPlaying = scheduleKey in playheadByScheduleKey;
-  const targetLane: CollisionPreviewLaneName | null =
-    targetEventId === playingEventId ? "playing" : targetEventId === incomingEventId ? "incoming" : null;
+  const playheadMilliseconds = Math.min(
+    timelineDurationMilliseconds,
+    (playheadByScheduleKey[scheduleKey] ?? 0) * 1000
+  );
   const previewUnavailableCopy = unavailable
     ? "This behavior does not allow a concurrent preview."
     : deviceIsDisabled
@@ -199,11 +225,6 @@ export function CollisionPreviewTimeline({
               .filter(Boolean)
               .join(" ")
           : "Choose one enabled audio playback for each event. Timing and sound choice remain local to this editor.";
-  const timelineDuration = Math.max(
-    minimumTimelineMilliseconds,
-    Math.ceil((Math.max(previewOffsets.playing, previewOffsets.incoming) + soundBlockDurationMilliseconds) / 150) * 150
-  );
-
   const setOffset = (lane: LaneName, milliseconds: number, snap = false) => {
     const nextOffset = snap ? snappedOffset(milliseconds) : clampOffset(milliseconds);
     setPreviewOffsets((current) => ({ ...current, [lane]: nextOffset }));
@@ -235,6 +256,15 @@ export function CollisionPreviewTimeline({
     });
   };
 
+  const toggleCollisionPreview = () => {
+    if (isPlaying) {
+      audioPreview.stopSchedule(scheduleKey);
+      return;
+    }
+
+    playCollision();
+  };
+
   useEffect(
     () => () => {
       audioPreview.stopSchedule(scheduleKey);
@@ -244,13 +274,20 @@ export function CollisionPreviewTimeline({
 
   const handleDragEnd = (event: DragEndEvent) => {
     const lane = event.active.id === "collision-preview-playing" ? "playing" : event.active.id === "collision-preview-incoming" ? "incoming" : null;
-    const canvasWidth = timelineCanvasRef.current?.clientWidth ?? 0;
 
-    if (!lane || canvasWidth <= 0 || event.delta.x === 0) {
+    if (!lane || event.delta.x === 0) {
       return;
     }
 
-    setOffset(lane, previewOffsetAfterPointerDrag(previewOffsets[lane], event.delta.x, canvasWidth, timelineDuration));
+    setOffset(
+      lane,
+      previewOffsetAfterPointerDrag(
+        previewOffsets[lane],
+        event.delta.x,
+        timelineCanvasWidth,
+        timelineDurationMilliseconds
+      )
+    );
   };
 
   const renderLane = (laneName: LaneName, label: string) => {
@@ -261,12 +298,34 @@ export function CollisionPreviewTimeline({
 
     return (
       <>
-        <span className="self-center text-xs font-medium text-gray-500">{label}</span>
-        <div className="grid gap-2">
+        <div
+          className="sticky left-0 z-30 grid content-center gap-2 border-r border-t border-gray-200 bg-gray-50 px-3 py-2"
+          style={{ height: timelineLaneHeight }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-gray-600">{label}</span>
+            <div className="flex min-w-0 items-center gap-1">
+              <label className="sr-only" htmlFor={`collision-preview-${laneName}-offset`}>
+                {label} offset in milliseconds
+              </label>
+              <input
+                aria-label={`${label} offset in milliseconds`}
+                className="h-9 w-[76px] min-w-0 rounded-lg border border-gray-300 bg-gray-25 px-2 text-right text-sm tabular-nums text-gray-700 outline-none focus:ring-2 focus:ring-purple-500/40"
+                id={`collision-preview-${laneName}-offset`}
+                max={maximumPreviewOffset}
+                min="0"
+                onChange={(event) => setOffset(laneName, Number(event.currentTarget.value), false)}
+                step="1"
+                type="number"
+                value={offset}
+              />
+              <span className="text-xs text-gray-500">ms</span>
+            </div>
+          </div>
           {lane.sources.length > 1 ? (
             <Select
               aria-label={`${label} sound`}
-              className="h-10"
+              className="h-9"
               id={`collision-preview-${laneName}-sound`}
               onChange={(event) => {
                 const nextSourceKey = event.currentTarget.value;
@@ -280,37 +339,37 @@ export function CollisionPreviewTimeline({
                 </option>
               ))}
             </Select>
-          ) : null}
-          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_132px] sm:items-center">
-            <div className="relative h-11 border-l border-gray-300 bg-gray-25" ref={timelineCanvasRef}>
-              <PreviewSoundBlock
-                label={sourceLabel}
-                lane={laneName}
-                offset={offset}
-                onKeyboardMove={(movingLane, direction) => setOffset(movingLane, previewOffsets[movingLane] + direction * offsetSnapMilliseconds, true)}
-                timelineDuration={timelineDuration}
-              />
-            </div>
-            <div className="flex items-center gap-1">
-              <label className="sr-only" htmlFor={`collision-preview-${laneName}-offset`}>
-                {label} offset in milliseconds
-              </label>
-              <input
-                aria-label={`${label} offset in milliseconds`}
-                className="h-10 min-w-0 flex-1 rounded-lg border border-gray-300 bg-gray-25 px-2 text-right text-sm tabular-nums text-gray-700 outline-none focus:ring-2 focus:ring-purple-500/40"
-                id={`collision-preview-${laneName}-offset`}
-                min="0"
-                onChange={(event) => setOffset(laneName, Number(event.currentTarget.value), false)}
-                step="1"
-                type="number"
-                value={offset}
-              />
-              <span className="text-xs text-gray-500">ms</span>
-            </div>
-          </div>
-          {!selectedSource ? (
+          ) : !selectedSource ? (
             <p className="text-xs text-gray-500">{missingAudioCopy(lane, label)}</p>
           ) : null}
+        </div>
+        <div
+          className="relative border-t border-gray-200 bg-gray-25"
+          style={{ height: timelineLaneHeight }}
+        >
+          {Array.from({ length: 60 }, (_, index) => (
+            <span
+              aria-hidden="true"
+              className={`absolute inset-y-0 border-l ${
+                index % 2 === 0 ? "border-gray-200" : "border-gray-100"
+              }`}
+              key={index}
+              style={{ left: index * 500 * timelinePixelsPerMillisecond }}
+            />
+          ))}
+          <PreviewSoundBlock
+            label={sourceLabel}
+            lane={laneName}
+            offset={offset}
+            onKeyboardMove={(movingLane, direction) =>
+              setOffset(
+                movingLane,
+                previewOffsets[movingLane] + direction * offsetSnapMilliseconds,
+                true
+              )
+            }
+          />
+          {isPlaying ? <TimelinePlayhead milliseconds={playheadMilliseconds} /> : null}
         </div>
       </>
     );
@@ -324,14 +383,15 @@ export function CollisionPreviewTimeline({
     >
       <div className="grid justify-items-center gap-3 text-center">
         <Button
-          aria-label="Tap to preview collision"
+          aria-label={isPlaying ? "Stop collision preview" : "Tap to preview collision"}
           className="h-12 min-w-32 text-base"
-          disabled={!canPreview}
-          onClick={playCollision}
+          disabled={!canPreview && !isPlaying}
+          leftIcon={isPlaying ? <Pause className="size-4" /> : undefined}
+          onClick={toggleCollisionPreview}
           title={previewUnavailableCopy}
           variant="primary"
         >
-          Tap
+          {isPlaying ? "Stop" : "Tap"}
         </Button>
         <div className="grid gap-1">
           <h3 className="text-sm font-semibold text-gray-700" id="collision-preview-heading">
@@ -344,28 +404,63 @@ export function CollisionPreviewTimeline({
           <p className="text-xs text-gray-500">
             {previewUnavailableCopy}
           </p>
-          {isPlaying ? <p className="text-xs font-medium text-purple-600">{prefersReducedMotion ? "Previewing" : `Previewing at ${Math.round((playheadByScheduleKey[scheduleKey] ?? 0) * 1000)}ms`}</p> : null}
           {errorMessage ? <p className="text-xs text-red-600" role="status">{errorMessage}</p> : null}
         </div>
       </div>
 
       <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
-      <div className="overflow-x-auto overscroll-x-contain pb-1">
-        <div className="min-w-[620px] border-y border-gray-200 bg-gray-50 px-4 py-3">
-          <div className="grid grid-cols-[104px_1fr] gap-x-3 gap-y-3">
+        <div
+          aria-label={`Collision preview timeline, Playing starts at ${previewOffsets.playing} milliseconds and Incoming starts at ${previewOffsets.incoming} milliseconds`}
+          className="overflow-x-auto overscroll-x-contain border-y border-gray-200 bg-gray-50 pb-1"
+          data-testid="collision-preview-timeline"
+          ref={timelineScrollerRef}
+        >
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: `${timelineControlWidth}px ${timelineCanvasWidth}px`,
+              width: timelineControlWidth + timelineCanvasWidth
+            }}
+          >
+            <div
+              className="sticky left-0 z-30 flex items-center border-r border-gray-200 bg-gray-50 px-3 text-xs font-medium text-gray-500"
+              style={{ height: timelineRulerHeight }}
+            >
+              Offset (ms)
+            </div>
+            <div
+              className="relative border-b border-gray-200 bg-gray-50"
+              style={{ height: timelineRulerHeight }}
+            >
+              {Array.from({ length: 61 }, (_, index) => {
+                const milliseconds = index * 500;
+                const isWholeSecond = milliseconds % 1000 === 0;
+
+                return (
+                  <span
+                    aria-hidden="true"
+                    className={`absolute bottom-0 border-l ${
+                      isWholeSecond ? "h-3 border-gray-400" : "h-2 border-gray-300"
+                    }`}
+                    key={milliseconds}
+                    style={{ left: milliseconds * timelinePixelsPerMillisecond }}
+                  >
+                    {isWholeSecond ? (
+                      <span className="absolute bottom-3 left-1 whitespace-nowrap text-[11px] tabular-nums text-gray-500">
+                        {milliseconds === 0 ? "0ms" : `${milliseconds / 1000}s`}
+                      </span>
+                    ) : null}
+                  </span>
+                );
+              })}
+              {isPlaying ? (
+                <TimelinePlayhead milliseconds={playheadMilliseconds} ruler />
+              ) : null}
+            </div>
             {renderLane("playing", "Playing")}
             {renderLane("incoming", "Incoming")}
-            <span aria-hidden="true" />
-            <div aria-label={`Collision preview timeline, Playing starts at ${previewOffsets.playing} milliseconds and Incoming starts at ${previewOffsets.incoming} milliseconds`} className="grid grid-cols-5 border-t border-gray-300 pt-1 text-xs tabular-nums text-gray-500">
-              <span>0ms</span>
-              <span>{timelineDuration / 4}ms</span>
-              <span>{timelineDuration / 2}ms</span>
-              <span>{(timelineDuration * 3) / 4}ms</span>
-              <span className="text-right">{timelineDuration}ms</span>
-            </div>
           </div>
         </div>
-      </div>
       </DndContext>
 
       <div className="flex flex-wrap justify-center gap-2">
@@ -373,17 +468,14 @@ export function CollisionPreviewTimeline({
           aria-label="Reset collision preview timing"
           className="h-11"
           leftIcon={<RotateCcw className="size-4" />}
-          onClick={() => setPreviewOffsets(defaultPreviewOffsets)}
+          onClick={() => {
+            setPreviewOffsets(defaultPreviewOffsets);
+            if (timelineScrollerRef.current) {
+              timelineScrollerRef.current.scrollLeft = 0;
+            }
+          }}
         >
           Reset timing
-        </Button>
-        <Button
-          aria-label="Stop collision preview"
-          disabled={!isPlaying}
-          leftIcon={<Pause className="size-4" />}
-          onClick={() => audioPreview.stopSchedule(scheduleKey)}
-        >
-          Stop
         </Button>
       </div>
     </section>

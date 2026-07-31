@@ -190,6 +190,43 @@ describe("MatrixResolutionPanel adaptive controls", () => {
 });
 
 describe("MatrixResolutionEditor", () => {
+  it("selects the target side independently when both sides use the same event", () => {
+    const onTargetEventIdChange = vi.fn();
+
+    render(
+      <AudioPreviewProvider><MatrixResolutionEditor
+        behavior="Preempt"
+        eventById={new Map(events.map((event) => [event.id, event]))}
+        onBack={vi.fn()}
+        onBehaviorChange={vi.fn()}
+        onClearEntry={vi.fn()}
+        onPostInterruptionRecoveryChange={vi.fn()}
+        onSaveEntry={vi.fn()}
+        onSystemInterruptionRecoveryChange={vi.fn()}
+        onTargetEventIdChange={onTargetEventIdChange}
+        postInterruptionRecovery="Stay stopped"
+        selectedEntry={{ ...selectedEntry, incomingEventId: playingEventId }}
+        selectedIncomingEventId={playingEventId}
+        selectedPlayingEventId={playingEventId}
+        systemInterruptionRecovery="Stay stopped"
+        targetEventId={playingEventId}
+        workspace={previewWorkspace}
+      /></AudioPreviewProvider>
+    );
+
+    const playing = screen.getByRole("button", { name: "Playing" });
+    const incoming = screen.getByRole("button", { name: "Incoming" });
+
+    expect(playing.getAttribute("aria-pressed")).toBe("true");
+    expect(incoming.getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(incoming);
+
+    expect(playing.getAttribute("aria-pressed")).toBe("false");
+    expect(incoming.getAttribute("aria-pressed")).toBe("true");
+    expect(onTargetEventIdChange).toHaveBeenCalledWith(playingEventId);
+  });
+
   it("disables Tap with an explanation when either event has no previewable audio", () => {
     render(
       <AudioPreviewProvider><MatrixResolutionEditor
@@ -245,7 +282,7 @@ describe("MatrixResolutionEditor", () => {
     expect(screen.getByRole("heading", { name: /Pay now.*Card declined/i })).not.toBeNull();
     expect((screen.getByRole("button", { name: "Tap to preview collision" }) as HTMLButtonElement).disabled).toBe(false);
     expect(screen.getByLabelText(/Collision preview timeline/i)).not.toBeNull();
-    expect((screen.getByRole("button", { name: "Stop collision preview" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: "Stop collision preview" })).toBeNull();
     expect(screen.getByRole("button", { name: "Clear collision rule" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Save collision rule" })).not.toBeNull();
     const playingSound = screen.getByLabelText("Playing sound") as HTMLSelectElement;
@@ -291,7 +328,8 @@ describe("MatrixResolutionEditor", () => {
     expect(controlGrid?.className).toContain("lg:grid-cols-2");
     expect(screen.getByRole("group", { name: "Target" }).className).toContain("grid-cols-2");
     expect(scroller).not.toBeNull();
-    expect(scroller?.firstElementChild?.className).toContain("min-w-[620px]");
+    expect(scroller?.getAttribute("data-testid")).toBe("collision-preview-timeline");
+    expect((scroller?.firstElementChild as HTMLElement | null)?.style.width).toBe("12176px");
     expect(screen.getByRole("button", { name: "Tap to preview collision" }).className).toContain("h-12");
     expect(behavior.className).toContain("h-11");
   });
@@ -321,7 +359,6 @@ describe("MatrixResolutionEditor", () => {
     const actions = [
       screen.getByRole("button", { name: "Back to Matrix" }),
       screen.getByRole("button", { name: "Tap to preview collision" }),
-      screen.getByRole("button", { name: "Stop collision preview" }),
       screen.getByRole("button", { name: "Clear collision rule" }),
       screen.getByRole("button", { name: "Save collision rule" })
     ];
@@ -334,7 +371,7 @@ describe("MatrixResolutionEditor", () => {
       action.focus();
       expect(document.activeElement).toBe(action);
     });
-    expect((screen.getByRole("button", { name: "Stop collision preview" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: "Stop collision preview" })).toBeNull();
   });
 
   it("keeps sound choice and audition timing local while offering precise keyboard and input controls", () => {
@@ -461,7 +498,7 @@ describe("MatrixResolutionEditor", () => {
     vi.unstubAllGlobals();
   });
 
-  it("starts, restarts, stops, and cleans up the collision preview", async () => {
+  it("uses Tap as the play/stop toggle and cleans up the collision preview", async () => {
     const sources = installCollisionPreviewAudioMocks();
     const { unmount } = render(
       <AudioPreviewProvider><MatrixResolutionEditor
@@ -484,25 +521,23 @@ describe("MatrixResolutionEditor", () => {
       /></AudioPreviewProvider>
     );
 
-    const tap = screen.getByRole("button", { name: "Tap to preview collision" });
-    const stop = screen.getByRole("button", { name: "Stop collision preview" });
-
-    fireEvent.click(tap);
+    fireEvent.click(screen.getByRole("button", { name: "Tap to preview collision" }));
     await waitFor(() => expect(sources).toHaveLength(2));
-    await waitFor(() => expect((stop as HTMLButtonElement).disabled).toBe(false));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Stop collision preview" })).not.toBeNull()
+    );
+    expect(screen.getByTestId("collision-preview-playhead")).not.toBeNull();
 
-    fireEvent.click(tap);
-    await waitFor(() => expect(sources).toHaveLength(4));
+    fireEvent.click(screen.getByRole("button", { name: "Stop collision preview" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Tap to preview collision" })).not.toBeNull()
+    );
     expect(sources.slice(0, 2).every((source) => source.stop.mock.calls.length === 1)).toBe(true);
 
-    fireEvent.click(stop);
-    await waitFor(() => expect((stop as HTMLButtonElement).disabled).toBe(true));
-    expect(sources.slice(2).every((source) => source.stop.mock.calls.length === 1)).toBe(true);
-
-    fireEvent.click(tap);
-    await waitFor(() => expect(sources).toHaveLength(6));
+    fireEvent.click(screen.getByRole("button", { name: "Tap to preview collision" }));
+    await waitFor(() => expect(sources).toHaveLength(4));
     unmount();
-    expect(sources.slice(4).every((source) => source.stop.mock.calls.length === 1)).toBe(true);
+    expect(sources.slice(2).every((source) => source.stop.mock.calls.length === 1)).toBe(true);
     vi.unstubAllGlobals();
   });
 });

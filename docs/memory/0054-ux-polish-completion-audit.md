@@ -25,3 +25,29 @@
 - UX Polish is complete. Choose a new implementation-plan/checklist stream for
   subsequent work; do not reopen this checklist for the documented scope
   boundaries alone.
+
+## Collision Matrix maintenance follow-up
+
+- Fixed the focused editor's target control so it tracks the semantic Playing or
+  Incoming side and never highlights both options for a diagonal same-event cell.
+- Replaced the dynamically growing audition ruler with a fixed 30-second,
+  horizontally scrollable canvas. Offset fields stay pinned on the left; pointer,
+  keyboard, and exact-input timing remain editor-local and capped so the preview
+  block fits inside the horizon.
+- Added a ruler/lane playhead, made Tap toggle to Stop, removed the separate Stop
+  action, and removed the live millisecond status text that shifted the layout.
+- Added ADR 0063 and refreshed the focused 1440px/375px snapshots and tests.
+
+### Follow-up verification
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed with the two existing unrelated warnings.
+- `pnpm test` passed (28 files, 161 tests).
+- Focused Chromium Matrix coverage passed for rule configuration, responsive
+  snapshots, scroll/drag offsets, preview lifecycle/playhead, and reduced motion
+  (5 tests). After removing the progress text, the focused lifecycle test passed.
+
+### Recommended next group
+
+- Start a new implementation-plan/checklist stream for the next requested product
+  change; no unchecked group remains in the main implementation checklist.

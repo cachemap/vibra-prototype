@@ -507,6 +507,8 @@ Goal: make the prototype feel polished enough for stakeholder review.
 - [x] Confirm table text does not overlap.
 - [x] Confirm dialogs fit their content.
 - [x] Confirm hover/focus/loading states do not shift layout.
+- [x] Keep Collision Matrix target selection role-specific for diagonal same-event cells.
+- [x] Keep Collision Matrix audition controls stable with a fixed scrollable timeline, visible playhead, and one Tap/Stop action.
 
 ### 10.3 Demo Reliability
 
