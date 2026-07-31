@@ -46,3 +46,9 @@
 - Completed theme persistence and system-change E2E coverage. The browser test verifies the stored Dark preference survives reload, then verifies System follows light-to-dark and dark-to-light `prefers-color-scheme` changes while retaining the selected system preference.
 - Verification: `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'persists theme preferences and follows system changes'` passed (1 test).
 - Next UX Polish checklist item: add coordinate-alignment assertions for page headers.
+
+## Follow-up
+
+- Completed page-header coordinate coverage across Projects, Libraries, Project Workspace, and Event Detail. The E2E test measures the breadcrumb and title positions from the same `PageHeader` instance, so secondary page headings cannot mask a geometry regression.
+- Verification: `pnpm exec playwright test tests/e2e/toolbar.spec.ts --grep 'keeps breadcrumbs and titles aligned'` passed (1 test); `pnpm typecheck` passed; `pnpm lint` passed with the two existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- Next UX Polish checklist item: add sidebar width assertions at desktop.
