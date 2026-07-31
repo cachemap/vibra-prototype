@@ -36,3 +36,10 @@
 - Added a focused Playwright test that replaces Web Audio with a long-lived instrumented source, starts the seeded Suppress audition, returns to the Matrix, and confirms the scheduled source is stopped.
 - Verification: `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'stops active collision audio when returning to Matrix'` passed (1 test); `pnpm typecheck` passed; `pnpm lint` passed with the two pre-existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
 - Next UX Polish checklist group: complete the remaining full `pnpm test` and `pnpm test:e2e` verification, then perform the manual acceptance and completion audit.
+
+## Full verification
+
+- Completed UX Polish automated verification and removed Playwright's one-second per-action slowdown so focused-editor and workspace flows run within their default test timeout.
+- Updated E2E selectors for DnD's live-region status, focused editor accessible names, exact nested-dialog names, and post-navigation route state. Matrix save/clear tests now explicitly return to the grid before asserting grid state.
+- Verification: `pnpm test` passed (28 files, 160 tests); `pnpm test:e2e` passed (27 tests); `pnpm typecheck` passed; `pnpm lint` passed with the two existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- Next UX Polish checklist group: perform manual acceptance and completion documentation/screenshots audit.

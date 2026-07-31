@@ -7,10 +7,7 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3000",
     trace: "on",
-    video: 'on',
-    launchOptions: {
-      slowMo: 1000,
-    }
+    video: "on"
   },
   webServer: {
     command: "pnpm dev",

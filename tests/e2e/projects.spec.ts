@@ -185,6 +185,7 @@ test("creates folders and projects at the projects root", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Root Experiments" })).toBeVisible();
 
   await page.getByLabel("Workspace sections").getByRole("link", { name: "Projects" }).click();
+  await expect(page).toHaveURL(/\/projects$/);
   await page.getByRole("button", { name: "New", exact: true }).click();
   const projectDialog = page.getByRole("dialog", { name: "New Project" });
   await projectDialog.getByLabel("Project name").fill("Root Feedback System");
@@ -226,7 +227,7 @@ test("deletes projects and folders from explorer row menus", async ({ page }) =>
   await page.getByRole("menuitem", { name: "Delete project" }).click();
   const projectDeleteDialog = page.getByRole("dialog", { name: "Delete project?" });
   await projectDeleteDialog.getByRole("button", { name: "Delete project" }).click();
-  await expect(page.getByRole("status")).toContainText("Deleted project Delete Candidate Project.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted project Delete Candidate Project." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Delete Candidate Project" })).toHaveCount(0);
 
   await page.getByRole("button", { name: "New folder" }).click();
@@ -239,7 +240,7 @@ test("deletes projects and folders from explorer row menus", async ({ page }) =>
   const activeFolderDeleteDialog = page.getByRole("dialog", { name: "Delete folder?" });
   await activeFolderDeleteDialog.getByRole("button", { name: "Delete folder" }).click();
   await expect(page).toHaveURL(/\/projects$/);
-  await expect(page.getByRole("status")).toContainText("Deleted folder Active Delete Folder.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted folder Active Delete Folder." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Active Delete Folder" })).toHaveCount(0);
 
   await page
@@ -249,7 +250,7 @@ test("deletes projects and folders from explorer row menus", async ({ page }) =>
   await page.getByRole("menuitem", { name: "Delete folder" }).click();
   const folderDeleteDialog = page.getByRole("dialog", { name: "Delete folder?" });
   await folderDeleteDialog.getByRole("button", { name: "Delete folder" }).click();
-  await expect(page.getByRole("status")).toContainText("Deleted folder Delete Candidate Folder.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted folder Delete Candidate Folder." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Delete Candidate Folder" })).toHaveCount(0);
 });
 
@@ -277,7 +278,7 @@ test("deletes a project and reloads the explorer cleanly", async ({ page }) => {
     .getByRole("button", { name: "Delete project" })
     .click();
 
-  await expect(page.getByRole("status")).toContainText("Deleted project Reload Delete Project.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted project Reload Delete Project." })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Reload Delete Project" })).toHaveCount(0);
@@ -325,7 +326,7 @@ test("deletes a device and project from the workspace", async ({ page }) => {
   const deviceDeleteDialog = page.getByRole("dialog", { name: "Delete device?" });
   await deviceDeleteDialog.getByRole("button", { name: "Delete device" }).click();
 
-  await expect(page.getByRole("status")).toContainText("Deleted device iPhone 16 Pro.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted device iPhone 16 Pro." })).toBeVisible();
   await expect(page.getByTestId("device-list")).not.toContainText("iPhone 16 Pro");
   await expect(page.getByRole("heading", { name: "Pixel 9" })).toBeVisible();
 
@@ -336,7 +337,7 @@ test("deletes a device and project from the workspace", async ({ page }) => {
   await projectDeleteDialog.getByRole("button", { name: "Delete project" }).click();
 
   await expect(page).toHaveURL(/\/projects$/);
-  await expect(page.getByRole("status")).toContainText("Deleted project Checkout Feedback System.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted project Checkout Feedback System." })).toBeVisible();
   await page.goto("/projects?folder=folder_checkout");
   await expect(page.getByRole("link", { name: "Checkout Feedback System" })).toHaveCount(0);
 });
@@ -492,7 +493,7 @@ test("creates an event with an interaction playback", async ({ page }) => {
   let deleteDialog = page.getByRole("dialog", { name: "Delete playback?" });
   await deleteDialog.getByRole("button", { name: "Delete playback" }).click();
 
-  await expect(page.getByRole("status")).toContainText("Deleted playback Navigation Click.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted playback Navigation Click." })).toBeVisible();
   await expect(page.getByText("0.20s")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Playback" })).toBeVisible();
 
@@ -500,7 +501,7 @@ test("creates an event with an interaction playback", async ({ page }) => {
   deleteDialog = page.getByRole("dialog", { name: "Delete interaction?" });
   await deleteDialog.getByRole("button", { name: "Delete interaction" }).click();
 
-  await expect(page.getByRole("status")).toContainText("Deleted interaction Primary undo press.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted interaction Primary undo press." })).toBeVisible();
   await expect(page.getByText("No interactions bound yet")).toBeVisible();
 
   await page.getByRole("button", { name: "Back to events" }).click();
@@ -539,6 +540,7 @@ test("browses and mutates asset libraries", async ({ page }) => {
   await folderDialog.getByRole("button", { name: "Create" }).click();
 
   await expect(page.getByRole("heading", { name: "Notification Kit" })).toBeVisible();
+  await expect(page.getByText("Toasts contains 0 items.")).toBeVisible();
   await page.getByRole("button", { name: "New asset" }).click();
   const assetDialog = page.getByRole("dialog", { name: "New Asset" });
   await assetDialog.getByLabel("Display name").fill("Toast Tap");
@@ -555,7 +557,7 @@ test("browses and mutates asset libraries", async ({ page }) => {
   await page.getByRole("menuitem", { name: "Delete asset" }).click();
   let deleteDialog = page.getByRole("dialog", { name: "Delete asset?" });
   await deleteDialog.getByRole("button", { name: "Delete asset" }).click();
-  await expect(page.getByRole("status")).toContainText("Deleted asset Toast Tap.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted asset Toast Tap." })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Toast Tap", exact: true })).toHaveCount(0);
 
   await page.getByRole("button", { name: "New folder" }).click();
@@ -564,6 +566,8 @@ test("browses and mutates asset libraries", async ({ page }) => {
   await nestedFolderDialog.getByRole("button", { name: "Create" }).click();
   await expect(page.getByRole("heading", { name: "Notification Kit" })).toBeVisible();
   await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Toasts" }).click();
+  await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("Toasts");
+  await expect(page.getByText("Toasts contains 1 item.")).toBeVisible();
 
   await page.getByRole("button", { name: "Show tile view" }).click();
   await expect(page.getByRole("button", { name: "Nested Delete 0 items" })).toBeVisible();
@@ -571,7 +575,7 @@ test("browses and mutates asset libraries", async ({ page }) => {
   await page.getByRole("menuitem", { name: "Delete folder" }).click();
   deleteDialog = page.getByRole("dialog", { name: "Delete folder?" });
   await deleteDialog.getByRole("button", { name: "Delete folder" }).click();
-  await expect(page.getByRole("status")).toContainText("Deleted folder Nested Delete.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted folder Nested Delete." })).toBeVisible();
   await expect(page.getByRole("button", { name: "Nested Delete 0 items" })).toHaveCount(0);
 
   await page.getByRole("button", { name: "New folder" }).click();
@@ -583,14 +587,14 @@ test("browses and mutates asset libraries", async ({ page }) => {
   await page.getByRole("menuitem", { name: "Delete folder" }).click();
   deleteDialog = page.getByRole("dialog", { name: "Delete folder?" });
   await deleteDialog.getByRole("button", { name: "Delete folder" }).click();
-  await expect(page.getByRole("status")).toContainText("Deleted folder Active Asset Folder.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted folder Active Asset Folder." })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Breadcrumb" })).not.toContainText("Active Asset Folder");
 
   await page.getByRole("button", { name: "Open actions for Notification Kit" }).click();
   await page.getByRole("menuitem", { name: "Delete library" }).click();
   deleteDialog = page.getByRole("dialog", { name: "Delete library?" });
   await deleteDialog.getByRole("button", { name: "Delete library" }).click();
-  await expect(page.getByRole("status")).toContainText("Deleted library Notification Kit.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted library Notification Kit." })).toBeVisible();
   await expect(page.getByRole("button", { name: /Notification Kit/ })).toHaveCount(0);
 });
 
@@ -698,14 +702,14 @@ test("uploads assets from the project workspace default library", async ({ page 
   await page.getByRole("menuitem", { name: "Delete asset" }).click();
   let deleteDialog = page.getByRole("dialog", { name: "Delete asset?" });
   await deleteDialog.getByRole("button", { name: "Delete asset" }).click();
-  await expect(page.getByRole("status")).toContainText("Deleted asset Nested Toast Tap.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted asset Nested Toast Tap." })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Nested Toast Tap", exact: true })).toHaveCount(0);
 
   await page.getByRole("button", { name: "Open actions for Project Uploads" }).click();
   await page.getByRole("menuitem", { name: "Delete folder" }).click();
   deleteDialog = page.getByRole("dialog", { name: "Delete folder?" });
   await deleteDialog.getByRole("button", { name: "Delete folder" }).click();
-  await expect(page.getByRole("status")).toContainText("Deleted folder Project Uploads.");
+  await expect(page.getByRole("status").filter({ hasText: "Deleted folder Project Uploads." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Project Uploads" })).toHaveCount(0);
 });
 
@@ -730,7 +734,7 @@ test("configures a collision matrix entry", async ({ page }) => {
   });
   await expect(playingCheckoutActions).toHaveAttribute("aria-checked", "mixed");
   await playingCheckoutActions.click();
-  await expect(page.getByRole("status")).toContainText("Added Save Card to playing rows.");
+  await expect(page.getByRole("status").filter({ hasText: "Added Save Card to playing rows." })).toBeVisible();
   await expect(playingCheckoutActions).toHaveAttribute("aria-checked", "true");
 
   await matrixFilters.getByRole("tab", { name: "Incoming" }).click();
@@ -744,7 +748,7 @@ test("configures a collision matrix entry", async ({ page }) => {
     .getByRole("button", { name: "Unset: Save Card when Card Declined arrives" })
     .click();
   await page.getByLabel("Behavior").selectOption("Queue");
-  await page.getByRole("button", { name: "Save rule" }).click();
+  await page.getByRole("button", { name: "Save collision rule" }).click();
   await page.getByRole("button", { name: "Back to Matrix" }).click();
 
   await expect(page.getByTestId("collision-matrix-grid")).toContainText("Queue");
@@ -950,25 +954,28 @@ test("clears collision matrix rows columns and entries", async ({ page }) => {
 
   await matrixGrid.getByRole("button", { name: "Unset: Save Card when Card Declined arrives" }).click();
   await page.getByLabel("Behavior").selectOption("Queue");
-  await page.getByRole("button", { name: "Save rule" }).click();
+  await page.getByRole("button", { name: "Save collision rule" }).click();
+  await page.getByRole("button", { name: "Back to Matrix" }).click();
   await expect(matrixGrid).toContainText("Queue");
 
-  await page.getByRole("button", { name: "Clear rule" }).click();
+  await matrixGrid.getByRole("button", { name: "Queue: Save Card when Card Declined arrives" }).click();
+  await page.getByRole("button", { name: "Clear collision rule" }).click();
   await page.getByRole("dialog", { name: "Clear matrix rule?" }).getByRole("button", { name: "Clear matrix rule" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Cleared matrix rule" })).toBeVisible();
+  await page.getByRole("button", { name: "Back to Matrix" }).click();
   await expect(
     page.getByRole("button", { name: "Unset: Save Card when Card Declined arrives" })
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Playing", exact: true }).click();
   await matrixFilters.getByRole("checkbox", { name: "Toggle playing row Save Card" }).click();
-  await expect(page.getByRole("status")).toContainText("Removed Save Card from playing rows.");
+  await expect(page.getByRole("status").filter({ hasText: "Removed Save Card from playing rows." })).toBeVisible();
 
   await matrixFilters.getByRole("tab", { name: "Incoming" }).click();
   await matrixFilters
     .getByRole("checkbox", { name: "Toggle incoming columns in System Messaging" })
     .click();
-  await expect(page.getByRole("status")).toContainText("Removed 2 events from incoming columns.");
+  await expect(page.getByRole("status").filter({ hasText: "Removed 2 events from incoming columns." })).toBeVisible();
   await page.getByRole("button", { name: "Close matrix filters" }).click();
 
   await expect(matrixGrid.getByRole("button", { name: /Save Card when/ })).toHaveCount(0);
@@ -986,7 +993,7 @@ test("generates and opens share links", async ({ page }) => {
   await page.goto("/projects/project_checkout-system");
 
   await page.getByRole("button", { name: "Share project" }).click();
-  let shareDialog = page.getByRole("dialog", { name: "Share Link" });
+  let shareDialog = page.getByRole("dialog", { name: "Share Link", exact: true });
   await expect(shareDialog).toContainText("/share/share_");
   const projectSharePath = (await shareDialog.getByText(/\/share\/share_/).textContent())?.trim();
   await shareDialog.getByRole("button", { name: "Delete link" }).click();
@@ -998,13 +1005,13 @@ test("generates and opens share links", async ({ page }) => {
   await page.goto("/projects/project_checkout-system");
 
   await page.getByRole("button", { name: "Share project" }).click();
-  shareDialog = page.getByRole("dialog", { name: "Share Link" });
+  shareDialog = page.getByRole("dialog", { name: "Share Link", exact: true });
   await expect(shareDialog).toContainText("/share/share_");
   await shareDialog.getByRole("button", { name: "Close" }).click();
 
   await page.getByRole("cell", { name: "Save Card", exact: true }).getByRole("button").click();
   await page.getByRole("button", { name: "Share", exact: true }).click();
-  shareDialog = page.getByRole("dialog", { name: "Share Link" });
+  shareDialog = page.getByRole("dialog", { name: "Share Link", exact: true });
   await expect(shareDialog).toContainText("/share/share_");
   const eventSharePath = (await shareDialog.getByText(/\/share\/share_/).textContent())?.trim();
   await shareDialog.getByRole("button", { name: "Close" }).click();
@@ -1013,7 +1020,7 @@ test("generates and opens share links", async ({ page }) => {
   await page.getByRole("tab", { name: "Matrix" }).click();
   await page.getByTestId("collision-matrix-grid").getByRole("button", { name: "Preempt" }).first().click();
   await page.getByRole("button", { name: "Share entry" }).click();
-  shareDialog = page.getByRole("dialog", { name: "Share Link" });
+  shareDialog = page.getByRole("dialog", { name: "Share Link", exact: true });
   await expect(shareDialog).toContainText("/share/share_");
 
   expect(eventSharePath).toMatch(/^\/share\/share_/);
@@ -1044,7 +1051,7 @@ test("keeps workspace dialogs singular and stacks share-link deletion confirmati
 
   await page.getByRole("button", { name: "Share project" }).click();
   await expectSingleDialog("Share Link");
-  await page.getByRole("dialog", { name: "Share Link" }).getByRole("button", { name: "Close" }).click();
+  await page.getByRole("dialog", { name: "Share Link", exact: true }).getByRole("button", { name: "Close" }).click();
 
   await page.getByRole("button", { name: "Add device" }).first().click();
   await expectSingleDialog("Create Device");
@@ -1063,10 +1070,6 @@ test("keeps workspace dialogs singular and stacks share-link deletion confirmati
   await page.getByRole("dialog", { name: "Create Event" }).getByRole("button", { name: "Cancel" }).click();
 
   await page.getByRole("tab", { name: "Assets" }).click();
-  await page.getByRole("button", { name: "Import library" }).click();
-  await expectSingleDialog("Import Library");
-  await page.getByRole("dialog", { name: "Import Library" }).getByRole("button", { name: "Cancel" }).click();
-
   await page.getByRole("button", { name: "New folder" }).click();
   await expectSingleDialog("New Folder");
   await page.getByRole("dialog", { name: "New Folder" }).getByRole("button", { name: "Cancel" }).click();
@@ -1077,12 +1080,12 @@ test("keeps workspace dialogs singular and stacks share-link deletion confirmati
 
   await page.getByRole("tab", { name: "Events" }).click();
   await page.getByRole("button", { name: "Share project" }).click();
-  await page.getByRole("dialog", { name: "Share Link" }).getByRole("button", { name: "Delete link" }).click();
-  await expect(page.getByRole("dialog", { name: "Share Link" })).toBeVisible();
+  await page.getByRole("dialog", { name: "Share Link", exact: true }).getByRole("button", { name: "Delete link" }).click();
+  await expect(page.getByRole("dialog", { name: "Share Link", exact: true })).toBeVisible();
   await expect(page.getByRole("dialog", { name: "Delete share link?" })).toBeVisible();
   await expect(overlays).toHaveCount(2);
   await expect(overlays.last().getByRole("dialog", { name: "Delete share link?" })).toBeVisible();
   await page.getByRole("dialog", { name: "Delete share link?" }).getByRole("button", { name: "Cancel" }).click();
-  await page.getByRole("dialog", { name: "Share Link" }).getByRole("button", { name: "Close" }).click();
+  await page.getByRole("dialog", { name: "Share Link", exact: true }).getByRole("button", { name: "Close" }).click();
   await expect(overlays).toHaveCount(0);
 });

@@ -255,7 +255,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Verify uploaded blob URLs remain valid for playback and are not leaked or persisted.
 - [x] Verify Tap and timeline motion respect reduced-motion settings.
 
-## 9. Automated verification [~]
+## 9. Automated verification [x]
 
 - [x] Add active-route helper/component tests.
 - [x] Add theme-toggle accessibility/state tests.
@@ -279,8 +279,8 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Add E2E coverage proving Back to Matrix stops active collision audio.
 - [x] Run `pnpm typecheck`.
 - [x] Run `pnpm lint`.
-- [ ] Run `pnpm test`.
-- [ ] Run `pnpm test:e2e`.
+- [x] Run `pnpm test`.
+- [x] Run `pnpm test:e2e`.
 
 ## 10. Manual acceptance
 
