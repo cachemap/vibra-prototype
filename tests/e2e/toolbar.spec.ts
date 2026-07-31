@@ -31,6 +31,20 @@ function expectAlignedHeader(reference: HeaderCoordinates, current: HeaderCoordi
   expect(current.title.y).toBe(reference.title.y);
 }
 
+async function expectDesktopSidebarWidth(sidebar: ReturnType<Page["locator"]>, content: ReturnType<Page["locator"]>) {
+  await expect(sidebar).toBeVisible();
+  await expect(content).toBeVisible();
+
+  const [sidebarBox, contentBox] = await Promise.all([sidebar.boundingBox(), content.boundingBox()]);
+
+  if (!sidebarBox || !contentBox) {
+    throw new Error("Expected a visible sidebar and its content area.");
+  }
+
+  expect(sidebarBox.width).toBe(320);
+  expect(contentBox.x).toBe(sidebarBox.x + sidebarBox.width);
+}
+
 test("shows the active section and keeps the global toolbar within a 375px viewport", async ({ page }) => {
   await page.setViewportSize({ height: 812, width: 375 });
   await page.goto("/projects");
@@ -79,4 +93,20 @@ test("keeps breadcrumbs and titles aligned across Projects, Libraries, Workspace
 
   await page.getByRole("row", { name: /Pay Now/ }).getByRole("button", { name: "Open", exact: true }).click();
   expectAlignedHeader(projectsHeader, await readHeaderCoordinates(page));
+});
+
+test("uses the shared 320px desktop sidebar width for libraries and project workspaces", async ({ page }) => {
+  await page.setViewportSize({ height: 900, width: 1440 });
+  await page.goto("/libraries");
+
+  const librarySidebar = page.getByRole("heading", { name: "Asset Libraries" }).locator("xpath=ancestor::aside");
+  await expectDesktopSidebarWidth(librarySidebar, librarySidebar.locator("xpath=following-sibling::main"));
+
+  await page.goto("/projects");
+  await page.getByRole("link", { name: "Mobile App Systems" }).click();
+  await page.getByRole("link", { name: "Checkout Experience" }).click();
+  await page.getByRole("link", { name: "Checkout Feedback System" }).click();
+
+  const workspaceSidebar = page.getByRole("heading", { name: "Devices" }).locator("xpath=ancestor::aside");
+  await expectDesktopSidebarWidth(workspaceSidebar, workspaceSidebar.locator("xpath=following-sibling::main"));
 });

@@ -272,7 +272,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Add drag pointer and keyboard E2E coverage.
 - [x] Add theme persistence and system-change E2E coverage.
 - [x] Add coordinate-alignment assertions for page headers.
-- [ ] Add sidebar width assertions at desktop.
+- [x] Add sidebar width assertions at desktop.
 - [ ] Add reduced-motion Matrix coverage.
 - [ ] Add wide and 375px visual snapshots for the focused resolution editor.
 - [ ] Add E2E coverage proving audition offsets do not mutate event playback offsets.
