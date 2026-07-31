@@ -34,3 +34,9 @@
 - Tightened its feedback assertions to target the visible feedback text rather than the generic `status` role, which is also used by dnd-kit's live announcement region.
 - Verification: `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'deletes collections and events from the workspace'` passed (1 test); `pnpm typecheck` passed; `pnpm lint` passed with the two existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
 - Next UX Polish checklist item: add drag pointer and keyboard E2E coverage.
+
+## Follow-up
+
+- Verified the existing drag-reorder E2E covers pointer dragging, keyboard reordering, and reload persistence for both changes.
+- Verification: `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'reorders collection events with pointer and keyboard controls'` passed (1 test).
+- Next UX Polish checklist item: add theme persistence and system-change E2E coverage.
