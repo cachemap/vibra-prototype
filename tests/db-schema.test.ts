@@ -8,7 +8,8 @@ import {
   VIBRA_DATABASE_VERSION,
   vibraStores,
   vibraStoresV1,
-  vibraStoresV2
+  vibraStoresV2,
+  vibraStoresV3
 } from "../data/db";
 import { asEntityId, type CollisionMatrixEntryId } from "../domain";
 
@@ -106,7 +107,9 @@ describe("Vibra IndexedDB schema", () => {
     ).resolves.toMatchObject({
       resolutionBehavior: {
         behaviorName: "Queue",
-        targetEventId: "event_alpha"
+        targetEventId: "event_alpha",
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Stay stopped"
       }
     });
 
@@ -135,6 +138,72 @@ describe("Vibra IndexedDB schema", () => {
       upgradedDatabase.close();
       await upgradedDatabase.delete();
     }
+  });
+
+  it("normalizes version-3 resolution behaviors without changing their schema version", async () => {
+    const databaseName = `vibra-v3-resolution-migration-${crypto.randomUUID()}`;
+    const legacyDatabase = new Dexie(databaseName);
+    legacyDatabase.version(3).stores(vibraStoresV3);
+    await legacyDatabase.open();
+
+    await legacyDatabase.table("collisionMatrixEntries").bulkAdd([
+      {
+        id: "matrix_entry_preempt",
+        matrixId: "matrix_1",
+        playingEventId: "event_playing",
+        incomingEventId: "event_incoming",
+        resolutionBehavior: { behaviorName: "Preempt", targetEventId: "event_incoming" }
+      },
+      {
+        id: "matrix_entry_suppress",
+        matrixId: "matrix_1",
+        playingEventId: "event_playing",
+        incomingEventId: "event_incoming",
+        resolutionBehavior: { behaviorName: "Suppress", targetEventId: "event_playing" }
+      },
+      {
+        id: "matrix_entry_not_possible",
+        matrixId: "matrix_1",
+        playingEventId: "event_playing",
+        incomingEventId: "event_incoming",
+        resolutionBehavior: { behaviorName: "Not possible", targetEventId: "event_playing" }
+      }
+    ]);
+    legacyDatabase.close();
+
+    const upgradedDatabase = createVibraDatabase(databaseName);
+    await upgradedDatabase.open();
+
+    await expect(upgradedDatabase.collisionMatrixEntries.get("matrix_entry_preempt" as CollisionMatrixEntryId)).resolves
+      .toMatchObject({
+        resolutionBehavior: {
+          behaviorName: "Preempt",
+          targetEventId: "event_incoming",
+          postInterruptionRecovery: "Stay stopped",
+          systemInterruptionRecovery: "Stay stopped"
+        }
+      });
+    await expect(upgradedDatabase.collisionMatrixEntries.get("matrix_entry_suppress" as CollisionMatrixEntryId)).resolves
+      .toMatchObject({
+        resolutionBehavior: {
+          behaviorName: "Suppress",
+          targetEventId: "event_playing",
+          postInterruptionRecovery: null,
+          systemInterruptionRecovery: "Stay stopped"
+        }
+      });
+    await expect(upgradedDatabase.collisionMatrixEntries.get("matrix_entry_not_possible" as CollisionMatrixEntryId)).resolves
+      .toMatchObject({
+        resolutionBehavior: {
+          behaviorName: "Not possible",
+          targetEventId: null,
+          postInterruptionRecovery: null,
+          systemInterruptionRecovery: null
+        }
+      });
+
+    upgradedDatabase.close();
+    await upgradedDatabase.delete();
   });
 
   it("keeps sharing links addressable by URL token and target kind", () => {

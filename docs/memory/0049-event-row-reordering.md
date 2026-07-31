@@ -29,4 +29,21 @@
 
 ## Next
 
-- Implement UX Polish checklist group 8: focused resolution behavior editor and collision preview. Start with the adaptive rule domain/schema work, allocating a new IndexedDB migration version because v3 has already shipped.
+- Started UX Polish checklist group 8's adaptive rule foundation (remaining visual controls are still in progress).
+
+## Changed (continued)
+
+- Added `InterruptionRecovery` and behavior-specific nullable recovery fields to `ResolutionBehavior`.
+- Centralized required/forbidden fields, defaults, and help copy in `resolutionBehaviorDefinitions`; repository validation rejects missing or stale values.
+- Added IndexedDB v4 migration to normalize version-3 rule objects, preserving valid Suppress targets and applying deterministic defaults.
+- Seed/share data and the existing interim Matrix form now retain behavior-aware recovery values; the form disables Save for an invalid visible draft.
+
+## Verification
+
+- `pnpm typecheck` passed.
+- `pnpm lint` passed with the two existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- `pnpm test -- tests/domain-rules.test.ts tests/db-schema.test.ts tests/project-repository.test.ts tests/matrix-grid.test.tsx` passed: 134 tests.
+
+## Next
+
+- Complete the remaining adaptive control work: accessible help buttons and Playing/Incoming plus Resume/Stay stopped segmented controls. Then build the focused editor layout and collision preview timeline.

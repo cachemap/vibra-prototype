@@ -117,7 +117,12 @@ export function WorkspaceDeleteConfirm() {
         if (deleteTarget.kind === "matrixEntry") {
           await deleteMatrixEntry.mutateAsync(deleteTarget.id);
           setDeleteTarget(null);
-          setMatrixSelection({ matrixBehavior: "Preempt", matrixTargetEventId: "" });
+          setMatrixSelection({
+            matrixBehavior: "Preempt",
+            matrixTargetEventId: "",
+            matrixPostInterruptionRecovery: "Stay stopped",
+            matrixSystemInterruptionRecovery: "Stay stopped"
+          });
           return `Cleared matrix rule ${deleteTarget.name}.`;
         }
 

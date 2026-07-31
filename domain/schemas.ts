@@ -2,6 +2,7 @@ import * as v from "valibot";
 
 import {
   eventTypes,
+  interruptionRecoveries,
   mediaKinds,
   platformNames,
   resolutionBehaviorNames,
@@ -21,6 +22,7 @@ export const platformNameSchema = v.picklist(platformNames);
 export const triggerNameSchema = v.picklist(triggerNames);
 export const eventTypeSchema = v.picklist(eventTypes);
 export const resolutionBehaviorNameSchema = v.picklist(resolutionBehaviorNames);
+export const interruptionRecoverySchema = v.picklist(interruptionRecoveries);
 export const mediaKindSchema = v.picklist(mediaKinds);
 
 export const userSchema = v.strictObject({
@@ -80,7 +82,9 @@ export const collisionMatrixColumnSchema = v.strictObject({
 
 export const resolutionBehaviorSchema = v.strictObject({
   behaviorName: resolutionBehaviorNameSchema,
-  targetEventId: nullableIdSchema
+  targetEventId: nullableIdSchema,
+  postInterruptionRecovery: v.nullable(interruptionRecoverySchema),
+  systemInterruptionRecovery: v.nullable(interruptionRecoverySchema)
 });
 
 export const collisionMatrixEntrySchema = v.strictObject({

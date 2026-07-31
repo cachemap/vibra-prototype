@@ -1,6 +1,7 @@
 import Dexie, { type Table } from "dexie";
 
 import { resolutionBehaviorNames } from "../domain/enums";
+import { normalizeResolutionBehavior } from "../domain/rules/matrix";
 import type {
   Asset,
   AssetBlob,
@@ -44,7 +45,7 @@ import type {
 } from "../domain/ids";
 
 export const VIBRA_DATABASE_NAME = "vibra-prototype";
-export const VIBRA_DATABASE_VERSION = 3;
+export const VIBRA_DATABASE_VERSION = 4;
 
 export const vibraStoresV1 = {
   users: "id",
@@ -75,14 +76,19 @@ export const vibraStoresV2 = {
   assetBlobs: "assetId, contentType, storedAt"
 } as const;
 
-export const vibraStores = {
+export const vibraStoresV3 = {
   ...vibraStoresV2,
   events: "id, collectionId, eventType, name, [collectionId+sortOrder]"
 } as const;
 
+export const vibraStores = vibraStoresV3;
+
 type LegacyEventRecord = Omit<Event, "sortOrder"> & { sortOrder?: number };
 type LegacyCollisionMatrixEntryRecord = Omit<CollisionMatrixEntry, "resolutionBehavior"> & {
-  resolutionBehavior?: Partial<CollisionMatrixEntry["resolutionBehavior"]> | null;
+  resolutionBehavior?: {
+    behaviorName?: CollisionMatrixEntry["resolutionBehavior"]["behaviorName"];
+    targetEventId?: EventId | null;
+  } | null;
 };
 
 const sortLegacyEventsForMigration = (events: LegacyEventRecord[]) =>
@@ -115,7 +121,9 @@ const migrateEventSortOrders = async (eventsTable: Table<LegacyEventRecord, Even
 
 const normalizeLegacyResolutionBehavior = (
   entry: LegacyCollisionMatrixEntryRecord
-): CollisionMatrixEntry => {
+): LegacyCollisionMatrixEntryRecord & {
+  resolutionBehavior: NonNullable<LegacyCollisionMatrixEntryRecord["resolutionBehavior"]>;
+} => {
   const behaviorName = resolutionBehaviorNames.includes(
     entry.resolutionBehavior?.behaviorName as CollisionMatrixEntry["resolutionBehavior"]["behaviorName"]
   )
@@ -172,6 +180,25 @@ const migrateLegacyCollisionResolutionBehaviors = async (
   }
 };
 
+type Version3CollisionMatrixEntryRecord = Omit<CollisionMatrixEntry, "resolutionBehavior"> & {
+  resolutionBehavior?: Partial<CollisionMatrixEntry["resolutionBehavior"]> | null;
+};
+
+const migrateResolutionBehaviorRecoveries = async (
+  entriesTable: Table<Version3CollisionMatrixEntryRecord, CollisionMatrixEntryId>
+) => {
+  const entries = await entriesTable.toArray();
+
+  if (entries.length > 0) {
+    await entriesTable.bulkPut(
+      entries.map((entry) => ({
+        ...entry,
+        resolutionBehavior: normalizeResolutionBehavior(entry.resolutionBehavior, entry)
+      }))
+    );
+  }
+};
+
 export class VibraDatabase extends Dexie {
   users!: Table<User, UserId>;
   folders!: Table<ProjectFolder, ProjectFolderId>;
@@ -201,7 +228,7 @@ export class VibraDatabase extends Dexie {
     this.version(1).stores(vibraStoresV1);
     this.version(2).stores(vibraStoresV2);
     this.version(3)
-      .stores(vibraStores)
+      .stores(vibraStoresV3)
       .upgrade(async (transaction) => {
         await migrateEventSortOrders(
           transaction.table("events") as Table<LegacyEventRecord, EventId>
@@ -209,6 +236,16 @@ export class VibraDatabase extends Dexie {
         await migrateLegacyCollisionResolutionBehaviors(
           transaction.table("collisionMatrixEntries") as Table<
             LegacyCollisionMatrixEntryRecord,
+            CollisionMatrixEntryId
+          >
+        );
+      });
+    this.version(4)
+      .stores(vibraStores)
+      .upgrade(async (transaction) => {
+        await migrateResolutionBehaviorRecoveries(
+          transaction.table("collisionMatrixEntries") as Table<
+            Version3CollisionMatrixEntryRecord,
             CollisionMatrixEntryId
           >
         );

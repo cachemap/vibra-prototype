@@ -1183,7 +1183,9 @@ describe("project repository", () => {
       incomingEventId: asEntityId<EventId>("event_ios-save-card"),
       resolutionBehavior: {
         behaviorName: "Suppress",
-        targetEventId: asEntityId<EventId>("event_ios-save-card")
+        targetEventId: asEntityId<EventId>("event_ios-save-card"),
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Stay stopped"
       }
     });
 
@@ -1193,7 +1195,9 @@ describe("project repository", () => {
     }
     expect(createdEntryResult.value.resolutionBehavior).toEqual({
       behaviorName: "Suppress",
-      targetEventId: "event_ios-save-card"
+      targetEventId: "event_ios-save-card",
+      postInterruptionRecovery: null,
+      systemInterruptionRecovery: "Stay stopped"
     });
 
     const updatedEntryResult = await repository.upsertCollisionMatrixEntry({
@@ -1202,7 +1206,9 @@ describe("project repository", () => {
       incomingEventId: asEntityId<EventId>("event_ios-save-card"),
       resolutionBehavior: {
         behaviorName: "Queue",
-        targetEventId: null
+        targetEventId: asEntityId<EventId>("event_ios-save-card"),
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Stay stopped"
       }
     });
 
@@ -1213,7 +1219,9 @@ describe("project repository", () => {
     expect(updatedEntryResult.value.id).toBe(createdEntryResult.value.id);
     expect(updatedEntryResult.value.resolutionBehavior).toEqual({
       behaviorName: "Queue",
-      targetEventId: null
+      targetEventId: "event_ios-save-card",
+      postInterruptionRecovery: null,
+      systemInterruptionRecovery: "Stay stopped"
     });
   });
 
@@ -1239,7 +1247,9 @@ describe("project repository", () => {
       incomingEventId: asEntityId<EventId>("event_ios-pay-now"),
       resolutionBehavior: {
         behaviorName: "Queue",
-        targetEventId: null
+        targetEventId: asEntityId<EventId>("event_ios-pay-now"),
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Stay stopped"
       }
     });
 
@@ -1256,7 +1266,9 @@ describe("project repository", () => {
       incomingEventId: asEntityId<EventId>("event_ios-save-card"),
       resolutionBehavior: {
         behaviorName: "Suppress",
-        targetEventId: null
+        targetEventId: null,
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Stay stopped"
       }
     });
 

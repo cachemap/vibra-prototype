@@ -185,31 +185,31 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [ ] Keep all touch targets at least 44px and avoid horizontal page overflow at 375px.
 - [ ] Verify Back, Clear, Save, Tap, and Stop have distinct accessible names and focus states.
 
-### Adaptive rule data and controls
+### Adaptive rule data and controls [~]
 
-- [ ] Add an `InterruptionRecovery` vocabulary with `Resume` and `Stay stopped`.
-- [ ] Add nullable post-interruption and system-interruption recovery fields to `ResolutionBehavior`.
-- [ ] Create one behavior-definition map for applicable fields, defaults, labels, help copy, and validation.
-- [ ] Require a target for Preempt, Queue, and Suppress.
-- [ ] Clear/forbid the target for Co-play and Not possible.
-- [ ] Require post-interruption recovery only for Preempt.
-- [ ] Require system-interruption recovery for every previewable behavior.
-- [ ] Clear/forbid all recovery values for Not possible.
+- [x] Add an `InterruptionRecovery` vocabulary with `Resume` and `Stay stopped`.
+- [x] Add nullable post-interruption and system-interruption recovery fields to `ResolutionBehavior`.
+- [x] Create one behavior-definition map for applicable fields, defaults, labels, help copy, and validation.
+- [x] Require a target for Preempt, Queue, and Suppress.
+- [x] Clear/forbid the target for Co-play and Not possible.
+- [x] Require post-interruption recovery only for Preempt.
+- [x] Require system-interruption recovery for every previewable behavior.
+- [x] Clear/forbid all recovery values for Not possible.
 - [ ] Render Target as a Playing/Incoming segmented control only when applicable.
 - [ ] Render Post interruption as a Resume/Stay stopped segmented control only when applicable.
 - [ ] Render System interruption as a Resume/Stay stopped segmented control only when applicable.
 - [ ] Add accessible help buttons and programmatic descriptions for unfamiliar terms.
-- [ ] Clear stale draft values immediately when switching to a behavior where a field is inapplicable.
-- [ ] Keep Save disabled until the visible behavior-specific draft is valid.
-- [ ] Update seed rules and every resolution fixture/factory.
-- [ ] Update repository command/input types and `canUseResolutionBehavior`.
-- [ ] Update matrix cell/share-preview copy to describe target and recovery semantics accurately.
-- [ ] Normalize legacy resolution objects during the coordinated IndexedDB migration.
-- [ ] Default legacy Preempt to Playing + Stay stopped.
-- [ ] Default legacy Queue to Incoming.
-- [ ] Preserve a valid legacy Suppress target and repair malformed missing targets to Incoming.
-- [ ] Default applicable system recovery to Stay stopped.
-- [ ] If database version 3 has already shipped, create a new migration version instead of mutating it.
+- [x] Clear stale draft values immediately when switching to a behavior where a field is inapplicable.
+- [x] Keep Save disabled until the visible behavior-specific draft is valid.
+- [x] Update seed rules and every resolution fixture/factory.
+- [x] Update repository command/input types and `canUseResolutionBehavior`.
+- [x] Update matrix cell/share-preview copy to describe target and recovery semantics accurately.
+- [x] Normalize legacy resolution objects during the coordinated IndexedDB migration.
+- [x] Default legacy Preempt to Playing + Stay stopped.
+- [x] Default legacy Queue to Incoming.
+- [x] Preserve a valid legacy Suppress target and repair malformed missing targets to Incoming.
+- [x] Default applicable system recovery to Stay stopped.
+- [x] If database version 3 has already shipped, create a new migration version instead of mutating it.
 
 ### Sound selection and audition timing
 

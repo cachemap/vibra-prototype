@@ -17,7 +17,14 @@ import type {
   TriggerPlaybackId,
   UserId
 } from "./ids";
-import type { EventType, MediaKind, PlatformName, ResolutionBehaviorName, TriggerName } from "./enums";
+import type {
+  EventType,
+  InterruptionRecovery,
+  MediaKind,
+  PlatformName,
+  ResolutionBehaviorName,
+  TriggerName
+} from "./enums";
 
 export interface User {
   id: UserId;
@@ -77,6 +84,8 @@ export interface CollisionMatrixColumn {
 export interface ResolutionBehavior {
   behaviorName: ResolutionBehaviorName;
   targetEventId: EventId | null;
+  postInterruptionRecovery: InterruptionRecovery | null;
+  systemInterruptionRecovery: InterruptionRecovery | null;
 }
 
 export interface CollisionMatrixEntry {

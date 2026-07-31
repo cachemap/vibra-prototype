@@ -2817,7 +2817,9 @@ export const createProjectRepository = (
           targetEventId:
             command.resolutionBehavior.targetEventId === null
               ? null
-              : asEntityId<EventId>(command.resolutionBehavior.targetEventId)
+              : asEntityId<EventId>(command.resolutionBehavior.targetEventId),
+          postInterruptionRecovery: command.resolutionBehavior.postInterruptionRecovery,
+          systemInterruptionRecovery: command.resolutionBehavior.systemInterruptionRecovery
         }
       };
       const aggregate = await loadCollisionMatrixAggregate(database, upsertInput.matrixId);

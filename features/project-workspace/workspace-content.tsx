@@ -81,7 +81,9 @@ function ProjectWorkspaceBody({ shareController }: { shareController: ReturnType
     matrixFilterAnchor,
     matrixFilterAxis,
     matrixIncomingEventId: selectedMatrixIncomingEventId,
+    matrixPostInterruptionRecovery,
     matrixPlayingEventId: selectedMatrixPlayingEventId,
+    matrixSystemInterruptionRecovery,
     matrixTargetEventId,
     projectId,
     searchTerm: workspaceSearch
@@ -177,6 +179,8 @@ function ProjectWorkspaceBody({ shareController }: { shareController: ReturnType
               matrixBehavior={matrixBehavior}
               matrixFilterAnchor={matrixFilterAnchor}
               matrixFilterAxis={matrixFilterAxis}
+              matrixPostInterruptionRecovery={matrixPostInterruptionRecovery}
+              matrixSystemInterruptionRecovery={matrixSystemInterruptionRecovery}
               matrixTargetEventId={matrixTargetEventId}
               onClearEntry={openClearMatrixEntry}
               onShareEntry={(entry, label) =>
@@ -199,6 +203,12 @@ function ProjectWorkspaceBody({ shareController }: { shareController: ReturnType
                 }
               }}
               setMatrixFilterAxis={(axis) => setMatrixSelection({ matrixFilterAxis: axis })}
+              setMatrixPostInterruptionRecovery={(recovery) =>
+                setMatrixSelection({ matrixPostInterruptionRecovery: recovery })
+              }
+              setMatrixSystemInterruptionRecovery={(recovery) =>
+                setMatrixSelection({ matrixSystemInterruptionRecovery: recovery })
+              }
               setMatrixTargetEventId={(eventId) => setMatrixSelection({ matrixTargetEventId: eventId })}
               setSelectedIncomingEventId={(eventId) => setMatrixSelection({ matrixIncomingEventId: eventId })}
               setSelectedPlayingEventId={(eventId) => setMatrixSelection({ matrixPlayingEventId: eventId })}

@@ -524,7 +524,9 @@ export const buildDemoSeedData = (): DemoSeedData => {
       incomingEventId: id<EventId>("event_ios-card-declined"),
       resolutionBehavior: {
         behaviorName: "Suppress",
-        targetEventId: id<EventId>("event_ios-card-declined")
+        targetEventId: id<EventId>("event_ios-card-declined"),
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Stay stopped"
       }
     },
     {
@@ -534,7 +536,9 @@ export const buildDemoSeedData = (): DemoSeedData => {
       incomingEventId: id<EventId>("event_ios-payment-complete"),
       resolutionBehavior: {
         behaviorName: "Queue",
-        targetEventId: null
+        targetEventId: id<EventId>("event_ios-payment-complete"),
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Stay stopped"
       }
     },
     {
@@ -544,7 +548,9 @@ export const buildDemoSeedData = (): DemoSeedData => {
       incomingEventId: id<EventId>("event_ios-save-card"),
       resolutionBehavior: {
         behaviorName: "Co-play",
-        targetEventId: null
+        targetEventId: null,
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Stay stopped"
       }
     },
     {
@@ -554,7 +560,9 @@ export const buildDemoSeedData = (): DemoSeedData => {
       incomingEventId: id<EventId>("event_ios-payment-complete"),
       resolutionBehavior: {
         behaviorName: "Preempt",
-        targetEventId: id<EventId>("event_ios-pay-now")
+        targetEventId: id<EventId>("event_ios-pay-now"),
+        postInterruptionRecovery: "Stay stopped",
+        systemInterruptionRecovery: "Stay stopped"
       }
     },
     {
@@ -564,7 +572,9 @@ export const buildDemoSeedData = (): DemoSeedData => {
       incomingEventId: id<EventId>("event_ios-save-card"),
       resolutionBehavior: {
         behaviorName: "Not possible",
-        targetEventId: null
+        targetEventId: null,
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: null
       }
     }
   ];

@@ -191,7 +191,9 @@ const matrixEntry = (
   incomingEventId: id<EventId>(incomingEventId),
   resolutionBehavior: {
     behaviorName: "Preempt",
-    targetEventId: id<EventId>(incomingEventId)
+    targetEventId: id<EventId>(playingEventId),
+    postInterruptionRecovery: "Stay stopped",
+    systemInterruptionRecovery: "Stay stopped"
   }
 });
 
@@ -413,24 +415,60 @@ describe("collision matrix rules", () => {
     ).toBe(true);
   });
 
-  it("validates suppression targets and resolution target membership", () => {
+  it("validates behavior-specific targets and recovery fields", () => {
     const suppressWithoutTarget: ResolutionBehavior = {
       behaviorName: "Suppress",
-      targetEventId: null
+      targetEventId: null,
+      postInterruptionRecovery: null,
+      systemInterruptionRecovery: "Stay stopped"
     };
 
     expect(canUseResolutionBehavior(suppressWithoutTarget, matrixEntry()).isErr()).toBe(true);
 
     expect(
       canUseResolutionBehavior(
-        { behaviorName: "Queue", targetEventId: id<EventId>("event_foreign") },
+        {
+          behaviorName: "Queue",
+          targetEventId: id<EventId>("event_foreign"),
+          postInterruptionRecovery: null,
+          systemInterruptionRecovery: "Stay stopped"
+        },
         matrixEntry()
       ).isErr()
     ).toBe(true);
 
     expect(
       canUseResolutionBehavior(
-        { behaviorName: "Suppress", targetEventId: id<EventId>("event_incoming") },
+        {
+          behaviorName: "Suppress",
+          targetEventId: id<EventId>("event_incoming"),
+          postInterruptionRecovery: null,
+          systemInterruptionRecovery: "Stay stopped"
+        },
+        matrixEntry()
+      ).isOk()
+    ).toBe(true);
+
+    expect(
+      canUseResolutionBehavior(
+        {
+          behaviorName: "Preempt",
+          targetEventId: id<EventId>("event_playing"),
+          postInterruptionRecovery: null,
+          systemInterruptionRecovery: "Stay stopped"
+        },
+        matrixEntry()
+      ).isErr()
+    ).toBe(true);
+
+    expect(
+      canUseResolutionBehavior(
+        {
+          behaviorName: "Not possible",
+          targetEventId: null,
+          postInterruptionRecovery: null,
+          systemInterruptionRecovery: null
+        },
         matrixEntry()
       ).isOk()
     ).toBe(true);

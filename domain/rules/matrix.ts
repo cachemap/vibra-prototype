@@ -10,6 +10,96 @@ import type {
 import { ConflictError, ConstraintError } from "../errors";
 import { errApp, okApp, type AppResult } from "../results";
 import type { EventId } from "../ids";
+import type { InterruptionRecovery, ResolutionBehaviorName } from "../enums";
+
+type FieldApplicability = "required" | "forbidden";
+type EventPosition = "playing" | "incoming";
+
+export type ResolutionBehaviorDefinition = {
+  target: FieldApplicability;
+  defaultTarget: EventPosition | null;
+  postInterruptionRecovery: FieldApplicability;
+  systemInterruptionRecovery: FieldApplicability;
+  help: string;
+};
+
+export const resolutionBehaviorDefinitions: Record<
+  ResolutionBehaviorName,
+  ResolutionBehaviorDefinition
+> = {
+  Preempt: {
+    target: "required",
+    defaultTarget: "playing",
+    postInterruptionRecovery: "required",
+    systemInterruptionRecovery: "required",
+    help: "The incoming event stops the selected target and takes over."
+  },
+  Queue: {
+    target: "required",
+    defaultTarget: "incoming",
+    postInterruptionRecovery: "forbidden",
+    systemInterruptionRecovery: "required",
+    help: "The selected target waits until the other event finishes."
+  },
+  "Co-play": {
+    target: "forbidden",
+    defaultTarget: null,
+    postInterruptionRecovery: "forbidden",
+    systemInterruptionRecovery: "required",
+    help: "Both events play at full level."
+  },
+  Suppress: {
+    target: "required",
+    defaultTarget: "incoming",
+    postInterruptionRecovery: "forbidden",
+    systemInterruptionRecovery: "required",
+    help: "The selected target does not start while the other event continues."
+  },
+  "Not possible": {
+    target: "forbidden",
+    defaultTarget: null,
+    postInterruptionRecovery: "forbidden",
+    systemInterruptionRecovery: "forbidden",
+    help: "These events cannot occur at the same time."
+  }
+};
+
+const defaultRecovery: InterruptionRecovery = "Stay stopped";
+
+export const normalizeResolutionBehavior = (
+  behavior: Partial<ResolutionBehavior> | null | undefined,
+  entryEvents: Pick<CollisionMatrixEntry, "playingEventId" | "incomingEventId">
+): ResolutionBehavior => {
+  const behaviorName = behavior?.behaviorName ?? "Preempt";
+  const definition = resolutionBehaviorDefinitions[behaviorName];
+  const isEntryTarget =
+    behavior?.targetEventId === entryEvents.playingEventId ||
+    behavior?.targetEventId === entryEvents.incomingEventId;
+  const defaultTarget =
+    definition.defaultTarget === "playing"
+      ? entryEvents.playingEventId
+      : definition.defaultTarget === "incoming"
+        ? entryEvents.incomingEventId
+        : null;
+
+  return {
+    behaviorName,
+    targetEventId:
+      definition.target === "forbidden"
+        ? null
+        : isEntryTarget
+          ? behavior.targetEventId ?? defaultTarget
+          : defaultTarget,
+    postInterruptionRecovery:
+      definition.postInterruptionRecovery === "required"
+        ? behavior?.postInterruptionRecovery ?? defaultRecovery
+        : null,
+    systemInterruptionRecovery:
+      definition.systemInterruptionRecovery === "required"
+        ? behavior?.systemInterruptionRecovery ?? defaultRecovery
+        : null
+  };
+};
 
 const eventBelongsToDevice = (
   eventId: EventId,
@@ -79,10 +169,20 @@ export const canUseResolutionBehavior = (
   behavior: ResolutionBehavior,
   entryEvents: Pick<CollisionMatrixEntry, "playingEventId" | "incomingEventId">
 ): AppResult<void> => {
-  if (behavior.behaviorName === "Suppress" && behavior.targetEventId === null) {
+  const definition = resolutionBehaviorDefinitions[behavior.behaviorName];
+
+  if (definition.target === "required" && behavior.targetEventId === null) {
     return errApp(
-      new ConstraintError("Suppress requires a target event.", {
-        constraint: "suppress-target-required"
+      new ConstraintError(`${behavior.behaviorName} requires a target event.`, {
+        constraint: `${behavior.behaviorName.toLowerCase().replaceAll(" ", "-")}-target-required`
+      })
+    );
+  }
+
+  if (definition.target === "forbidden" && behavior.targetEventId !== null) {
+    return errApp(
+      new ConstraintError(`${behavior.behaviorName} cannot target an event.`, {
+        constraint: "resolution-target-forbidden"
       })
     );
   }
@@ -95,6 +195,50 @@ export const canUseResolutionBehavior = (
     return errApp(
       new ConstraintError("Resolution targets must be the playing or incoming event.", {
         constraint: "resolution-target-entry-event"
+      })
+    );
+  }
+
+  if (
+    definition.postInterruptionRecovery === "required" &&
+    behavior.postInterruptionRecovery === null
+  ) {
+    return errApp(
+      new ConstraintError(`${behavior.behaviorName} requires a post-interruption recovery.`, {
+        constraint: "post-interruption-recovery-required"
+      })
+    );
+  }
+
+  if (
+    definition.postInterruptionRecovery === "forbidden" &&
+    behavior.postInterruptionRecovery !== null
+  ) {
+    return errApp(
+      new ConstraintError(`${behavior.behaviorName} cannot use post-interruption recovery.`, {
+        constraint: "post-interruption-recovery-forbidden"
+      })
+    );
+  }
+
+  if (
+    definition.systemInterruptionRecovery === "required" &&
+    behavior.systemInterruptionRecovery === null
+  ) {
+    return errApp(
+      new ConstraintError(`${behavior.behaviorName} requires a system-interruption recovery.`, {
+        constraint: "system-interruption-recovery-required"
+      })
+    );
+  }
+
+  if (
+    definition.systemInterruptionRecovery === "forbidden" &&
+    behavior.systemInterruptionRecovery !== null
+  ) {
+    return errApp(
+      new ConstraintError(`${behavior.behaviorName} cannot use system-interruption recovery.`, {
+        constraint: "system-interruption-recovery-forbidden"
       })
     );
   }

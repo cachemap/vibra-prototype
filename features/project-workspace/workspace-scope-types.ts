@@ -5,6 +5,7 @@ import type {
   CollectionId,
   DeviceId,
   EventId,
+  InterruptionRecovery,
   ProjectId,
   ResolutionBehaviorName
 } from "@/domain";
@@ -29,7 +30,9 @@ export type MatrixSelection = {
   matrixFilterAnchor: MatrixFilterAnchor | null;
   matrixFilterAxis: MatrixAxis;
   matrixIncomingEventId: EventId | null;
+  matrixPostInterruptionRecovery: InterruptionRecovery | null;
   matrixPlayingEventId: EventId | null;
+  matrixSystemInterruptionRecovery: InterruptionRecovery | null;
   matrixTargetEventId: string;
 };
 

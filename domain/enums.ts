@@ -16,6 +16,9 @@ export const resolutionBehaviorNames = [
 ] as const;
 export type ResolutionBehaviorName = (typeof resolutionBehaviorNames)[number];
 
+export const interruptionRecoveries = ["Resume", "Stay stopped"] as const;
+export type InterruptionRecovery = (typeof interruptionRecoveries)[number];
+
 export const mediaKinds = ["audio", "haptic"] as const;
 export type MediaKind = (typeof mediaKinds)[number];
 

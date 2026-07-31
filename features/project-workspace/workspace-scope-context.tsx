@@ -9,6 +9,7 @@ import {
   type CollectionId,
   type DeviceId,
   type EventId,
+  type InterruptionRecovery,
   type ResolutionBehaviorName
 } from "@/domain";
 import type { ProjectId } from "@/domain";
@@ -66,6 +67,10 @@ export function ProjectWorkspaceScopeProvider({ children, projectId }: ProjectWo
   const [matrixIncomingEventId, setMatrixIncomingEventId] = useState<EventId | null>(null);
   const [matrixBehavior, setMatrixBehavior] = useState<ResolutionBehaviorName>("Preempt");
   const [matrixTargetEventId, setMatrixTargetEventId] = useState("");
+  const [matrixPostInterruptionRecovery, setMatrixPostInterruptionRecovery] =
+    useState<InterruptionRecovery | null>("Stay stopped");
+  const [matrixSystemInterruptionRecovery, setMatrixSystemInterruptionRecovery] =
+    useState<InterruptionRecovery | null>("Stay stopped");
   const [matrixFilterAnchor, setMatrixFilterAnchor] = useState<MatrixFilterAnchor | null>(null);
   const [matrixFilterAxis, setMatrixFilterAxis] = useState<MatrixAxis>("playing");
 
@@ -175,8 +180,14 @@ export function ProjectWorkspaceScopeProvider({ children, projectId }: ProjectWo
     if ("matrixIncomingEventId" in next) {
       setMatrixIncomingEventId(next.matrixIncomingEventId ?? null);
     }
+    if ("matrixPostInterruptionRecovery" in next) {
+      setMatrixPostInterruptionRecovery(next.matrixPostInterruptionRecovery ?? null);
+    }
     if ("matrixPlayingEventId" in next) {
       setMatrixPlayingEventId(next.matrixPlayingEventId ?? null);
+    }
+    if ("matrixSystemInterruptionRecovery" in next) {
+      setMatrixSystemInterruptionRecovery(next.matrixSystemInterruptionRecovery ?? null);
     }
     if ("matrixTargetEventId" in next && typeof next.matrixTargetEventId === "string") {
       setMatrixTargetEventId(next.matrixTargetEventId);
@@ -194,7 +205,9 @@ export function ProjectWorkspaceScopeProvider({ children, projectId }: ProjectWo
       matrixFilterAnchor,
       matrixFilterAxis,
       matrixIncomingEventId,
+      matrixPostInterruptionRecovery,
       matrixPlayingEventId,
+      matrixSystemInterruptionRecovery,
       matrixTargetEventId,
       projectId,
       searchTerm
@@ -206,7 +219,9 @@ export function ProjectWorkspaceScopeProvider({ children, projectId }: ProjectWo
       matrixFilterAnchor,
       matrixFilterAxis,
       matrixIncomingEventId,
+      matrixPostInterruptionRecovery,
       matrixPlayingEventId,
+      matrixSystemInterruptionRecovery,
       matrixTargetEventId,
       projectId,
       resolvedAssetFolderId,

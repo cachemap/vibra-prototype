@@ -18,7 +18,12 @@ const configuredEntry: CollisionMatrixEntry = {
   incomingEventId,
   matrixId,
   playingEventId,
-  resolutionBehavior: { behaviorName: "Preempt", targetEventId: playingEventId }
+  resolutionBehavior: {
+    behaviorName: "Preempt",
+    targetEventId: playingEventId,
+    postInterruptionRecovery: "Stay stopped",
+    systemInterruptionRecovery: "Stay stopped"
+  }
 };
 
 function renderGrid(entries: readonly CollisionMatrixEntry[] = []) {

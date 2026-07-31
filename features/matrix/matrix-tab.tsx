@@ -1,6 +1,6 @@
 "use client";
 
-import { asEntityId, type EventId } from "@/domain";
+import { asEntityId, normalizeResolutionBehavior, type EventId } from "@/domain";
 import {
   useDeselectCollisionMatrixColumnMutation,
   useDeselectCollisionMatrixRowMutation,
@@ -24,6 +24,8 @@ export function MatrixTab({
   matrixBehavior,
   matrixFilterAnchor,
   matrixFilterAxis,
+  matrixPostInterruptionRecovery,
+  matrixSystemInterruptionRecovery,
   matrixTargetEventId,
   onClearEntry,
   onShareEntry,
@@ -32,6 +34,8 @@ export function MatrixTab({
   setMatrixBehavior,
   setMatrixFilterAnchor,
   setMatrixFilterAxis,
+  setMatrixPostInterruptionRecovery,
+  setMatrixSystemInterruptionRecovery,
   setMatrixTargetEventId,
   setSelectedIncomingEventId,
   setSelectedPlayingEventId
@@ -142,8 +146,14 @@ export function MatrixTab({
 
     setSelectedPlayingEventId(playingEventId);
     setSelectedIncomingEventId(incomingEventId);
-    setMatrixBehavior(entry?.resolutionBehavior.behaviorName ?? "Preempt");
-    setMatrixTargetEventId(entry?.resolutionBehavior.targetEventId ?? "");
+    const behavior = normalizeResolutionBehavior(entry?.resolutionBehavior, {
+      playingEventId,
+      incomingEventId
+    });
+    setMatrixBehavior(behavior.behaviorName);
+    setMatrixTargetEventId(behavior.targetEventId ?? "");
+    setMatrixPostInterruptionRecovery(behavior.postInterruptionRecovery);
+    setMatrixSystemInterruptionRecovery(behavior.systemInterruptionRecovery);
   };
 
   const handleSaveMatrixEntry = async () => {
@@ -153,7 +163,15 @@ export function MatrixTab({
       return;
     }
 
-    const targetEventId = matrixBehavior === "Suppress" ? matrixTargetEventId : matrixTargetEventId || "";
+    const resolutionBehavior = normalizeResolutionBehavior(
+      {
+        behaviorName: matrixBehavior,
+        targetEventId: matrixTargetEventId ? asEntityId<EventId>(matrixTargetEventId) : null,
+        postInterruptionRecovery: matrixPostInterruptionRecovery,
+        systemInterruptionRecovery: matrixSystemInterruptionRecovery
+      },
+      { playingEventId: selectedPlayingEventId, incomingEventId: selectedIncomingEventId }
+    );
 
     await runWithFeedback({
       work: () =>
@@ -161,10 +179,7 @@ export function MatrixTab({
           matrixId,
           playingEventId: selectedPlayingEventId,
           incomingEventId: selectedIncomingEventId,
-          resolutionBehavior: {
-            behaviorName: matrixBehavior,
-            targetEventId: targetEventId ? asEntityId<EventId>(targetEventId) : null
-          }
+          resolutionBehavior
         }),
       onSuccess: (entry) =>
         `Set ${matrixEventById.get(entry.playingEventId)?.name ?? "playing event"} x ${
@@ -202,11 +217,21 @@ export function MatrixTab({
         <MatrixResolutionPanel
           behavior={matrixBehavior}
           eventById={matrixEventById}
+          onPostInterruptionRecoveryChange={setMatrixPostInterruptionRecovery}
           onBehaviorChange={(nextBehavior) => {
-            setMatrixBehavior(nextBehavior);
-            if (nextBehavior !== "Suppress") {
-              setMatrixTargetEventId("");
+            if (!selectedPlayingEventId || !selectedIncomingEventId) {
+              setMatrixBehavior(nextBehavior);
+              return;
             }
+
+            const nextRule = normalizeResolutionBehavior(
+              { behaviorName: nextBehavior },
+              { playingEventId: selectedPlayingEventId, incomingEventId: selectedIncomingEventId }
+            );
+            setMatrixBehavior(nextRule.behaviorName);
+            setMatrixTargetEventId(nextRule.targetEventId ?? "");
+            setMatrixPostInterruptionRecovery(nextRule.postInterruptionRecovery);
+            setMatrixSystemInterruptionRecovery(nextRule.systemInterruptionRecovery);
           }}
           onClearEntry={() => {
             if (selectedMatrixEntry) {
@@ -214,10 +239,13 @@ export function MatrixTab({
             }
           }}
           onSaveEntry={() => void handleSaveMatrixEntry()}
+          onSystemInterruptionRecoveryChange={setMatrixSystemInterruptionRecovery}
           onTargetEventIdChange={setMatrixTargetEventId}
           selectedEntry={selectedMatrixEntry}
           selectedIncomingEventId={selectedIncomingEventId}
           selectedPlayingEventId={selectedPlayingEventId}
+          postInterruptionRecovery={matrixPostInterruptionRecovery}
+          systemInterruptionRecovery={matrixSystemInterruptionRecovery}
           targetEventId={matrixTargetEventId}
         />
 
