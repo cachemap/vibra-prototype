@@ -114,7 +114,7 @@ export function AssetsTab({
             selectedLibraryId={selectedLibrary?.library.id ?? null}
           />
 
-          <div className="grid min-w-0 content-start gap-3">
+          <div className="grid min-w-0 content-start items-start gap-3">
             <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-1 text-sm text-gray-500">

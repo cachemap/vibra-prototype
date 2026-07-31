@@ -51,7 +51,7 @@ function LibrariesWorkspace() {
   const canCreateFolder = Boolean(selection.selectedFolder);
   const canUploadAsset = Boolean(selection.selectedFolder);
   return (
-    <section className="grid min-h-[calc(100vh-64px)] bg-gray-25">
+    <section className="grid min-h-[calc(100vh-64px)] grid-rows-[auto_1fr] bg-gray-25">
       {selection.selectedLibrarySummary ? (
         <LibraryToolbar
           canCreateFolder={canCreateFolder}

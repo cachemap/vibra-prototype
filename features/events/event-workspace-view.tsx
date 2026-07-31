@@ -97,7 +97,7 @@ export function EventWorkspaceView({
         workspace={workspace}
       />
 
-      <main className="grid min-w-0 content-start gap-5 px-4 py-4">
+      <main className="grid min-w-0 content-start items-start gap-5 px-4 py-4">
         <div className="grid min-w-0 gap-2">
           <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-2">
             <div className="grid gap-0.5">

@@ -19,7 +19,7 @@ export function LibraryContent({ canUploadAsset, controller, selection }: Librar
   const audioPreview = useAudioPreviewState();
 
   return (
-    <main className="grid min-w-0 content-start gap-5 px-4 py-5 md:px-6">
+    <main className="grid min-w-0 content-start items-start gap-5 px-4 py-5 md:px-6">
       {selection.selectedLibrarySummary ? (
         <>
           <FeedbackBanner />

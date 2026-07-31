@@ -11,7 +11,7 @@ type StateProps = {
 
 export function EmptyState({ action, className, description, title }: StateProps) {
   return (
-    <div className={cx("grid min-h-40 place-items-center border-y border-gray-200 bg-gray-50 p-4", className)}>
+    <div className={cx("grid min-h-40 justify-items-center border-y border-gray-200 bg-gray-50 p-4", className)}>
       <div className="grid max-w-sm gap-3 text-center">
         <div>
           <p className="text-sm font-semibold text-gray-700">{title}</p>

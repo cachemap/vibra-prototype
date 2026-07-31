@@ -40,7 +40,7 @@ export function WorkspaceLayout({
           selectedDevice={selectedDevice}
         />
 
-        <main className="grid min-w-0 content-start gap-4 px-4 py-3 md:py-4">
+        <main className="grid min-w-0 content-start items-start gap-4 px-4 py-3 md:py-4">
           <WorkspaceMobileControls
             projectId={projectId}
             selectedCollectionId={selectedCollectionId}
