@@ -1,0 +1,317 @@
+# Vibra UX Polish Checklist
+
+Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-scoped so the database migration, theme system, and visual polish can be reviewed independently.
+
+## 0. Baseline [x]
+
+- [x] Review `git status` and preserve all pre-existing unstaged work.
+- [x] Capture desktop and mobile screenshots of Projects, Libraries, Project Events, Event Detail, and Collision Matrix.
+- [x] Capture the current selected-cell resolution panel and audio-preview behavior for comparison.
+- [x] Run `pnpm typecheck`.
+- [x] Run `pnpm lint`.
+- [x] Run `pnpm test`.
+- [x] Run the existing focused project E2E suite.
+
+## 1. Shared geometry and wider sidebars [x]
+
+- [x] Add `--shell-header-height`, `--workspace-sidebar-width: 320px`, `--page-gutter-x`, and `--page-gutter-y` to `app/globals.css`.
+- [x] Replace `calc(100vh-64px)` uses in app shells with the header-height token where practical.
+- [x] Update `features/project-workspace/workspace-layout.tsx` to use the shared sidebar width.
+- [x] Update `app/libraries/page.tsx` to use the same shared sidebar width.
+- [x] Confirm both top-level sidebars remain responsive below `md`.
+- [x] Decide from screenshots whether the nested project asset rail needs its own width token; do not reuse the top-level token blindly.
+- [x] Make `PageHeader` the single owner of full-page horizontal and vertical padding.
+- [x] Remove redundant padding wrappers from `workspace-header.tsx`.
+- [x] Remove redundant padding wrappers from `library-toolbar.tsx`.
+- [x] Update Projects header/body composition so the header aligns with the other pages.
+- [x] Update Event Detail loading, empty, and loaded headers to use identical geometry.
+- [x] Update `PageStateScaffold` to follow the canonical header geometry.
+- [x] Standardize main content gutters, including removal of the Libraries-only `md:px-6`.
+- [x] Verify breadcrumb row, title row, and action row coordinates across navigation.
+- [x] Update the layout constants in `docs/plan/DESIGN_SYSTEM.md`.
+- [x] Add or update an ADR for the shared header/layout ownership decision if needed.
+
+## 2. Theme foundation
+
+- [ ] Add `next-themes`.
+- [ ] Convert Tailwind `gray-*` and `purple-*` values to alpha-capable CSS-variable colors.
+- [ ] Define the complete light palette in `:root`.
+- [ ] Define the complete dark palette in `[data-theme="dark"]`.
+- [ ] Set the corresponding native `color-scheme`.
+- [ ] Preserve sufficient contrast for primary buttons, body text, muted text, dividers, controls, and focus rings.
+- [ ] Wrap the app with `ThemeProvider` in `app/providers.tsx`.
+- [ ] Configure `attribute="data-theme"`, `defaultTheme="system"`, `enableSystem`, and transition suppression.
+- [ ] Add `suppressHydrationWarning` to the root `<html>`.
+- [ ] Create an accessible Light/System/Dark segmented toggle.
+- [ ] Give each option an accessible label and pressed state.
+- [ ] Prevent a hydration mismatch and toolbar layout shift before mount.
+- [ ] Audit hard-coded white, black, hex, RGB, and shadow values under `app/`, `components/`, and `features/`.
+- [ ] Replace mode-sensitive raw shadow/divider colors with theme variables.
+- [ ] Verify native inputs, menus, dialogs, scrollbars, and audio controls in both themes.
+- [ ] Verify system-mode changes apply without reload.
+- [ ] Verify an explicit Light or Dark choice ignores later system changes.
+- [ ] Verify the preference survives reload.
+
+## 3. Global toolbar
+
+- [ ] Read the active route with `usePathname()` in `WorkspaceShell`.
+- [ ] Mark all `/projects...` routes as Projects.
+- [ ] Mark `/libraries` as Libraries.
+- [ ] Add a persistent selected style to the active link.
+- [ ] Add `aria-current="page"` only to the active link.
+- [ ] Keep selected, hover, and focus-visible treatments distinguishable.
+- [ ] Group the logo and Reset demo on the left.
+- [ ] Place Reset demo immediately after the logo.
+- [ ] Keep Projects, Libraries, and the theme toggle on the right.
+- [ ] Preserve Reset demo’s accessible name when its visible text collapses.
+- [ ] Verify the toolbar at 375px without horizontal overflow.
+- [ ] Verify Reset still invalidates queries and routes to `/projects`.
+- [ ] Verify Reset does not overwrite the theme preference.
+
+## 4. Collection viewer actions
+
+- [ ] Remove the collection-level `RowActionsMenu` from `events-tab.tsx`.
+- [ ] Remove the unused `MoreVertical` import.
+- [ ] Add a visible secondary Delete button with a `Trash2` icon.
+- [ ] Disable Delete when no collection is selected.
+- [ ] Route Delete through the existing collection confirmation callback.
+- [ ] Keep Rename, Delete, Collection, and Add event readable when wrapping.
+- [ ] Update E2E selectors that previously opened the collection action menu.
+- [ ] Verify the cascade confirmation copy and cancellation behavior are unchanged.
+
+## 5. Persistent event order
+
+### Domain and schema
+
+- [ ] Add `sortOrder: number` to `Event`.
+- [ ] Add a non-negative integer validator to `eventSchema`.
+- [ ] Add a reorder command/input type with `collectionId` and `orderedEventIds`.
+- [ ] Update every Event fixture/factory to include `sortOrder`.
+- [ ] Give seed events unique contiguous positions within each collection.
+
+### IndexedDB
+
+- [ ] Increment `VIBRA_DATABASE_VERSION` to `3`.
+- [ ] Add `[collectionId+sortOrder]` to the events store indexes.
+- [ ] Add a v3 upgrade that groups legacy events by collection.
+- [ ] Sort legacy siblings by name and then ID.
+- [ ] Write contiguous positions beginning at `0`.
+- [ ] Normalize legacy collision-resolution objects in the same upgrade transaction.
+- [ ] Add a migration test starting from a version-2 database.
+- [ ] Verify v1/v2 databases still open successfully through all upgrades.
+- [ ] Verify a fresh database uses the v3 schema.
+
+### Repository
+
+- [ ] Sort loaded collection events by `sortOrder`, with stable tie-breakers.
+- [ ] Append newly created events after the current maximum order.
+- [ ] Implement `reorderCollectionEvents`.
+- [ ] Validate that ordered IDs are unique.
+- [ ] Validate that ordered IDs exactly match the collection’s current events.
+- [ ] Reject cross-collection and unknown IDs with a typed error.
+- [ ] Persist all changed positions in one Dexie transaction.
+- [ ] Normalize positions to contiguous integers.
+- [ ] Add repository tests for successful reorder and reload.
+- [ ] Add repository tests for duplicates, omissions, unknown IDs, and cross-collection IDs.
+- [ ] Verify event delete and reset behavior with ordered events.
+- [ ] Check Matrix filters and event lookups for accidental name sorting.
+
+### Query layer
+
+- [ ] Add and export `useReorderCollectionEventsMutation`.
+- [ ] Optimistically reorder the affected device-workspace cache.
+- [ ] Snapshot and roll back the cache on error.
+- [ ] Invalidate the device workspace after settle/success.
+- [ ] Invalidate any project/matrix aggregates that expose event order.
+- [ ] Surface persistence errors through the existing feedback context.
+
+## 6. Drag-and-drop rows
+
+- [ ] Add `@dnd-kit/core`.
+- [ ] Add `@dnd-kit/sortable`.
+- [ ] Add `@dnd-kit/utilities`.
+- [ ] Add a drag-handle header column to `EventsTable`.
+- [ ] Add a `GripVertical` button at the left edge of every event row.
+- [ ] Give each handle an event-specific accessible label.
+- [ ] Restrict drag listeners to the handle.
+- [ ] Add pointer/touch activation distance to prevent accidental drags.
+- [ ] Add a keyboard sensor with sortable keyboard coordinates.
+- [ ] Use vertical-list sorting.
+- [ ] Apply transform-only row movement.
+- [ ] Add a lifted/dragging visual state that works in both themes.
+- [ ] Remove transform motion under reduced-motion preference.
+- [ ] Ignore cancelled and same-position drops.
+- [ ] Call the reorder mutation only once per completed reorder.
+- [ ] Disable or serialize overlapping reorder writes.
+- [ ] Verify Open, Delete, and row links remain independently clickable.
+- [ ] Verify mobile cards display the persisted order.
+- [ ] If mobile reordering is included, use a separate sortable context and left-edge handles.
+- [ ] Add component/E2E coverage for pointer reorder.
+- [ ] Add component/E2E coverage for keyboard reorder.
+- [ ] Reload after a reorder and confirm persistence.
+
+## 7. Collision Matrix hover UX
+
+- [ ] Add `group`/relative positioning to interactive data cells as needed.
+- [ ] Add a 120–160ms motion-safe transform and shadow/ring transition.
+- [ ] Add a subtle hover lift and scale without changing cell dimensions.
+- [ ] Add a small hover response to configured behavior pills.
+- [ ] Keep selected styling stronger than hover styling.
+- [ ] Preserve row/column cross-highlighting during hover.
+- [ ] Keep empty-cell and configured-cell accessible names unchanged.
+- [ ] Add a no-transform reduced-motion path with visible color/ring feedback.
+- [ ] Verify sticky headers and borders do not clip hovering cells.
+- [ ] Verify the effect in Light, System-light, System-dark, and Dark.
+- [ ] Verify touch interaction does not leave a misleading stuck hover state.
+
+## 8. Resolution behavior editor and collision preview
+
+### Focused editor layout
+
+- [ ] Make selecting a matrix cell open a focused resolution editor within the Matrix tab.
+- [ ] Add `Back to Matrix` and restore the prior matrix selection/scroll context on return.
+- [ ] Split `matrix-resolution-panel.tsx` into editor, adaptive fields, playback preview, and timeline responsibilities.
+- [ ] Put the prominent primary `Tap` button at the top of the preview stage.
+- [ ] Keep `Tap` as the persistent visible label while exposing a more descriptive accessible name.
+- [ ] Show Playing event × Incoming event identity between the Tap stage and timeline.
+- [ ] Render a shared-ruler two-lane timeline for Playing and Incoming.
+- [ ] Put rule controls and Clear/Save actions below the preview.
+- [ ] Match the desktop reference hierarchy without copying irrelevant device-preview chrome.
+- [ ] Match the narrow reference with full-width stacked controls and readable section spacing.
+- [ ] Keep the timeline horizontally scrollable at narrow widths instead of crushing labels/blocks.
+- [ ] Keep all touch targets at least 44px and avoid horizontal page overflow at 375px.
+- [ ] Verify Back, Clear, Save, Tap, and Stop have distinct accessible names and focus states.
+
+### Adaptive rule data and controls
+
+- [ ] Add an `InterruptionRecovery` vocabulary with `Resume` and `Stay stopped`.
+- [ ] Add nullable post-interruption and system-interruption recovery fields to `ResolutionBehavior`.
+- [ ] Create one behavior-definition map for applicable fields, defaults, labels, help copy, and validation.
+- [ ] Require a target for Preempt, Queue, and Suppress.
+- [ ] Clear/forbid the target for Co-play and Not possible.
+- [ ] Require post-interruption recovery only for Preempt.
+- [ ] Require system-interruption recovery for every previewable behavior.
+- [ ] Clear/forbid all recovery values for Not possible.
+- [ ] Render Target as a Playing/Incoming segmented control only when applicable.
+- [ ] Render Post interruption as a Resume/Stay stopped segmented control only when applicable.
+- [ ] Render System interruption as a Resume/Stay stopped segmented control only when applicable.
+- [ ] Add accessible help buttons and programmatic descriptions for unfamiliar terms.
+- [ ] Clear stale draft values immediately when switching to a behavior where a field is inapplicable.
+- [ ] Keep Save disabled until the visible behavior-specific draft is valid.
+- [ ] Update seed rules and every resolution fixture/factory.
+- [ ] Update repository command/input types and `canUseResolutionBehavior`.
+- [ ] Update matrix cell/share-preview copy to describe target and recovery semantics accurately.
+- [ ] Normalize legacy resolution objects during the coordinated IndexedDB migration.
+- [ ] Default legacy Preempt to Playing + Stay stopped.
+- [ ] Default legacy Queue to Incoming.
+- [ ] Preserve a valid legacy Suppress target and repair malformed missing targets to Incoming.
+- [ ] Default applicable system recovery to Stay stopped.
+- [ ] If database version 3 has already shipped, create a new migration version instead of mutating it.
+
+### Sound selection and audition timing
+
+- [ ] Locate the selected event aggregates and their enabled playback rows from `DeviceWorkspaceAggregate`.
+- [ ] Derive previewable audio independently for Playing and Incoming.
+- [ ] Default each lane to its earliest enabled audio playback.
+- [ ] Add a lane-level sound selector when an event has more than one previewable audio choice.
+- [ ] Keep event names primary and asset names secondary in each lane.
+- [ ] Explain and disable Tap when either side has no enabled previewable audio.
+- [ ] Treat haptic-only assets as visible but not audio-previewable.
+- [ ] Store sound selection and collision offsets only in editor-local audition state.
+- [ ] Default Playing to `0ms` and Incoming to a visibly separated offset such as `150ms`.
+- [ ] Allow each sound block to move horizontally with a handle.
+- [ ] Use a separate horizontal DnD context from sortable event rows.
+- [ ] Add keyboard arrow movement for each focused sound block/handle.
+- [ ] Add an exact millisecond input/nudge fallback.
+- [ ] Snap pointer/keyboard movement to 10ms and clamp offsets to non-negative values.
+- [ ] Extend the ruler when needed rather than placing a block outside the preview canvas.
+- [ ] Add a Reset timing action that does not change the matrix rule.
+- [ ] Confirm moving preview blocks never mutates `TriggerPlayback.startOffset`.
+- [ ] Confirm saving a rule does not persist selected sounds or audition offsets.
+
+### Playback engine and behavior
+
+- [ ] Extract a collision-preview scheduling boundary from the existing audio-preview provider.
+- [ ] Lazily create one shared `AudioContext` after a user gesture.
+- [ ] Fetch/decode and cache audio buffers by playback URL for the provider lifetime.
+- [ ] Schedule both sources against the same audio clock.
+- [ ] Implement Co-play using the authored preview offsets.
+- [ ] Implement Suppress by omitting the selected target.
+- [ ] Implement Queue by starting the queued target after the other buffer completes.
+- [ ] Implement Preempt by stopping the target at the collision point.
+- [ ] Implement Preempt + Resume by creating a new source at the interrupted buffer position.
+- [ ] Disable preview for Not possible and explain why.
+- [ ] Make Tap start or restart from time zero without autoplay or implicit save.
+- [ ] Add a synchronized playhead.
+- [ ] Add a compact Stop control for long playback while keeping Tap visibly labeled.
+- [ ] Route collision preview through the provider so only one app preview is active at a time.
+- [ ] Stop and clean up preview on restart, Stop, Back, pair change, unmount, reset, and asset deletion.
+- [ ] Cancel all source nodes, animation frames, decoded-buffer work, and stale state updates.
+- [ ] Surface fetch, decode, unsupported file, and autoplay errors without shifting the editor layout.
+- [ ] Honor disabled devices and disabled event triggers.
+- [ ] Verify uploaded blob URLs remain valid for playback and are not leaked or persisted.
+- [ ] Verify Tap and timeline motion respect reduced-motion settings.
+
+## 9. Automated verification
+
+- [ ] Add active-route helper/component tests.
+- [ ] Add theme-toggle accessibility/state tests.
+- [ ] Add event schema and migration tests.
+- [ ] Add repository reorder tests.
+- [ ] Add resolution behavior-definition and validation tests for every behavior.
+- [ ] Add legacy resolution migration tests.
+- [ ] Add preview-source and offset derivation tests.
+- [ ] Add collision scheduler tests for Preempt, Resume, Queue, Co-play, Suppress, cancellation, and errors.
+- [ ] Add responsive resolution-editor component coverage.
+- [ ] Add Tap disabled/enabled, restart, Stop, and cleanup coverage.
+- [ ] Add pointer and keyboard collision-timeline alignment coverage.
+- [ ] Add collection direct-delete-button coverage.
+- [ ] Add drag pointer and keyboard E2E coverage.
+- [ ] Add theme persistence and system-change E2E coverage.
+- [ ] Add coordinate-alignment assertions for page headers.
+- [ ] Add sidebar width assertions at desktop.
+- [ ] Add reduced-motion Matrix coverage.
+- [ ] Add wide and 375px visual snapshots for the focused resolution editor.
+- [ ] Add E2E coverage proving audition offsets do not mutate event playback offsets.
+- [ ] Add E2E coverage proving Back to Matrix stops active collision audio.
+- [ ] Run `pnpm typecheck`.
+- [ ] Run `pnpm lint`.
+- [ ] Run `pnpm test`.
+- [ ] Run `pnpm test:e2e`.
+
+## 10. Manual acceptance
+
+- [ ] Projects → Libraries navigation does not move the breadcrumb/title baseline.
+- [ ] Project list → Project Workspace navigation does not move the header gutter.
+- [ ] Project Events → Event Detail navigation does not move the header gutter.
+- [ ] Both main sidebars visibly fit more text and remain usable at 768px.
+- [ ] Global toolbar fits at 375px.
+- [ ] Active section is obvious without relying only on color.
+- [ ] Theme toggle is keyboard accessible and has an obvious selected state.
+- [ ] No light flash occurs on a dark-mode reload.
+- [ ] Dialogs, tables, cards, menus, focus rings, and empty states remain legible in dark mode.
+- [ ] Dragging is smooth and does not select text or trigger row actions.
+- [ ] Keyboard users can reorder events from the handle.
+- [ ] Reordered events remain ordered after navigation, reload, and a new query.
+- [ ] Reset demo restores the canonical event order.
+- [ ] Matrix hover feels responsive but restrained.
+- [ ] Matrix hover animation disappears under reduced-motion preference.
+- [ ] Selecting a matrix cell enters a focused editor that clearly resembles the supplied desktop reference.
+- [ ] At 375px, the editor follows the supplied stacked mobile form without clipped labels or controls.
+- [ ] Target and recovery controls appear only when meaningful for the selected behavior.
+- [ ] The Playing and Incoming sounds are easy to identify and align on one ruler.
+- [ ] Pointer and keyboard users can set precise relative sound starts.
+- [ ] `Tap` is prominent at the top, always visibly labeled, and starts/restarts the current audition.
+- [ ] Preempt, Queue, Co-play, and Suppress sound distinct and match their written semantics.
+- [ ] Not possible and missing-audio pairs explain why Tap is disabled.
+- [ ] Back, Stop, navigation, and reset never leave audio playing.
+- [ ] Auditioning an unsaved draft never saves it or changes either event's authored playback schedule.
+- [ ] Resolution controls, timeline blocks, playhead, errors, and help remain legible in both themes.
+- [ ] No unrelated existing working-tree changes were lost.
+
+## Completion
+
+- [ ] Update screenshots and compare with the baseline set.
+- [ ] Update documentation/ADR references.
+- [ ] Confirm all Definition of Done items in the implementation plan.
+- [ ] Record any intentionally deferred mobile reordering, nested-sidebar, or haptic-preview work.
