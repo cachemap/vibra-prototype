@@ -47,3 +47,20 @@
 
 - Add editor-local, keyboard-accessible timing controls (10ms snapping, exact millisecond fallback, reset) without persisting audition offsets.
 - Then extract the collision scheduling boundary and make Tap/Stop functional before closing the accessible focus-state check.
+
+## Changed (continued)
+
+- Added a provider-lifetime `CollisionPreviewScheduler` backed by lazy Web Audio, decoded-buffer caching, and a pure, tested source-plan derivation.
+- The focused editor now enables `Tap` for valid audio pairs, shows a synchronized millisecond playhead, and exposes an enabled `Stop` while playing. It keeps `Not possible`, disabled devices, and missing-audio pairs disabled with explanatory copy.
+- Co-play, Suppress, Queue, and Preempt (including local Resume) schedule from the same audio clock. Tap, Stop, Back/unmount, and changing the pair or a selected source cancel the active collision preview. Nothing is persisted by auditioning.
+
+## Verification
+
+- `pnpm typecheck` passed.
+- `pnpm exec vitest run tests/collision-preview-scheduler.test.ts tests/matrix-resolution-panel.test.tsx` passed: 8 tests.
+- `pnpm lint` passed with the two pre-existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'configures a collision matrix entry' --timeout=60000` passed.
+
+## Next
+
+- Finish the collision-preview lifecycle audit: reset and asset-deletion cancellation, stale fetch/decode cancellation, blob URL behavior, reduced-motion handling, and real-browser scheduler coverage. Then complete the editor action/focus and responsive visual verification checklist items.

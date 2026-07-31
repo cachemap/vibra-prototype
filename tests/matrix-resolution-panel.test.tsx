@@ -11,6 +11,7 @@ import {
 import type { DeviceWorkspaceAggregate } from "@/data/repositories/project-repository";
 import { MatrixResolutionPanel } from "@/features/matrix/matrix-resolution-panel";
 import { MatrixResolutionEditor } from "@/features/matrix/matrix-resolution-editor";
+import { AudioPreviewProvider } from "@/features/projects/audio-preview-context";
 
 const matrixId = asEntityId<CollisionMatrixId>("matrix_checkout");
 const collectionId = asEntityId<CollectionId>("collection_checkout");
@@ -151,7 +152,7 @@ describe("MatrixResolutionEditor", () => {
     const onBack = vi.fn();
 
     render(
-      <MatrixResolutionEditor
+      <AudioPreviewProvider><MatrixResolutionEditor
         behavior="Preempt"
         eventById={new Map(events.map((event) => [event.id, event]))}
         onBack={onBack}
@@ -168,14 +169,14 @@ describe("MatrixResolutionEditor", () => {
         systemInterruptionRecovery="Stay stopped"
         targetEventId={playingEventId}
         workspace={previewWorkspace}
-      />
+      /></AudioPreviewProvider>
     );
 
     expect(screen.getByRole("region", { name: "Collision Matrix resolution editor" })).not.toBeNull();
     expect(screen.getByRole("heading", { name: /Pay now.*Card declined/i })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Tap to preview collision" })).not.toBeNull();
+    expect((screen.getByRole("button", { name: "Tap to preview collision" }) as HTMLButtonElement).disabled).toBe(false);
     expect(screen.getByLabelText(/Collision preview timeline/i)).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Stop collision preview" })).not.toBeNull();
+    expect((screen.getByRole("button", { name: "Stop collision preview" }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByRole("button", { name: "Clear collision rule" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Save collision rule" })).not.toBeNull();
     const playingSound = screen.getByLabelText("Playing sound") as HTMLSelectElement;
@@ -198,7 +199,7 @@ describe("MatrixResolutionEditor", () => {
     );
 
     render(
-      <MatrixResolutionEditor
+      <AudioPreviewProvider><MatrixResolutionEditor
         behavior="Preempt"
         eventById={new Map(events.map((event) => [event.id, event]))}
         onBack={vi.fn()}
@@ -215,7 +216,7 @@ describe("MatrixResolutionEditor", () => {
         systemInterruptionRecovery="Stay stopped"
         targetEventId={playingEventId}
         workspace={previewWorkspace}
-      />
+      /></AudioPreviewProvider>
     );
 
     const incomingOffset = screen.getByLabelText("Incoming offset in milliseconds") as HTMLInputElement;

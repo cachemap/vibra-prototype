@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import type { AudioPreviewItem } from "./audio-preview";
+import type { CollisionPreviewRequest } from "./collision-preview-scheduler";
 import { useAudioPreviewPlayer } from "./audio-preview";
 import { AudioPreviewIconButton } from "./audio-preview-controls";
 
@@ -23,6 +24,7 @@ type AudioPreviewState = {
 type AudioPreviewActions = {
   isSchedulePlaying: (scheduleKey: string) => boolean;
   playItem: (item: AudioPreviewItem) => Promise<void>;
+  playCollisionSchedule: (request: CollisionPreviewRequest) => Promise<void>;
   playSchedule: (
     scheduleKey: string,
     items: readonly AudioPreviewItem[],
@@ -58,6 +60,7 @@ export function AudioPreviewProvider({ children }: { children: ReactNode }) {
     () => ({
       isSchedulePlaying: (scheduleKey) => previewRef.current.isSchedulePlaying(scheduleKey),
       playItem: (item) => previewRef.current.playItem(item),
+      playCollisionSchedule: (request) => previewRef.current.playCollisionSchedule(request),
       playSchedule: (scheduleKey, items, durationSeconds) =>
         previewRef.current.playSchedule(scheduleKey, items, durationSeconds),
       playheadFor: (scheduleKey) => previewRef.current.playheadFor(scheduleKey),

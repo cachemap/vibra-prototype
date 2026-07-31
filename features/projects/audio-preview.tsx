@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Asset } from "@/domain";
+import {
+  CollisionPreviewScheduler,
+  type CollisionPreviewRequest
+} from "./collision-preview-scheduler";
 
 export interface AudioPreviewItem {
   asset: Pick<Asset, "id" | "mediaKind" | "name" | "playbackUrl">;
@@ -34,6 +38,26 @@ export const useAudioPreviewPlayer = () => {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [playheadByScheduleKey, setPlayheadByScheduleKey] = useState<Record<string, number>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [collisionScheduler] = useState(
+    () =>
+      new CollisionPreviewScheduler({
+      onError: setErrorMessage,
+      onProgress: (scheduleKey, seconds) => {
+        setPlayheadByScheduleKey((current) => {
+          if (seconds === null) {
+            if (!(scheduleKey in current)) {
+              return current;
+            }
+            const next = { ...current };
+            delete next[scheduleKey];
+            return next;
+          }
+
+          return { ...current, [scheduleKey]: seconds };
+        });
+      }
+      })
+  );
 
   const teardownSchedule = useCallback((scheduleKey: string) => {
     const running = schedulesRef.current.get(scheduleKey);
@@ -58,6 +82,7 @@ export const useAudioPreviewPlayer = () => {
   const stopSchedule = useCallback(
     (scheduleKey: string) => {
       teardownSchedule(scheduleKey);
+      collisionScheduler.stopSchedule(scheduleKey);
       setPlayheadByScheduleKey((current) => {
         if (!(scheduleKey in current)) {
           return current;
@@ -69,7 +94,7 @@ export const useAudioPreviewPlayer = () => {
         return next;
       });
     },
-    [teardownSchedule]
+    [collisionScheduler, teardownSchedule]
   );
 
   const stopItem = useCallback(() => {
@@ -86,7 +111,17 @@ export const useAudioPreviewPlayer = () => {
     Array.from(schedulesRef.current.keys()).forEach(teardownSchedule);
     setPlayheadByScheduleKey({});
     stopItem();
-  }, [stopItem, teardownSchedule]);
+    collisionScheduler.stop();
+  }, [collisionScheduler, stopItem, teardownSchedule]);
+
+  const playCollisionSchedule = useCallback(
+    async (request: CollisionPreviewRequest) => {
+      stop();
+      setErrorMessage(null);
+      await collisionScheduler.play(request);
+    },
+    [collisionScheduler, stop]
+  );
 
   const playItem = useCallback(
     async (item: AudioPreviewItem) => {
@@ -187,13 +222,20 @@ export const useAudioPreviewPlayer = () => {
     [stopSchedule]
   );
 
-  useEffect(() => stop, [stop]);
+  useEffect(
+    () => () => {
+      stop();
+      collisionScheduler.dispose();
+    },
+    [collisionScheduler, stop]
+  );
 
   return {
     activeKey,
     errorMessage,
     isPlaying: Boolean(activeKey) || Object.keys(playheadByScheduleKey).length > 0,
     isSchedulePlaying: (scheduleKey: string) => scheduleKey in playheadByScheduleKey,
+    playCollisionSchedule,
     playItem,
     playSchedule,
     playheadByScheduleKey,

@@ -232,25 +232,25 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Confirm moving preview blocks never mutates `TriggerPlayback.startOffset`.
 - [x] Confirm saving a rule does not persist selected sounds or audition offsets.
 
-### Playback engine and behavior
+### Playback engine and behavior [~]
 
-- [ ] Extract a collision-preview scheduling boundary from the existing audio-preview provider.
-- [ ] Lazily create one shared `AudioContext` after a user gesture.
-- [ ] Fetch/decode and cache audio buffers by playback URL for the provider lifetime.
-- [ ] Schedule both sources against the same audio clock.
-- [ ] Implement Co-play using the authored preview offsets.
-- [ ] Implement Suppress by omitting the selected target.
-- [ ] Implement Queue by starting the queued target after the other buffer completes.
-- [ ] Implement Preempt by stopping the target at the collision point.
-- [ ] Implement Preempt + Resume by creating a new source at the interrupted buffer position.
-- [ ] Disable preview for Not possible and explain why.
-- [ ] Make Tap start or restart from time zero without autoplay or implicit save.
-- [ ] Add a synchronized playhead.
-- [ ] Add a compact Stop control for long playback while keeping Tap visibly labeled.
-- [ ] Route collision preview through the provider so only one app preview is active at a time.
+- [x] Extract a collision-preview scheduling boundary from the existing audio-preview provider.
+- [x] Lazily create one shared `AudioContext` after a user gesture.
+- [x] Fetch/decode and cache audio buffers by playback URL for the provider lifetime.
+- [x] Schedule both sources against the same audio clock.
+- [x] Implement Co-play using the authored preview offsets.
+- [x] Implement Suppress by omitting the selected target.
+- [x] Implement Queue by starting the queued target after the other buffer completes.
+- [x] Implement Preempt by stopping the target at the collision point.
+- [x] Implement Preempt + Resume by creating a new source at the interrupted buffer position.
+- [x] Disable preview for Not possible and explain why.
+- [x] Make Tap start or restart from time zero without autoplay or implicit save.
+- [x] Add a synchronized playhead.
+- [x] Add a compact Stop control for long playback while keeping Tap visibly labeled.
+- [x] Route collision preview through the provider so only one app preview is active at a time.
 - [ ] Stop and clean up preview on restart, Stop, Back, pair change, unmount, reset, and asset deletion.
 - [ ] Cancel all source nodes, animation frames, decoded-buffer work, and stale state updates.
-- [ ] Surface fetch, decode, unsupported file, and autoplay errors without shifting the editor layout.
+- [x] Surface fetch, decode, unsupported file, and autoplay errors without shifting the editor layout.
 - [ ] Honor disabled devices and disabled event triggers.
 - [ ] Verify uploaded blob URLs remain valid for playback and are not leaked or persisted.
 - [ ] Verify Tap and timeline motion respect reduced-motion settings.

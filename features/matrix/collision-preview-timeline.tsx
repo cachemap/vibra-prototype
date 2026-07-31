@@ -3,7 +3,7 @@
 import { DndContext, PointerSensor, useDraggable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Pause, RotateCcw } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Select } from "@/components/primitives";
 import type { DeviceWorkspaceAggregate } from "@/data/repositories/project-repository";
 import type { Event, EventId, ResolutionBehaviorName } from "@/domain";
@@ -12,12 +12,19 @@ import {
   type CollisionPreviewLane,
   type CollisionPreviewSource
 } from "./collision-preview-model";
+import {
+  useAudioPreviewActions,
+  useAudioPreviewState
+} from "@/features/projects/audio-preview-context";
+import type { CollisionPreviewLaneName } from "@/features/projects/collision-preview-scheduler";
 
 type CollisionPreviewTimelineProps = {
   behavior: ResolutionBehaviorName;
   eventById: ReadonlyMap<EventId, Event>;
   incomingEventId: EventId | null;
+  postInterruptionRecovery: "Resume" | "Stay stopped" | null;
   playingEventId: EventId | null;
+  targetEventId: string;
   workspace: DeviceWorkspaceAggregate | undefined;
 };
 
@@ -115,9 +122,13 @@ export function CollisionPreviewTimeline({
   behavior,
   eventById,
   incomingEventId,
+  postInterruptionRecovery,
   playingEventId,
+  targetEventId,
   workspace
 }: CollisionPreviewTimelineProps) {
+  const audioPreview = useAudioPreviewActions();
+  const { errorMessage, playheadByScheduleKey } = useAudioPreviewState();
   const pairIsSelected = Boolean(playingEventId && incomingEventId);
   const unavailable = behavior === "Not possible";
   const lanes = useMemo(
@@ -136,6 +147,10 @@ export function CollisionPreviewTimeline({
   const selectedIncomingSource = selectedSourceFor(lanes.incoming.sources, selectedSourceKey.incoming);
   const missingAudio = !selectedPlayingSource || !selectedIncomingSource;
   const deviceIsDisabled = workspace?.device.isEnabled === false;
+  const scheduleKey = `collision-preview:${playingEventId ?? "none"}:${incomingEventId ?? "none"}`;
+  const isPlaying = scheduleKey in playheadByScheduleKey;
+  const targetLane: CollisionPreviewLaneName | null =
+    targetEventId === playingEventId ? "playing" : targetEventId === incomingEventId ? "incoming" : null;
   const previewUnavailableCopy = unavailable
     ? "This behavior does not allow a concurrent preview."
     : deviceIsDisabled
@@ -159,6 +174,38 @@ export function CollisionPreviewTimeline({
     const nextOffset = snap ? snappedOffset(milliseconds) : clampOffset(milliseconds);
     setPreviewOffsets((current) => ({ ...current, [lane]: nextOffset }));
   };
+
+  const canPreview = pairIsSelected && !unavailable && !deviceIsDisabled && !missingAudio;
+
+  const playCollision = () => {
+    if (!selectedPlayingSource || !selectedIncomingSource || !canPreview) {
+      return;
+    }
+
+    void audioPreview.playCollisionSchedule({
+      behavior,
+      lanes: {
+        incoming: {
+          offsetMilliseconds: previewOffsets.incoming,
+          playbackUrl: selectedIncomingSource.asset.playbackUrl
+        },
+        playing: {
+          offsetMilliseconds: previewOffsets.playing,
+          playbackUrl: selectedPlayingSource.asset.playbackUrl
+        }
+      },
+      postInterruptionRecovery,
+      scheduleKey,
+      targetLane
+    });
+  };
+
+  useEffect(
+    () => () => {
+      audioPreview.stopSchedule(scheduleKey);
+    },
+    [audioPreview, scheduleKey, selectedIncomingSource?.key, selectedPlayingSource?.key]
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const lane = event.active.id === "collision-preview-playing" ? "playing" : event.active.id === "collision-preview-incoming" ? "incoming" : null;
@@ -240,7 +287,8 @@ export function CollisionPreviewTimeline({
         <Button
           aria-label="Tap to preview collision"
           className="h-12 min-w-32 text-base"
-          disabled
+          disabled={!canPreview}
+          onClick={playCollision}
           title={previewUnavailableCopy}
           variant="primary"
         >
@@ -255,8 +303,10 @@ export function CollisionPreviewTimeline({
             <EventLabel eventById={eventById} eventId={incomingEventId} fallback="Incoming event" />
           </h3>
           <p className="text-xs text-gray-500">
-            {previewUnavailableCopy} Collision playback controls arrive with the scheduling engine.
+            {previewUnavailableCopy}
           </p>
+          {isPlaying ? <p className="text-xs font-medium text-purple-600">Previewing at {Math.round((playheadByScheduleKey[scheduleKey] ?? 0) * 1000)}ms</p> : null}
+          {errorMessage ? <p className="text-xs text-red-600" role="status">{errorMessage}</p> : null}
         </div>
       </div>
 
@@ -288,7 +338,12 @@ export function CollisionPreviewTimeline({
         >
           Reset timing
         </Button>
-        <Button aria-label="Stop collision preview" disabled leftIcon={<Pause className="size-4" />}>
+        <Button
+          aria-label="Stop collision preview"
+          disabled={!isPlaying}
+          leftIcon={<Pause className="size-4" />}
+          onClick={() => audioPreview.stopSchedule(scheduleKey)}
+        >
           Stop
         </Button>
       </div>

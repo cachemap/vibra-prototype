@@ -44,7 +44,9 @@ export function MatrixResolutionEditor({ onBack, ...panelProps }: MatrixResoluti
         behavior={panelProps.behavior}
         eventById={panelProps.eventById}
         incomingEventId={panelProps.selectedIncomingEventId}
+        postInterruptionRecovery={panelProps.postInterruptionRecovery}
         playingEventId={panelProps.selectedPlayingEventId}
+        targetEventId={panelProps.targetEventId}
         workspace={panelProps.workspace}
       />
       <MatrixResolutionPanel {...panelProps} />
