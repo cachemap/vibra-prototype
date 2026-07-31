@@ -169,7 +169,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 
 ## 8. Resolution behavior editor and collision preview
 
-### Focused editor layout [~]
+### Focused editor layout [x]
 
 - [x] Make selecting a matrix cell open a focused resolution editor within the Matrix tab.
 - [x] Add `Back to Matrix` and restore the prior matrix selection/scroll context on return.
@@ -211,7 +211,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Default applicable system recovery to Stay stopped.
 - [x] If database version 3 has already shipped, create a new migration version instead of mutating it.
 
-### Sound selection and audition timing [~]
+### Sound selection and audition timing [x]
 
 - [x] Locate the selected event aggregates and their enabled playback rows from `DeviceWorkspaceAggregate`.
 - [x] Derive previewable audio independently for Playing and Incoming.
@@ -232,7 +232,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Confirm moving preview blocks never mutates `TriggerPlayback.startOffset`.
 - [x] Confirm saving a rule does not persist selected sounds or audition offsets.
 
-### Playback engine and behavior [~]
+### Playback engine and behavior [x]
 
 - [x] Extract a collision-preview scheduling boundary from the existing audio-preview provider.
 - [x] Lazily create one shared `AudioContext` after a user gesture.
@@ -252,8 +252,8 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Cancel all source nodes, animation frames, decoded-buffer work, and stale state updates.
 - [x] Surface fetch, decode, unsupported file, and autoplay errors without shifting the editor layout.
 - [x] Honor disabled devices and disabled event triggers.
-- [ ] Verify uploaded blob URLs remain valid for playback and are not leaked or persisted.
-- [ ] Verify Tap and timeline motion respect reduced-motion settings.
+- [x] Verify uploaded blob URLs remain valid for playback and are not leaked or persisted.
+- [x] Verify Tap and timeline motion respect reduced-motion settings.
 
 ## 9. Automated verification
 

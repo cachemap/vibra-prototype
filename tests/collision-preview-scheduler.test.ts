@@ -135,4 +135,48 @@ describe("CollisionPreviewScheduler lifecycle", () => {
     expect(decodeAudioData).not.toHaveBeenCalled();
     expect(source.start).not.toHaveBeenCalled();
   });
+
+  it("keeps collision audio functional while suppressing animated playhead updates for reduced motion", async () => {
+    vi.useFakeTimers();
+    const source = {
+      buffer: null,
+      connect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn()
+    };
+    const onProgress = vi.fn();
+    const requestAnimationFrame = vi.spyOn(window, "requestAnimationFrame");
+    const scheduler = new CollisionPreviewScheduler({
+      createAudioContext: () => ({
+        createBufferSource: () => source,
+        currentTime: 0,
+        decodeAudioData: vi.fn().mockResolvedValue({ duration: 1 }),
+        destination: {} as AudioNode,
+        resume: vi.fn().mockResolvedValue(undefined)
+      }),
+      fetchAudio: vi.fn().mockResolvedValue({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) }),
+      onError: vi.fn(),
+      onProgress
+    });
+
+    await scheduler.play({
+      behavior: "Co-play",
+      lanes,
+      postInterruptionRecovery: null,
+      reduceMotion: true,
+      scheduleKey: "collision-preview:reduced-motion",
+      targetLane: null
+    });
+
+    expect(source.start).toHaveBeenCalledTimes(2);
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+    expect(onProgress).toHaveBeenCalledWith("collision-preview:reduced-motion", 0);
+
+    await vi.advanceTimersByTimeAsync(1200);
+    expect(onProgress).toHaveBeenLastCalledWith("collision-preview:reduced-motion", null);
+
+    scheduler.dispose();
+    requestAnimationFrame.mockRestore();
+    vi.useRealTimers();
+  });
 });

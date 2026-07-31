@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   asEntityId,
@@ -280,5 +280,43 @@ describe("MatrixResolutionEditor", () => {
         event.eventTriggers.flatMap((trigger) => trigger.playbacks.map((playback) => playback.startOffset))
       )
     ).toEqual(authoredOffsets);
+  });
+
+  it("marks the collision timeline for reduced motion while preserving its controls", async () => {
+    const mediaQuery = {
+      addEventListener: vi.fn(),
+      matches: true,
+      removeEventListener: vi.fn()
+    } as unknown as MediaQueryList;
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue(mediaQuery));
+
+    render(
+      <AudioPreviewProvider><MatrixResolutionEditor
+        behavior="Preempt"
+        eventById={new Map(events.map((event) => [event.id, event]))}
+        onBack={vi.fn()}
+        onBehaviorChange={vi.fn()}
+        onClearEntry={vi.fn()}
+        onPostInterruptionRecoveryChange={vi.fn()}
+        onSaveEntry={vi.fn()}
+        onSystemInterruptionRecoveryChange={vi.fn()}
+        onTargetEventIdChange={vi.fn()}
+        postInterruptionRecovery="Stay stopped"
+        selectedEntry={selectedEntry}
+        selectedIncomingEventId={incomingEventId}
+        selectedPlayingEventId={playingEventId}
+        systemInterruptionRecovery="Stay stopped"
+        targetEventId={playingEventId}
+        workspace={previewWorkspace}
+      /></AudioPreviewProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole("region", { name: /Pay now.*Card declined/i }).dataset.motionPreference).toBe("reduced")
+    );
+    expect((screen.getByRole("button", { name: "Tap to preview collision" }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole("button", { name: "Move Playing sound" }) as HTMLButtonElement).disabled).toBe(false);
+
+    vi.unstubAllGlobals();
   });
 });

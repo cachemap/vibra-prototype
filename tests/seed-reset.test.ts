@@ -165,4 +165,53 @@ describe("demo seed data", () => {
 
     expect(seededAudioAsset?.playbackUrl).toMatch(/^blob:vibra-reset-/);
   });
+
+  it("keeps uploaded object URLs ephemeral, shared between repository consumers, and releases them on reset", async () => {
+    const testDatabase = createTestDatabase();
+    await seedDemoDataIfEmpty(testDatabase);
+
+    const revokedUrls: string[] = [];
+    let createdUrlCount = 0;
+    const repository = createProjectRepository(testDatabase, {
+      createObjectUrl: () => `blob:vibra-reset-${++createdUrlCount}`,
+      revokeObjectUrl: (url) => revokedUrls.push(url)
+    });
+    const libraryId = asEntityId<AssetLibraryId>("library_checkout-default");
+    const firstLoad = await repository.loadAssetLibraryTree(libraryId);
+
+    expect(firstLoad.isOk()).toBe(true);
+    if (firstLoad.isErr()) {
+      return;
+    }
+
+    const firstPlaybackUrl = firstLoad.value.rootFolder.childFolders
+      .flatMap((folder) => folder.assets)
+      .find((asset) => asset.mediaKind === "audio")?.playbackUrl;
+    expect(firstPlaybackUrl).toMatch(/^blob:vibra-reset-/);
+
+    const secondRepository = createProjectRepository(testDatabase, {
+      createObjectUrl: () => `blob:vibra-unexpected-${++createdUrlCount}`
+    });
+    const secondLoad = await secondRepository.loadAssetLibraryTree(libraryId);
+
+    expect(secondLoad.isOk()).toBe(true);
+    if (secondLoad.isErr()) {
+      return;
+    }
+    expect(
+      secondLoad.value.rootFolder.childFolders
+        .flatMap((folder) => folder.assets)
+        .find((asset) => asset.mediaKind === "audio")?.playbackUrl
+    ).toBe(firstPlaybackUrl);
+
+    const storedAsset = await testDatabase.assets.get(asEntityId("asset_checkout-success-audio"));
+    expect(storedAsset?.playbackUrl).not.toMatch(/^blob:/);
+
+    await resetDemoData(testDatabase);
+
+    expect(revokedUrls).toContain(firstPlaybackUrl);
+    expect(await testDatabase.assets.get(asEntityId("asset_checkout-success-audio"))).toMatchObject({
+      playbackUrl: expect.not.stringMatching(/^blob:/)
+    });
+  });
 });

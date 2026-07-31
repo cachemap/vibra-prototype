@@ -37,6 +37,26 @@ const offsetSnapMilliseconds = 10;
 const minimumTimelineMilliseconds = 600;
 const soundBlockDurationMilliseconds = 250;
 
+const useReducedMotion = () => {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+
+    if (!mediaQuery) {
+      return;
+    }
+
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+    updatePreference();
+    mediaQuery.addEventListener?.("change", updatePreference);
+
+    return () => mediaQuery.removeEventListener?.("change", updatePreference);
+  }, []);
+
+  return prefersReducedMotion;
+};
+
 function clampOffset(milliseconds: number) {
   return Math.max(0, Math.round(milliseconds));
 }
@@ -140,6 +160,7 @@ export function CollisionPreviewTimeline({
     playing: null
   });
   const [previewOffsets, setPreviewOffsets] = useState<PreviewOffsets>(defaultPreviewOffsets);
+  const prefersReducedMotion = useReducedMotion();
   const timelineCanvasRef = useRef<HTMLDivElement>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -195,6 +216,7 @@ export function CollisionPreviewTimeline({
         }
       },
       postInterruptionRecovery,
+      reduceMotion: prefersReducedMotion,
       scheduleKey,
       targetLane
     });
@@ -282,7 +304,11 @@ export function CollisionPreviewTimeline({
   };
 
   return (
-    <section aria-labelledby="collision-preview-heading" className="grid gap-5 border-b border-gray-300 pb-5">
+    <section
+      aria-labelledby="collision-preview-heading"
+      className="grid gap-5 border-b border-gray-300 pb-5"
+      data-motion-preference={prefersReducedMotion ? "reduced" : "full"}
+    >
       <div className="grid justify-items-center gap-3 text-center">
         <Button
           aria-label="Tap to preview collision"
@@ -305,7 +331,7 @@ export function CollisionPreviewTimeline({
           <p className="text-xs text-gray-500">
             {previewUnavailableCopy}
           </p>
-          {isPlaying ? <p className="text-xs font-medium text-purple-600">Previewing at {Math.round((playheadByScheduleKey[scheduleKey] ?? 0) * 1000)}ms</p> : null}
+          {isPlaying ? <p className="text-xs font-medium text-purple-600">{prefersReducedMotion ? "Previewing" : `Previewing at ${Math.round((playheadByScheduleKey[scheduleKey] ?? 0) * 1000)}ms`}</p> : null}
           {errorMessage ? <p className="text-xs text-red-600" role="status">{errorMessage}</p> : null}
         </div>
       </div>

@@ -6,6 +6,8 @@
 - Reset demo now broadcasts a preview-stop event to mounted route providers before clearing IndexedDB. Workspace and library deletes stop preview before any direct or cascading asset removal.
 - `CollisionPreviewScheduler` now aborts pending playback fetches, evicts cancelled cache entries, prevents stale requests from starting sources, and closes its audio context on provider disposal when the browser supports it.
 - The existing lane projection already ignores disabled event triggers and the editor disables preview for disabled devices; its focused tests continue to cover enabled-source selection.
+- Finished UX Polish group 8. Uploaded blobs now resolve through a database-scoped, runtime-only object-URL registry shared by repository consumers. Asset deletes and Reset demo revoke those URLs; persisted asset records never contain `blob:` URLs.
+- Reduced-motion preview keeps audio and controls functional but uses a static preview status instead of request-animation-frame playhead updates; it stops on the same calculated schedule duration.
 
 ## Verification
 
@@ -13,8 +15,8 @@
 - `pnpm lint` passed with the two existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
 - `pnpm typecheck` passed.
 - `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'configures a collision matrix entry' --timeout=60000` passed.
+- `pnpm exec vitest run tests/seed-reset.test.ts tests/collision-preview-scheduler.test.ts tests/matrix-resolution-panel.test.tsx` passed: 15 tests.
 
 ## Next
 
-- Verified the focused editor's Back, Tap, Stop, Clear, and Save actions have distinct accessible names and shared visible keyboard-focus styling. Stop correctly remains unfocusable while disabled; enabled actions receive focus normally.
-- Finish UX Polish group 8 by auditing uploaded blob-URL lifetime and reduced-motion handling for Tap/timeline feedback, then start the focused automated verification group.
+- UX Polish group 8 is complete. Start group 9 Automated verification with the active-route helper/component tests, then theme-toggle and persistence/migration coverage.

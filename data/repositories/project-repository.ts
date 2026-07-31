@@ -452,6 +452,38 @@ export interface ProjectRepositoryOptions {
   revokeObjectUrl?: (url: string) => void;
 }
 
+type UploadedObjectUrl = {
+  revoke: (url: string) => void;
+  url: string;
+};
+
+// Several feature modules construct a repository over the same Dexie instance. Keep uploaded
+// object URLs database-scoped so every aggregate sees the same live URL and reset can release it.
+const uploadedObjectUrlsByDatabase = new WeakMap<VibraDatabase, Map<AssetId, UploadedObjectUrl>>();
+
+const uploadedObjectUrlsFor = (database: VibraDatabase) => {
+  let objectUrls = uploadedObjectUrlsByDatabase.get(database);
+
+  if (!objectUrls) {
+    objectUrls = new Map<AssetId, UploadedObjectUrl>();
+    uploadedObjectUrlsByDatabase.set(database, objectUrls);
+  }
+
+  return objectUrls;
+};
+
+/** Releases ephemeral browser URLs before an out-of-band data clear, such as Reset demo. */
+export const releaseUploadedAssetObjectUrls = (database: VibraDatabase): void => {
+  const objectUrls = uploadedObjectUrlsByDatabase.get(database);
+
+  if (!objectUrls) {
+    return;
+  }
+
+  objectUrls.forEach(({ revoke, url }) => revoke(url));
+  objectUrls.clear();
+};
+
 const defaultCreateObjectUrl = (blob: Blob): string => {
   if (typeof URL === "undefined" || typeof URL.createObjectURL !== "function") {
     throw new PersistenceError("Uploaded asset playback URLs are not available in this environment.", {
@@ -499,8 +531,9 @@ const parseCommand = <Schema extends v.GenericSchema>(schema: Schema, value: unk
 const parseAssetRecord = async (
   database: VibraDatabase,
   rawAsset: unknown,
-  objectUrlsByAssetId: Map<AssetId, string>,
-  createObjectUrl: (blob: Blob) => string
+  objectUrlsByAssetId: Map<AssetId, UploadedObjectUrl>,
+  createObjectUrl: (blob: Blob) => string,
+  revokeObjectUrl: (url: string) => void
 ): Promise<Asset> => {
   const asset = parseRecord(assetSchema, rawAsset) as Asset;
   const rawAssetBlob = await database.assetBlobs.get(asset.id);
@@ -522,12 +555,12 @@ const parseAssetRecord = async (
   if (previousObjectUrl) {
     return {
       ...asset,
-      playbackUrl: previousObjectUrl
+      playbackUrl: previousObjectUrl.url
     };
   }
 
   const playbackUrl = createObjectUrl(assetBlob.blob);
-  objectUrlsByAssetId.set(asset.id, playbackUrl);
+  objectUrlsByAssetId.set(asset.id, { revoke: revokeObjectUrl, url: playbackUrl });
 
   return {
     ...asset,
@@ -1227,12 +1260,12 @@ export const createProjectRepository = (
   database: VibraDatabase,
   options: ProjectRepositoryOptions = {}
 ): ProjectRepository => {
-  const objectUrlsByAssetId = new Map<AssetId, string>();
+  const objectUrlsByAssetId = uploadedObjectUrlsFor(database);
   const createObjectUrl = options.createObjectUrl ?? defaultCreateObjectUrl;
   const revokeObjectUrl = options.revokeObjectUrl ?? defaultRevokeObjectUrl;
 
   const resolveAsset = (rawAsset: unknown) =>
-    parseAssetRecord(database, rawAsset, objectUrlsByAssetId, createObjectUrl);
+    parseAssetRecord(database, rawAsset, objectUrlsByAssetId, createObjectUrl, revokeObjectUrl);
   const deleteTransactionTables = () => deleteCascadeTransactionTables.map((tableName) => database[tableName]);
 
   const deleteSharingLinksForTarget = async (target: ShareTarget) => {
@@ -1292,7 +1325,7 @@ export const createProjectRepository = (
     const objectUrl = objectUrlsByAssetId.get(assetId);
 
     if (objectUrl) {
-      revokeObjectUrl(objectUrl);
+      objectUrl.revoke(objectUrl.url);
       objectUrlsByAssetId.delete(assetId);
     }
 

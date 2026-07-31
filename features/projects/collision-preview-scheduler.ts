@@ -119,7 +119,10 @@ type AudioContextLike = {
   resume: () => Promise<void>;
 };
 
-export type CollisionPreviewRequest = CollisionPreviewScheduleInput & { scheduleKey: string };
+export type CollisionPreviewRequest = CollisionPreviewScheduleInput & {
+  reduceMotion?: boolean;
+  scheduleKey: string;
+};
 
 type CollisionPreviewSchedulerOptions = {
   createAudioContext?: () => AudioContextLike;
@@ -140,6 +143,7 @@ export class CollisionPreviewScheduler {
   private audioContext: AudioContextLike | null = null;
   private buffers = new Map<string, Promise<AudioBufferLike>>();
   private frameId: number | null = null;
+  private finishTimeoutId: number | null = null;
   private pendingBufferAbortControllers = new Map<string, AbortController>();
   private requestVersion = 0;
   private scheduleKey: string | null = null;
@@ -183,7 +187,7 @@ export class CollisionPreviewScheduler {
         this.activeSources.add(source);
       });
 
-      this.updatePlayhead(request.scheduleKey, startedAt, plan.durationSeconds, version);
+      this.updatePlayhead(request.scheduleKey, startedAt, plan.durationSeconds, version, request.reduceMotion ?? false);
     } catch {
       if (version === this.requestVersion) {
         this.options.onError(previewError);
@@ -212,6 +216,11 @@ export class CollisionPreviewScheduler {
     if (this.frameId !== null) {
       window.cancelAnimationFrame(this.frameId);
       this.frameId = null;
+    }
+
+    if (this.finishTimeoutId !== null) {
+      window.clearTimeout(this.finishTimeoutId);
+      this.finishTimeoutId = null;
     }
 
     if (this.scheduleKey) {
@@ -300,7 +309,22 @@ export class CollisionPreviewScheduler {
     return this.audioContext;
   }
 
-  private updatePlayhead(scheduleKey: string, startedAt: number, durationSeconds: number, version: number) {
+  private updatePlayhead(
+    scheduleKey: string,
+    startedAt: number,
+    durationSeconds: number,
+    version: number,
+    reduceMotion: boolean
+  ) {
+    if (reduceMotion) {
+      this.finishTimeoutId = window.setTimeout(() => {
+        if (version === this.requestVersion) {
+          this.stop();
+        }
+      }, Math.max(0, durationSeconds * 1000));
+      return;
+    }
+
     const step = () => {
       if (version !== this.requestVersion || !this.audioContext) {
         return;
