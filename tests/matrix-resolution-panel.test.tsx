@@ -190,4 +190,53 @@ describe("MatrixResolutionEditor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Back to Matrix" }));
     expect(onBack).toHaveBeenCalledOnce();
   });
+
+  it("keeps sound choice and audition timing local while offering precise keyboard and input controls", () => {
+    const onSaveEntry = vi.fn();
+    const authoredOffsets = previewWorkspace.collections.flatMap((collection) => collection.events).flatMap((event) =>
+      event.eventTriggers.flatMap((trigger) => trigger.playbacks.map((playback) => playback.startOffset))
+    );
+
+    render(
+      <MatrixResolutionEditor
+        behavior="Preempt"
+        eventById={new Map(events.map((event) => [event.id, event]))}
+        onBack={vi.fn()}
+        onBehaviorChange={vi.fn()}
+        onClearEntry={vi.fn()}
+        onPostInterruptionRecoveryChange={vi.fn()}
+        onSaveEntry={onSaveEntry}
+        onSystemInterruptionRecoveryChange={vi.fn()}
+        onTargetEventIdChange={vi.fn()}
+        postInterruptionRecovery="Stay stopped"
+        selectedEntry={selectedEntry}
+        selectedIncomingEventId={incomingEventId}
+        selectedPlayingEventId={playingEventId}
+        systemInterruptionRecovery="Stay stopped"
+        targetEventId={playingEventId}
+        workspace={previewWorkspace}
+      />
+    );
+
+    const incomingOffset = screen.getByLabelText("Incoming offset in milliseconds") as HTMLInputElement;
+    expect(incomingOffset.value).toBe("150");
+
+    fireEvent.keyDown(screen.getByRole("button", { name: "Move Incoming sound" }), { key: "ArrowRight" });
+    expect(incomingOffset.value).toBe("160");
+
+    fireEvent.change(incomingOffset, { target: { value: "655" } });
+    expect(incomingOffset.value).toBe("655");
+    expect(screen.getByLabelText(/Incoming starts at 655 milliseconds/)).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset collision preview timing" }));
+    expect(incomingOffset.value).toBe("150");
+
+    fireEvent.click(screen.getByRole("button", { name: "Save collision rule" }));
+    expect(onSaveEntry).toHaveBeenCalledOnce();
+    expect(
+      previewWorkspace.collections.flatMap((collection) => collection.events).flatMap((event) =>
+        event.eventTriggers.flatMap((trigger) => trigger.playbacks.map((playback) => playback.startOffset))
+      )
+    ).toEqual(authoredOffsets);
+  });
 });

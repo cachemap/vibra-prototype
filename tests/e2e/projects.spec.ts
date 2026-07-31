@@ -680,6 +680,7 @@ test("configures a collision matrix entry", async ({ page }) => {
     .click();
   await page.getByLabel("Behavior").selectOption("Queue");
   await page.getByRole("button", { name: "Save rule" }).click();
+  await page.getByRole("button", { name: "Back to Matrix" }).click();
 
   await expect(page.getByTestId("collision-matrix-grid")).toContainText("Queue");
 

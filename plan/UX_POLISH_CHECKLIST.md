@@ -220,17 +220,17 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Keep event names primary and asset names secondary in each lane.
 - [x] Explain and disable Tap when either side has no enabled previewable audio.
 - [x] Treat haptic-only assets as visible but not audio-previewable.
-- [ ] Store sound selection and collision offsets only in editor-local audition state.
-- [ ] Default Playing to `0ms` and Incoming to a visibly separated offset such as `150ms`.
-- [ ] Allow each sound block to move horizontally with a handle.
-- [ ] Use a separate horizontal DnD context from sortable event rows.
-- [ ] Add keyboard arrow movement for each focused sound block/handle.
-- [ ] Add an exact millisecond input/nudge fallback.
-- [ ] Snap pointer/keyboard movement to 10ms and clamp offsets to non-negative values.
-- [ ] Extend the ruler when needed rather than placing a block outside the preview canvas.
-- [ ] Add a Reset timing action that does not change the matrix rule.
-- [ ] Confirm moving preview blocks never mutates `TriggerPlayback.startOffset`.
-- [ ] Confirm saving a rule does not persist selected sounds or audition offsets.
+- [x] Store sound selection and collision offsets only in editor-local audition state.
+- [x] Default Playing to `0ms` and Incoming to a visibly separated offset such as `150ms`.
+- [x] Allow each sound block to move horizontally with a handle.
+- [x] Use a separate horizontal DnD context from sortable event rows.
+- [x] Add keyboard arrow movement for each focused sound block/handle.
+- [x] Add an exact millisecond input/nudge fallback.
+- [x] Snap pointer/keyboard movement to 10ms and clamp offsets to non-negative values.
+- [x] Extend the ruler when needed rather than placing a block outside the preview canvas.
+- [x] Add a Reset timing action that does not change the matrix rule.
+- [x] Confirm moving preview blocks never mutates `TriggerPlayback.startOffset`.
+- [x] Confirm saving a rule does not persist selected sounds or audition offsets.
 
 ### Playback engine and behavior
 
