@@ -16,4 +16,5 @@
 
 ## Next
 
-- Finish UX Polish group 8 by auditing uploaded blob-URL lifetime and reduced-motion handling for Tap/timeline feedback, then complete the distinct focus-state/accessibility verification.
+- Verified the focused editor's Back, Tap, Stop, Clear, and Save actions have distinct accessible names and shared visible keyboard-focus styling. Stop correctly remains unfocusable while disabled; enabled actions receive focus normally.
+- Finish UX Polish group 8 by auditing uploaded blob-URL lifetime and reduced-motion handling for Tap/timeline feedback, then start the focused automated verification group.

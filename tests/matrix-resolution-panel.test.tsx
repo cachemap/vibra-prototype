@@ -192,6 +192,47 @@ describe("MatrixResolutionEditor", () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
+  it("gives editor actions distinct names and a visible keyboard focus treatment", () => {
+    render(
+      <AudioPreviewProvider><MatrixResolutionEditor
+        behavior="Preempt"
+        eventById={new Map(events.map((event) => [event.id, event]))}
+        onBack={vi.fn()}
+        onBehaviorChange={vi.fn()}
+        onClearEntry={vi.fn()}
+        onPostInterruptionRecoveryChange={vi.fn()}
+        onSaveEntry={vi.fn()}
+        onSystemInterruptionRecoveryChange={vi.fn()}
+        onTargetEventIdChange={vi.fn()}
+        postInterruptionRecovery="Stay stopped"
+        selectedEntry={selectedEntry}
+        selectedIncomingEventId={incomingEventId}
+        selectedPlayingEventId={playingEventId}
+        systemInterruptionRecovery="Stay stopped"
+        targetEventId={playingEventId}
+        workspace={previewWorkspace}
+      /></AudioPreviewProvider>
+    );
+
+    const actions = [
+      screen.getByRole("button", { name: "Back to Matrix" }),
+      screen.getByRole("button", { name: "Tap to preview collision" }),
+      screen.getByRole("button", { name: "Stop collision preview" }),
+      screen.getByRole("button", { name: "Clear collision rule" }),
+      screen.getByRole("button", { name: "Save collision rule" })
+    ];
+
+    expect(new Set(actions.map((action) => action.getAttribute("aria-label"))).size).toBe(actions.length);
+    actions.forEach((action) => {
+      expect(action.className).toContain("focus-visible:outline-purple-500/40");
+    });
+    actions.filter((action) => !(action as HTMLButtonElement).disabled).forEach((action) => {
+      action.focus();
+      expect(document.activeElement).toBe(action);
+    });
+    expect((screen.getByRole("button", { name: "Stop collision preview" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it("keeps sound choice and audition timing local while offering precise keyboard and input controls", () => {
     const onSaveEntry = vi.fn();
     const authoredOffsets = previewWorkspace.collections.flatMap((collection) => collection.events).flatMap((event) =>

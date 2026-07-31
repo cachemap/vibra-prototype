@@ -183,7 +183,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Match the narrow reference with full-width stacked controls and readable section spacing.
 - [x] Keep the timeline horizontally scrollable at narrow widths instead of crushing labels/blocks.
 - [x] Keep all touch targets at least 44px and avoid horizontal page overflow at 375px.
-- [ ] Verify Back, Clear, Save, Tap, and Stop have distinct accessible names and focus states.
+- [x] Verify Back, Clear, Save, Tap, and Stop have distinct accessible names and focus states.
 
 ### Adaptive rule data and controls [x]
 
