@@ -29,3 +29,9 @@
 - Added a table-driven domain-rule test that accepts and rejects a complete configuration for all five resolution behaviors, while asserting the behavior-definition map is exhaustive.
 - Verification passed: focused Vitest (69 tests), `pnpm typecheck`, and `pnpm lint` (two pre-existing warnings only).
 - Next: preview-source and offset-derivation coverage, followed by collision-scheduler behavior coverage.
+
+## UX Polish verification: preview source derivation
+
+- Closed the preview-source and offset-derivation verification item. Focused model tests now cover deterministic earliest-audio selection, disabled/haptic/unavailable-source filtering, independent Playing/Incoming source projection, authored-offset immutability, and unknown/unloaded lanes.
+- Verification passed: `pnpm exec vitest run tests/collision-preview-model.test.ts` (3 tests), `pnpm lint` (two pre-existing warnings only), and `pnpm typecheck`.
+- Next: collision scheduler behavior coverage for Preempt, Resume, Queue, Co-play, Suppress, cancellation, and errors.
