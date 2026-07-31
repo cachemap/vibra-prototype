@@ -500,8 +500,7 @@ const parseAssetRecord = async (
   database: VibraDatabase,
   rawAsset: unknown,
   objectUrlsByAssetId: Map<AssetId, string>,
-  createObjectUrl: (blob: Blob) => string,
-  revokeObjectUrl: (url: string) => void
+  createObjectUrl: (blob: Blob) => string
 ): Promise<Asset> => {
   const asset = parseRecord(assetSchema, rawAsset) as Asset;
   const rawAssetBlob = await database.assetBlobs.get(asset.id);
@@ -521,7 +520,10 @@ const parseAssetRecord = async (
   const previousObjectUrl = objectUrlsByAssetId.get(asset.id);
 
   if (previousObjectUrl) {
-    revokeObjectUrl(previousObjectUrl);
+    return {
+      ...asset,
+      playbackUrl: previousObjectUrl
+    };
   }
 
   const playbackUrl = createObjectUrl(assetBlob.blob);
@@ -1230,7 +1232,7 @@ export const createProjectRepository = (
   const revokeObjectUrl = options.revokeObjectUrl ?? defaultRevokeObjectUrl;
 
   const resolveAsset = (rawAsset: unknown) =>
-    parseAssetRecord(database, rawAsset, objectUrlsByAssetId, createObjectUrl, revokeObjectUrl);
+    parseAssetRecord(database, rawAsset, objectUrlsByAssetId, createObjectUrl);
   const deleteTransactionTables = () => deleteCascadeTransactionTables.map((tableName) => database[tableName]);
 
   const deleteSharingLinksForTarget = async (target: ShareTarget) => {
@@ -1585,7 +1587,7 @@ export const createProjectRepository = (
       const folders = rawFolders.map(
         (folder) => parseRecord(assetLibraryFolderSchema, folder) as AssetLibraryFolder
       );
-      const assets = await Promise.all(rawAssets.map((asset) => resolveAsset(asset)));
+      const assets = rawAssets.map((asset) => parseRecord(assetSchema, asset) as Asset);
       const imports = rawImports.map(
         (libraryImport) =>
           parseRecord(projectAssetLibraryImportSchema, libraryImport) as ProjectAssetLibraryImport

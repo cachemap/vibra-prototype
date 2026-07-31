@@ -80,7 +80,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Verify the cascade confirmation copy and cancellation behavior are unchanged.
 
 # SIDE QUEST
-- [ ] Playback is broken on the Assets tab view for sounds that have been uploaded
+- [x] Fix playback on the Assets tab for uploaded sounds.
 
 ## 5. Persistent event order [x]
 

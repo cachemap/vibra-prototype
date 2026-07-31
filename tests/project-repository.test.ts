@@ -829,7 +829,7 @@ describe("project repository", () => {
     });
   });
 
-  it("stores uploaded audio blobs and resolves browser playback URLs after a repository reload", async () => {
+  it("stores uploaded audio blobs and keeps browser playback URLs stable across aggregate loads", async () => {
     const repository = await createSeededRepository();
     const createdLibraryResult = await repository.createAssetLibrary({
       name: "Uploaded Audio Kit"
@@ -882,17 +882,20 @@ describe("project repository", () => {
     });
 
     const firstTreeResult = await reloadedRepository.loadAssetLibraryTree(createdLibraryResult.value.library.id);
+    const libraryListResult = await reloadedRepository.loadAssetLibraries();
     const secondTreeResult = await reloadedRepository.loadAssetLibraryTree(createdLibraryResult.value.library.id);
 
     expect(firstTreeResult.isOk()).toBe(true);
+    expect(libraryListResult.isOk()).toBe(true);
     expect(secondTreeResult.isOk()).toBe(true);
     if (firstTreeResult.isErr() || secondTreeResult.isErr()) {
       return;
     }
 
     expect(firstTreeResult.value.rootFolder.childFolders[0]?.assets[0]?.playbackUrl).toBe("blob:vibra-test-1");
-    expect(secondTreeResult.value.rootFolder.childFolders[0]?.assets[0]?.playbackUrl).toBe("blob:vibra-test-2");
-    expect(revokedUrls).toEqual(["blob:vibra-test-1"]);
+    expect(secondTreeResult.value.rootFolder.childFolders[0]?.assets[0]?.playbackUrl).toBe("blob:vibra-test-1");
+    expect(createdUrlCount).toBe(1);
+    expect(revokedUrls).toEqual([]);
   });
 
   it("stores uploaded haptic blobs after reload and keeps them selectable for playbacks", async () => {
