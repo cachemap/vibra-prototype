@@ -68,16 +68,16 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Verify Reset still invalidates queries and routes to `/projects`.
 - [x] Verify Reset does not overwrite the theme preference.
 
-## 4. Collection viewer actions
+## 4. Collection viewer actions [x]
 
-- [ ] Remove the collection-level `RowActionsMenu` from `events-tab.tsx`.
-- [ ] Remove the unused `MoreVertical` import.
-- [ ] Add a visible secondary Delete button with a `Trash2` icon.
-- [ ] Disable Delete when no collection is selected.
-- [ ] Route Delete through the existing collection confirmation callback.
-- [ ] Keep Rename, Delete, Collection, and Add event readable when wrapping.
-- [ ] Update E2E selectors that previously opened the collection action menu.
-- [ ] Verify the cascade confirmation copy and cancellation behavior are unchanged.
+- [x] Remove the collection-level `RowActionsMenu` from `events-tab.tsx`.
+- [x] Remove the unused `MoreVertical` import.
+- [x] Add a visible secondary Delete button with a `Trash2` icon.
+- [x] Disable Delete when no collection is selected.
+- [x] Route Delete through the existing collection confirmation callback.
+- [x] Keep Rename, Delete, Collection, and Add event readable when wrapping.
+- [x] Update E2E selectors that previously opened the collection action menu.
+- [x] Verify the cascade confirmation copy and cancellation behavior are unchanged.
 
 ## 5. Persistent event order
 

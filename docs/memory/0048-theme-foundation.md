@@ -33,3 +33,18 @@
 ## Next
 
 - Implement checklist group 4: replace the collection overflow menu with a direct Delete button while retaining the existing confirmation flow.
+
+## Collection viewer actions
+
+- Completed UX Polish checklist group 4. The Events collection toolbar now exposes a visible secondary Delete button with a `Trash2` icon, disabled when no collection is selected; it calls the unchanged confirmation callback.
+- Updated the workspace E2E path to use the direct control and verify the existing collection cascade copy plus cancellation before confirming deletion.
+
+## Verification
+
+- `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'deletes collections and events from the workspace'` passed.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed with the existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+
+## Next
+
+- Implement UX Polish checklist group 5: persisted event ordering (domain field, v3 IndexedDB migration, repository/query mutation, then drag-and-drop UI in group 6).

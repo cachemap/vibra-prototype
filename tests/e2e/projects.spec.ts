@@ -308,8 +308,18 @@ test("deletes collections and events from the workspace", async ({ page }) => {
   await expect(page.getByRole("status")).toContainText("Deleted event Temporary Toast.");
   await expect(page.getByRole("cell", { name: "Temporary Toast", exact: true })).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Open actions for Delete Flow" }).click();
-  await page.getByRole("menuitem", { name: "Delete collection" }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  deleteDialog = page.getByRole("dialog", { name: "Delete collection?" });
+  await expect(deleteDialog).toContainText(
+    "This removes Delete Flow and its dependent demo records from IndexedDB."
+  );
+  await expect(deleteDialog).toContainText(
+    "Events, trigger schedules, collision matrix rows, columns, entries, and share links."
+  );
+  await deleteDialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByTestId("collection-list")).toContainText("Delete Flow");
+
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
   deleteDialog = page.getByRole("dialog", { name: "Delete collection?" });
   await deleteDialog.getByRole("button", { name: "Delete collection" }).click();
   await expect(page.getByRole("status")).toContainText("Deleted collection Delete Flow.");

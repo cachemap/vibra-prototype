@@ -1,5 +1,5 @@
-import { Edit3, MoreVertical, Plus, Trash2 } from "lucide-react";
-import { Button, EmptyState, RowActionsMenu } from "@/components/primitives";
+import { Edit3, Plus, Trash2 } from "lucide-react";
+import { Button, EmptyState } from "@/components/primitives";
 import type { Collection, EventId } from "@/domain";
 import type { DeviceSummary } from "@/data/repositories/project-repository";
 import type { EventRowModel } from "./event-row-model";
@@ -46,20 +46,13 @@ export function EventsTab({
           >
             Rename
           </Button>
-          <RowActionsMenu
+          <Button
             disabled={!selectedCollection}
-            grouped
-            icon={MoreVertical}
-            items={[
-              {
-                destructive: true,
-                icon: <Trash2 aria-hidden="true" className="size-4" />,
-                label: "Delete collection",
-                onSelect: onDeleteCollection
-              }
-            ]}
-            label={`Open actions for ${selectedCollection?.collection.name ?? "collection"}`}
-          />
+            leftIcon={<Trash2 className="size-4" />}
+            onClick={onDeleteCollection}
+          >
+            Delete
+          </Button>
           <Button leftIcon={<Plus className="size-4" />} onClick={onAddCollection}>
             Collection
           </Button>
