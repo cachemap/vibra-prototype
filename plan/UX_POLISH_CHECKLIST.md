@@ -273,12 +273,12 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Add theme persistence and system-change E2E coverage.
 - [x] Add coordinate-alignment assertions for page headers.
 - [x] Add sidebar width assertions at desktop.
-- [ ] Add reduced-motion Matrix coverage.
+- [x] Add reduced-motion Matrix coverage.
 - [ ] Add wide and 375px visual snapshots for the focused resolution editor.
 - [ ] Add E2E coverage proving audition offsets do not mutate event playback offsets.
 - [ ] Add E2E coverage proving Back to Matrix stops active collision audio.
-- [ ] Run `pnpm typecheck`.
-- [ ] Run `pnpm lint`.
+- [x] Run `pnpm typecheck`.
+- [x] Run `pnpm lint`.
 - [ ] Run `pnpm test`.
 - [ ] Run `pnpm test:e2e`.
 

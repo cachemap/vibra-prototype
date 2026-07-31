@@ -22,10 +22,10 @@ import type { MatrixAxis, MatrixFilterCollection } from "./matrix-axis-filter";
 const matrixRowHeaderWidth = "168px";
 
 const interactiveCellHoverClass =
-  "group relative z-0 motion-safe:transition-[transform,box-shadow,background-color,border-color] motion-safe:duration-150 motion-safe:ease-out motion-reduce:transition-[background-color,border-color,box-shadow] [@media(hover:hover)]:hover:z-10 [@media(hover:hover)]:hover:-translate-y-px [@media(hover:hover)]:hover:scale-[1.015] [@media(hover:hover)]:hover:border-gray-300 [@media(hover:hover)]:hover:shadow-[0_2px_5px_rgb(var(--gray-700)/0.14)] [@media(hover:hover)]:hover:ring-1 [@media(hover:hover)]:hover:ring-inset [@media(hover:hover)]:hover:ring-gray-300 motion-reduce:transform-none";
+  "group relative z-0 motion-safe:transition-[transform,box-shadow,background-color,border-color] motion-safe:duration-150 motion-safe:ease-out motion-reduce:transition-[background-color,border-color,box-shadow] [@media(hover:hover)]:hover:z-10 [@media(hover:hover)]:hover:-translate-y-px [@media(hover:hover)]:hover:scale-[1.015] [@media(hover:hover)]:hover:border-gray-300 [@media(hover:hover)]:hover:shadow-[0_2px_5px_rgb(var(--gray-700)/0.14)] [@media(hover:hover)]:hover:ring-1 [@media(hover:hover)]:hover:ring-inset [@media(hover:hover)]:hover:ring-gray-300 motion-reduce:!transform-none";
 
 const behaviorPillHoverClass =
-  "motion-safe:transition-[transform,background-color,border-color] motion-safe:duration-150 motion-safe:ease-out motion-reduce:transition-[background-color,border-color] [@media(hover:hover)]:group-hover:scale-[1.02] [@media(hover:hover)]:group-hover:-translate-y-px motion-reduce:transform-none";
+  "motion-safe:transition-[transform,background-color,border-color] motion-safe:duration-150 motion-safe:ease-out motion-reduce:transition-[background-color,border-color] [@media(hover:hover)]:group-hover:scale-[1.02] [@media(hover:hover)]:group-hover:-translate-y-px motion-reduce:!transform-none";
 
 export const matrixEntryKeyFor = (playingEventId: EventId, incomingEventId: EventId) =>
   `${playingEventId}:${incomingEventId}`;

@@ -59,7 +59,7 @@ describe("MatrixGrid hover feedback", () => {
 
     expect(cell.className).toContain("[@media(hover:hover)]:hover:-translate-y-px");
     expect(cell.className).toContain("[@media(hover:hover)]:hover:scale-[1.015]");
-    expect(cell.className).toContain("motion-reduce:transform-none");
+    expect(cell.className).toContain("motion-reduce:!transform-none");
     expect(cell.className).toContain("ring-2");
   });
 
@@ -71,6 +71,6 @@ describe("MatrixGrid hover feedback", () => {
 
     expect(cell.className).toContain("[@media(hover:hover)]:hover:ring-1");
     expect(pill?.className).toContain("[@media(hover:hover)]:group-hover:scale-[1.02]");
-    expect(pill?.className).toContain("motion-reduce:transform-none");
+    expect(pill?.className).toContain("motion-reduce:!transform-none");
   });
 });

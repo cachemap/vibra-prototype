@@ -726,6 +726,37 @@ test("configures a collision matrix entry", async ({ page }) => {
   await expect(page.getByTestId("collision-matrix-grid")).toContainText("Queue");
 });
 
+test("keeps Collision Matrix hover feedback motionless when reduced motion is preferred", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/projects");
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.goto("/projects/project_checkout-system");
+  await page.getByRole("tab", { name: "Matrix" }).click();
+
+  const cell = page
+    .getByTestId("collision-matrix-grid")
+    .getByRole("button", { name: "Suppress: Pay Now when Card Declined arrives" });
+  await expect(cell).toBeVisible();
+
+  const before = await cell.evaluate((element) => getComputedStyle(element).boxShadow);
+  await cell.hover();
+  const hovered = await cell.evaluate((element) => {
+    const styles = getComputedStyle(element);
+
+    return {
+      boxShadow: styles.boxShadow,
+      reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
+      transform: styles.transform,
+      transitionProperty: styles.transitionProperty
+    };
+  });
+
+  expect(hovered.reducedMotion).toBe(true);
+  expect(hovered.transform).toBe("none");
+  expect(hovered.transitionProperty).not.toContain("transform");
+  expect(hovered.boxShadow).not.toBe(before);
+});
+
 test("clears collision matrix rows columns and entries", async ({ page }) => {
   await page.goto("/projects");
   await page.getByRole("button", { name: "Reset demo" }).click();
