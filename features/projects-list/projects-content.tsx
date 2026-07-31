@@ -99,7 +99,7 @@ export function ProjectsContent() {
   const deleteIsPending = deleteFolder.isPending || deleteProject.isPending;
 
   return (
-    <section className="grid gap-4 px-4 py-5">
+    <section className="grid">
       <ProjectsHeader
         breadcrumbs={breadcrumbs}
         currentFolderDeleteTarget={currentFolderDeleteTarget}
@@ -113,33 +113,35 @@ export function ProjectsContent() {
         }
         title={title}
       />
-      <ProjectsToolbar onSearchTermChange={setSearchTerm} searchTerm={searchTerm} />
+      <div className="grid gap-4 px-[var(--page-gutter-x)] py-[var(--page-gutter-y)]">
+        <ProjectsToolbar onSearchTermChange={setSearchTerm} searchTerm={searchTerm} />
 
-      <FeedbackBanner />
+        <FeedbackBanner />
 
-      <ProjectsDialogs
-        currentFolder={currentFolder}
-        dialog={dialog}
-        onClose={() => setDialog(null)}
-        platformIdByName={platformIdByName}
-      />
+        <ProjectsDialogs
+          currentFolder={currentFolder}
+          dialog={dialog}
+          onClose={() => setDialog(null)}
+          platformIdByName={platformIdByName}
+        />
 
-      <ProjectsDeleteConfirm
-        disabled={deleteIsPending}
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={() => void handleConfirmDelete()}
-        target={deleteTarget}
-      />
+        <ProjectsDeleteConfirm
+          disabled={deleteIsPending}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => void handleConfirmDelete()}
+          target={deleteTarget}
+        />
 
-      <ProjectsList
-        allRowCount={allRows.length}
-        currentFolder={currentFolder}
-        onCreateFolder={() => setDialog("folder")}
-        onCreateProject={openProjectDialog}
-        onDelete={setDeleteTarget}
-        rows={rows}
-        searchTerm={searchTerm}
-      />
+        <ProjectsList
+          allRowCount={allRows.length}
+          currentFolder={currentFolder}
+          onCreateFolder={() => setDialog("folder")}
+          onCreateProject={openProjectDialog}
+          onDelete={setDeleteTarget}
+          rows={rows}
+          searchTerm={searchTerm}
+        />
+      </div>
     </section>
   );
 }

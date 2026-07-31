@@ -142,8 +142,9 @@ Use dividers to clarify sections, not to create decorative card stacks.
 | Constant | Value |
 |---|---:|
 | Main nav height | 64px |
-| Left sidebar width | 268px |
-| Page gutter | 16px |
+| Left sidebar width | 320px |
+| Nested asset-library rail width | 268px |
+| Page gutter | 16px horizontal / 20px vertical |
 | Default table row | 40px |
 | Compact table row | 32px |
 | Matrix cell | 119px x 40px |

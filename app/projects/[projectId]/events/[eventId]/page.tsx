@@ -47,30 +47,32 @@ function EventDetailWorkspace() {
 
   if (workspaceQuery.isLoading) {
     return (
-      <section className="grid gap-4 px-4 py-5">
+      <section className="grid">
         <PageHeader
           breadcrumbs={[{ href: "/projects", label: "Projects" }]}
           border={false}
-          className="px-0 py-0"
         />
-        <LoadingState title="Loading event" description="Opening the local device workspace." />
+        <div className="px-[var(--page-gutter-x)] py-[var(--page-gutter-y)]">
+          <LoadingState title="Loading event" description="Opening the local device workspace." />
+        </div>
       </section>
     );
   }
 
   if (workspaceQuery.isError) {
     return (
-      <section className="grid gap-4 px-4 py-5">
+      <section className="grid">
         <PageHeader
           breadcrumbs={[{ href: "/projects", label: "Projects" }]}
           border={false}
-          className="px-0 py-0"
         />
-        <ErrorState
-          action={<Button onClick={() => void workspaceQuery.refetch()}>Retry</Button>}
-          title="Event could not load"
-          description={messageForError(workspaceQuery.error, eventWorkspaceErrorFallback)}
-        />
+        <div className="px-[var(--page-gutter-x)] py-[var(--page-gutter-y)]">
+          <ErrorState
+            action={<Button onClick={() => void workspaceQuery.refetch()}>Retry</Button>}
+            title="Event could not load"
+            description={messageForError(workspaceQuery.error, eventWorkspaceErrorFallback)}
+          />
+        </div>
       </section>
     );
   }

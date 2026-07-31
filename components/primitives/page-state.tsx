@@ -9,9 +9,9 @@ type PageStateScaffoldProps = {
 
 export function PageStateScaffold({ breadcrumbs, children }: PageStateScaffoldProps) {
   return (
-    <section className="grid gap-4 px-4 py-5">
-      <PageHeader breadcrumbs={breadcrumbs} border={false} className="px-0 py-0" />
-      {children}
+    <section className="grid">
+      <PageHeader breadcrumbs={breadcrumbs} border={false} />
+      <div className="grid gap-4 px-[var(--page-gutter-x)] py-[var(--page-gutter-y)]">{children}</div>
     </section>
   );
 }

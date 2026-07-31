@@ -35,45 +35,42 @@ export function LibraryToolbar({
   setView
 }: LibraryToolbarProps) {
   return (
-    <div className="px-4 py-5">
-      <PageHeader
-        actions={
-          <>
-            {selectedFolder?.folder.parentFolderId ? (
-              <RowActionsMenu
-                items={[
-                  {
-                    destructive: true,
-                    icon: <Trash2 aria-hidden="true" className="size-4" />,
-                    label: "Delete folder",
-                    onSelect: () => onDeleteFolder(selectedFolder)
-                  }
-                ]}
-                label={`Open actions for ${selectedFolder.folder.name}`}
-              />
-            ) : null}
-            <IconButton icon={Grid2X2} label="Show tile view" onClick={() => setView("tiles")} />
-            <IconButton icon={List} label="Show list view" onClick={() => setView("list")} />
-            <Button disabled={!canCreateFolder} leftIcon={<FolderPlus className="size-4" />} onClick={onCreateFolder}>
-              New folder
-            </Button>
-            <Button disabled={!canUploadAsset} leftIcon={<Plus className="size-4" />} onClick={onCreateAsset} variant="primary">
-              New asset
-            </Button>
-          </>
-        }
-        breadcrumbs={[
-          { label: "Libraries", href: "/libraries" },
-          ...folderPath.map((folder) => ({
-            label: folder.name,
-            href: folderHref(folder)
-          }))
-        ]}
-        border={false}
-        className="px-0 py-0"
-        subtitle={`${selectedFolder?.folder.name ?? "Root"} contains ${itemCount} item${pluralSuffix(itemCount)}.`}
-        title={selectedLibraryName}
-      />
-    </div>
+    <PageHeader
+      actions={
+        <>
+          {selectedFolder?.folder.parentFolderId ? (
+            <RowActionsMenu
+              items={[
+                {
+                  destructive: true,
+                  icon: <Trash2 aria-hidden="true" className="size-4" />,
+                  label: "Delete folder",
+                  onSelect: () => onDeleteFolder(selectedFolder)
+                }
+              ]}
+              label={`Open actions for ${selectedFolder.folder.name}`}
+            />
+          ) : null}
+          <IconButton icon={Grid2X2} label="Show tile view" onClick={() => setView("tiles")} />
+          <IconButton icon={List} label="Show list view" onClick={() => setView("list")} />
+          <Button disabled={!canCreateFolder} leftIcon={<FolderPlus className="size-4" />} onClick={onCreateFolder}>
+            New folder
+          </Button>
+          <Button disabled={!canUploadAsset} leftIcon={<Plus className="size-4" />} onClick={onCreateAsset} variant="primary">
+            New asset
+          </Button>
+        </>
+      }
+      breadcrumbs={[
+        { label: "Libraries", href: "/libraries" },
+        ...folderPath.map((folder) => ({
+          label: folder.name,
+          href: folderHref(folder)
+        }))
+      ]}
+      border={false}
+      subtitle={`${selectedFolder?.folder.name ?? "Root"} contains ${itemCount} item${pluralSuffix(itemCount)}.`}
+      title={selectedLibraryName}
+    />
   );
 }

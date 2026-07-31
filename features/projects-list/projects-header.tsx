@@ -57,7 +57,6 @@ export function ProjectsHeader({
       }
       breadcrumbs={breadcrumbs}
       border={false}
-      className="px-0 py-0"
       subtitle={subtitle}
       title={title}
     />

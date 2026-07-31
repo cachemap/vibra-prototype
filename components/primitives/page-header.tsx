@@ -22,7 +22,7 @@ export function PageHeader({
   return (
     <header
       className={cx(
-        "grid gap-3 bg-gray-25 px-4 py-3",
+        "grid gap-3 bg-gray-25 px-[var(--page-gutter-x)] py-[var(--page-gutter-y)]",
         border && "border-b border-gray-300",
         className
       )}

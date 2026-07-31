@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 :root {
+  --shell-header-height: 64px;
+  --workspace-sidebar-width: 320px;
+  --page-gutter-x: 16px;
+  --page-gutter-y: 20px;
   color: #414651;
   background: #fdfdfd;
 }

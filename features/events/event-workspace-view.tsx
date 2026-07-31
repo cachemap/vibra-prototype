@@ -86,7 +86,7 @@ export function EventWorkspaceView({
   workspace
 }: EventWorkspaceViewProps) {
   return (
-    <section className="grid min-h-[calc(100vh-64px)] grid-rows-[auto_1fr] bg-gray-25">
+    <section className="grid min-h-[calc(100vh-var(--shell-header-height))] grid-rows-[auto_1fr] bg-gray-25">
       <EventHeader
         backHref={backHref}
         located={located}
@@ -97,7 +97,7 @@ export function EventWorkspaceView({
         workspace={workspace}
       />
 
-      <main className="grid min-w-0 content-start items-start gap-5 px-4 py-4">
+      <main className="grid min-w-0 content-start items-start gap-5 px-[var(--page-gutter-x)] py-4">
         <div className="grid min-w-0 gap-2">
           <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-2">
             <div className="grid gap-0.5">

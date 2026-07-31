@@ -18,6 +18,14 @@
 - The active server on port 3000 was used for the baseline captures; an attempted second dev server chose port 3001 and was not used.
 - No ADR was needed because this chunk records baseline evidence only.
 
+## Shared Geometry Follow-up
+
+- Completed checklist group 1. `PageHeader` now owns a 16px horizontal / 20px vertical canonical gutter, and Projects, Libraries, project workspace, Event Detail, and loading/error scaffolds compose their body spacing outside it.
+- Added `--shell-header-height` and `--workspace-sidebar-width: 320px`; both top-level rails keep their existing `md` responsive behavior. The nested project asset-library rail stays at 268px because the baseline did not show comparable truncation.
+- Added ADR 0051 and a focused `PageHeader` gutter test.
+- `pnpm typecheck` and `pnpm test` passed (121 tests). `pnpm lint` passed with the two existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`. The focused seeded-shell Playwright smoke test passed.
+- Captures in `.codex-verify/ux-polish-geometry-*.png` confirm the 320px library rail and mobile project workspace fit without horizontal overflow.
+
 ## Recommended Next Group
 
-- Start `1. Shared geometry and wider sidebars`: inspect the listed shells and headers, then centralize the top-level dimensions in `app/globals.css` while retaining the existing mobile breakpoints.
+- Start `2. Theme foundation`: introduce the variable-backed Tailwind palette and `next-themes` provider before adding the toolbar toggle in group 3.

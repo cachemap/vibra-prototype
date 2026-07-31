@@ -184,38 +184,40 @@ export function EventDetailContent({
 
   if (deviceWorkspaceQuery.isLoading) {
     return (
-      <section className="grid gap-4 px-4 py-5">
+      <section className="grid">
         <PageHeader
           breadcrumbs={[{ href: "/projects", label: "Projects" }]}
           border={false}
-          className="px-0 py-0"
         />
-        <LoadingState title="Loading event" description="Opening the local device workspace." />
+        <div className="px-[var(--page-gutter-x)] py-[var(--page-gutter-y)]">
+          <LoadingState title="Loading event" description="Opening the local device workspace." />
+        </div>
       </section>
     );
   }
 
   if (!selectedEvent || !located) {
     return (
-      <section className="grid gap-4 px-4 py-5">
+      <section className="grid">
         <PageHeader
           breadcrumbs={[{ href: "/projects", label: "Projects" }]}
           border={false}
-          className="px-0 py-0"
         />
-        <EmptyState
-          action={
-            <Button
-              leftIcon={<ArrowLeft className="size-4" />}
-              onClick={() => router.push(`/projects/${projectId}`)}
-              variant="primary"
-            >
-              Back to project
-            </Button>
-          }
-          title="Event not found"
-          description="This event is not part of the selected system. Open it from the project event list."
-        />
+        <div className="px-[var(--page-gutter-x)] py-[var(--page-gutter-y)]">
+          <EmptyState
+            action={
+              <Button
+                leftIcon={<ArrowLeft className="size-4" />}
+                onClick={() => router.push(`/projects/${projectId}`)}
+                variant="primary"
+              >
+                Back to project
+              </Button>
+            }
+            title="Event not found"
+            description="This event is not part of the selected system. Open it from the project event list."
+          />
+        </div>
       </section>
     );
   }

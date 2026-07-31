@@ -20,52 +20,48 @@ export function WorkspaceHeader({ projectId, shareController }: WorkspaceHeaderP
   }
 
   return (
-    <div className="px-4 py-5">
-      <PageHeader
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              leftIcon={<Link2 className="size-4" />}
-              onClick={() =>
-                void shareController.openShareDialog(
-                  { kind: "project", projectId: workspace.project.id },
-                  workspace.project.name
-                )
+    <PageHeader
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            leftIcon={<Link2 className="size-4" />}
+            onClick={() =>
+              void shareController.openShareDialog(
+                { kind: "project", projectId: workspace.project.id },
+                workspace.project.name
+              )
+            }
+          >
+            Share project
+          </Button>
+          <RowActionsMenu
+            grouped
+            icon={MoreVertical}
+            items={[
+              {
+                destructive: true,
+                icon: <Trash2 aria-hidden="true" className="size-4" />,
+                label: "Delete project",
+                onSelect: () =>
+                  requestDelete({
+                    kind: "project",
+                    id: workspace.project.id,
+                    name: workspace.project.name
+                  })
               }
-            >
-              Share project
-            </Button>
-            <RowActionsMenu
-              grouped
-              icon={MoreVertical}
-              items={[
-                {
-                  destructive: true,
-                  icon: <Trash2 aria-hidden="true" className="size-4" />,
-                  label: "Delete project",
-                  onSelect: () =>
-                    requestDelete({
-                      kind: "project",
-                      id: workspace.project.id,
-                      name: workspace.project.name
-                    })
-                }
-              ]}
-              label={`Open actions for ${workspace.project.name}`}
-            />
-          </div>
-        }
-        breadcrumbs={[
-          { href: "/projects", label: "Projects" },
-          ...(workspace.folder
-            ? [{ href: `/projects?folder=${workspace.folder.id}`, label: workspace.folder.name }]
-            : [])
-        ]}
-        border={false}
-        className="px-0 py-0"
-        title={workspace.project.name}
-      />
-    </div>
+            ]}
+            label={`Open actions for ${workspace.project.name}`}
+          />
+        </div>
+      }
+      breadcrumbs={[
+        { href: "/projects", label: "Projects" },
+        ...(workspace.folder
+          ? [{ href: `/projects?folder=${workspace.folder.id}`, label: workspace.folder.name }]
+          : [])
+      ]}
+      border={false}
+      title={workspace.project.name}
+    />
   );
 }
-
