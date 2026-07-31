@@ -35,6 +35,7 @@ import {
   canUseTriggerPlaybackOffset,
   collectionHasNoChildCollections,
   getPreviewableTriggerPlaybacks,
+  resolutionBehaviorDefinitions,
   validateDeviceCreationRecords,
   validateNewMatrixIsEmpty,
   validateProjectCreationRecords
@@ -472,6 +473,60 @@ describe("collision matrix rules", () => {
         matrixEntry()
       ).isOk()
     ).toBe(true);
+  });
+
+  it("defines and accepts one complete rule for every resolution behavior", () => {
+    const entry = matrixEntry();
+    const validBehaviors: ResolutionBehavior[] = [
+      {
+        behaviorName: "Preempt",
+        targetEventId: entry.playingEventId,
+        postInterruptionRecovery: "Resume",
+        systemInterruptionRecovery: "Stay stopped"
+      },
+      {
+        behaviorName: "Queue",
+        targetEventId: entry.incomingEventId,
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Resume"
+      },
+      {
+        behaviorName: "Co-play",
+        targetEventId: null,
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Stay stopped"
+      },
+      {
+        behaviorName: "Suppress",
+        targetEventId: entry.incomingEventId,
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: "Stay stopped"
+      },
+      {
+        behaviorName: "Not possible",
+        targetEventId: null,
+        postInterruptionRecovery: null,
+        systemInterruptionRecovery: null
+      }
+    ];
+
+    expect(Object.keys(resolutionBehaviorDefinitions).sort()).toEqual(
+      validBehaviors.map((behavior) => behavior.behaviorName).sort()
+    );
+    validBehaviors.forEach((behavior) => {
+      expect(canUseResolutionBehavior(behavior, entry).isOk()).toBe(true);
+    });
+
+    const invalidBehaviors: ResolutionBehavior[] = [
+      { ...validBehaviors[0], targetEventId: null },
+      { ...validBehaviors[1], systemInterruptionRecovery: null },
+      { ...validBehaviors[2], targetEventId: entry.playingEventId },
+      { ...validBehaviors[3], targetEventId: null },
+      { ...validBehaviors[4], systemInterruptionRecovery: "Stay stopped" }
+    ];
+    invalidBehaviors.forEach((behavior) => {
+      expect(canUseResolutionBehavior(behavior, entry).isErr()).toBe(true);
+    });
   });
 
   it("requires a new collision matrix to start empty", () => {

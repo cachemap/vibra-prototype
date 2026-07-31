@@ -259,10 +259,10 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 
 - [x] Add active-route helper/component tests.
 - [x] Add theme-toggle accessibility/state tests.
-- [ ] Add event schema and migration tests.
-- [ ] Add repository reorder tests.
-- [ ] Add resolution behavior-definition and validation tests for every behavior.
-- [ ] Add legacy resolution migration tests.
+- [x] Add event schema and migration tests.
+- [x] Add repository reorder tests.
+- [x] Add resolution behavior-definition and validation tests for every behavior.
+- [x] Add legacy resolution migration tests.
 - [ ] Add preview-source and offset derivation tests.
 - [ ] Add collision scheduler tests for Preempt, Resume, Queue, Co-play, Suppress, cancellation, and errors.
 - [ ] Add responsive resolution-editor component coverage.
