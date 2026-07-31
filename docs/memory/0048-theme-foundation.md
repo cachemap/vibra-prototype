@@ -17,4 +17,19 @@
 
 ## Next
 
-- Implement checklist group 3: compose `ThemeModeToggle` into `WorkspaceShell`, derive active Projects/Libraries state from `usePathname`, and move Reset demo beside the Vibra logo.
+- UX Polish checklist group 3 is complete.
+- `WorkspaceShell` now derives the active Projects/Libraries link from `usePathname`, including nested project and event-detail routes. The selected link uses an explicit persistent surface treatment and the sole `aria-current="page"`.
+- Reset demo now sits beside the Vibra logo and retains its existing reset/query invalidation/redirect path. It is icon-only at narrow widths while retaining its accessible name.
+- The shared Light/System/Dark `ThemeModeToggle` is on the right with workspace navigation; reset does not touch theme state.
+- Added route-selection unit coverage in `tests/workspace-shell.test.ts`.
+
+## Verification
+
+- `pnpm typecheck` passed.
+- `pnpm test -- tests/workspace-shell.test.ts tests/theme-mode-toggle.test.tsx` passed: 126 tests.
+- `pnpm exec playwright test tests/e2e/toolbar.spec.ts` passed: active-route, 375px toolbar, reset redirect, and theme-preference coverage.
+- `pnpm lint` passed with existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+
+## Next
+
+- Implement checklist group 4: replace the collection overflow menu with a direct Delete button while retaining the existing confirmation flow.

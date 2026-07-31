@@ -52,21 +52,21 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Verify an explicit Light or Dark choice ignores later system changes.
 - [x] Verify the preference survives reload.
 
-## 3. Global toolbar
+## 3. Global toolbar [x]
 
-- [ ] Read the active route with `usePathname()` in `WorkspaceShell`.
-- [ ] Mark all `/projects...` routes as Projects.
-- [ ] Mark `/libraries` as Libraries.
-- [ ] Add a persistent selected style to the active link.
-- [ ] Add `aria-current="page"` only to the active link.
-- [ ] Keep selected, hover, and focus-visible treatments distinguishable.
-- [ ] Group the logo and Reset demo on the left.
-- [ ] Place Reset demo immediately after the logo.
-- [ ] Keep Projects, Libraries, and the theme toggle on the right.
-- [ ] Preserve Reset demo’s accessible name when its visible text collapses.
-- [ ] Verify the toolbar at 375px without horizontal overflow.
-- [ ] Verify Reset still invalidates queries and routes to `/projects`.
-- [ ] Verify Reset does not overwrite the theme preference.
+- [x] Read the active route with `usePathname()` in `WorkspaceShell`.
+- [x] Mark all `/projects...` routes as Projects.
+- [x] Mark `/libraries` as Libraries.
+- [x] Add a persistent selected style to the active link.
+- [x] Add `aria-current="page"` only to the active link.
+- [x] Keep selected, hover, and focus-visible treatments distinguishable.
+- [x] Group the logo and Reset demo on the left.
+- [x] Place Reset demo immediately after the logo.
+- [x] Keep Projects, Libraries, and the theme toggle on the right.
+- [x] Preserve Reset demo’s accessible name when its visible text collapses.
+- [x] Verify the toolbar at 375px without horizontal overflow.
+- [x] Verify Reset still invalidates queries and routes to `/projects`.
+- [x] Verify Reset does not overwrite the theme preference.
 
 ## 4. Collection viewer actions
 
