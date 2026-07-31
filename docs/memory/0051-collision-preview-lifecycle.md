@@ -19,4 +19,6 @@
 
 ## Next
 
-- UX Polish group 8 is complete. Start group 9 Automated verification with the active-route helper/component tests, then theme-toggle and persistence/migration coverage.
+- Verified and closed the first two UX Polish group 9 items. Existing focused Vitest coverage verifies workspace-route classification and the ThemeModeToggle's accessible pressed state plus preference update; the toolbar E2E test verifies 375px fit, active navigation, and Reset preserving a saved theme preference.
+- `pnpm exec vitest run tests/workspace-shell.test.ts tests/theme-mode-toggle.test.tsx` passed (5 tests), and `pnpm exec playwright test tests/e2e/toolbar.spec.ts --timeout=60000` passed (1 test).
+- Next: add event schema/migration and repository reorder automated coverage, then behavior-definition and legacy-resolution migration coverage.

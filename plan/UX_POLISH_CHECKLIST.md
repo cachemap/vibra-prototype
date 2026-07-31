@@ -255,10 +255,10 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Verify uploaded blob URLs remain valid for playback and are not leaked or persisted.
 - [x] Verify Tap and timeline motion respect reduced-motion settings.
 
-## 9. Automated verification
+## 9. Automated verification [~]
 
-- [ ] Add active-route helper/component tests.
-- [ ] Add theme-toggle accessibility/state tests.
+- [x] Add active-route helper/component tests.
+- [x] Add theme-toggle accessibility/state tests.
 - [ ] Add event schema and migration tests.
 - [ ] Add repository reorder tests.
 - [ ] Add resolution behavior-definition and validation tests for every behavior.
