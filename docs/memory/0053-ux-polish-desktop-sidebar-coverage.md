@@ -43,3 +43,10 @@
 - Updated E2E selectors for DnD's live-region status, focused editor accessible names, exact nested-dialog names, and post-navigation route state. Matrix save/clear tests now explicitly return to the grid before asserting grid state.
 - Verification: `pnpm test` passed (28 files, 160 tests); `pnpm test:e2e` passed (27 tests); `pnpm typecheck` passed; `pnpm lint` passed with the two existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
 - Next UX Polish checklist group: perform manual acceptance and completion documentation/screenshots audit.
+
+## Manual acceptance audit
+
+- Completed UX Polish checklist group 10. Reviewed fresh desktop captures for Projects, Libraries, the Project Events workspace, and the focused Matrix editor, plus 375px focused-editor coverage in dark mode. The screenshot probes live in ignored `.codex-verify/`.
+- The browser suite confirmed route/header alignment, 320px rails, 375px toolbar fit, theme state, pointer and keyboard reordering, persistence/reset, resolution-editor behavior, and preview cleanup. All 27 Playwright tests reported passing; the runner was then stopped because its reused development-server process did not exit on its own.
+- Preserved the existing untracked `.claude/` and `docs/architecture/` worktree entries.
+- Next UX Polish checklist group: completion documentation and screenshot comparison audit.

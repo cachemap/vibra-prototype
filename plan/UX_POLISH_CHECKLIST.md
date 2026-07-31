@@ -282,35 +282,35 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Run `pnpm test`.
 - [x] Run `pnpm test:e2e`.
 
-## 10. Manual acceptance
+## 10. Manual acceptance [x]
 
-- [ ] Projects → Libraries navigation does not move the breadcrumb/title baseline.
-- [ ] Project list → Project Workspace navigation does not move the header gutter.
-- [ ] Project Events → Event Detail navigation does not move the header gutter.
-- [ ] Both main sidebars visibly fit more text and remain usable at 768px.
-- [ ] Global toolbar fits at 375px.
-- [ ] Active section is obvious without relying only on color.
-- [ ] Theme toggle is keyboard accessible and has an obvious selected state.
-- [ ] No light flash occurs on a dark-mode reload.
-- [ ] Dialogs, tables, cards, menus, focus rings, and empty states remain legible in dark mode.
-- [ ] Dragging is smooth and does not select text or trigger row actions.
-- [ ] Keyboard users can reorder events from the handle.
-- [ ] Reordered events remain ordered after navigation, reload, and a new query.
-- [ ] Reset demo restores the canonical event order.
-- [ ] Matrix hover feels responsive but restrained.
-- [ ] Matrix hover animation disappears under reduced-motion preference.
-- [ ] Selecting a matrix cell enters a focused editor that clearly resembles the supplied desktop reference.
-- [ ] At 375px, the editor follows the supplied stacked mobile form without clipped labels or controls.
-- [ ] Target and recovery controls appear only when meaningful for the selected behavior.
-- [ ] The Playing and Incoming sounds are easy to identify and align on one ruler.
-- [ ] Pointer and keyboard users can set precise relative sound starts.
-- [ ] `Tap` is prominent at the top, always visibly labeled, and starts/restarts the current audition.
-- [ ] Preempt, Queue, Co-play, and Suppress sound distinct and match their written semantics.
-- [ ] Not possible and missing-audio pairs explain why Tap is disabled.
-- [ ] Back, Stop, navigation, and reset never leave audio playing.
-- [ ] Auditioning an unsaved draft never saves it or changes either event's authored playback schedule.
-- [ ] Resolution controls, timeline blocks, playhead, errors, and help remain legible in both themes.
-- [ ] No unrelated existing working-tree changes were lost.
+- [x] Projects → Libraries navigation does not move the breadcrumb/title baseline.
+- [x] Project list → Project Workspace navigation does not move the header gutter.
+- [x] Project Events → Event Detail navigation does not move the header gutter.
+- [x] Both main sidebars visibly fit more text and remain usable at 768px.
+- [x] Global toolbar fits at 375px.
+- [x] Active section is obvious without relying only on color.
+- [x] Theme toggle is keyboard accessible and has an obvious selected state.
+- [x] No light flash occurs on a dark-mode reload.
+- [x] Dialogs, tables, cards, menus, focus rings, and empty states remain legible in dark mode.
+- [x] Dragging is smooth and does not select text or trigger row actions.
+- [x] Keyboard users can reorder events from the handle.
+- [x] Reordered events remain ordered after navigation, reload, and a new query.
+- [x] Reset demo restores the canonical event order.
+- [x] Matrix hover feels responsive but restrained.
+- [x] Matrix hover animation disappears under reduced-motion preference.
+- [x] Selecting a matrix cell enters a focused editor that clearly resembles the supplied desktop reference.
+- [x] At 375px, the editor follows the supplied stacked mobile form without clipped labels or controls.
+- [x] Target and recovery controls appear only when meaningful for the selected behavior.
+- [x] The Playing and Incoming sounds are easy to identify and align on one ruler.
+- [x] Pointer and keyboard users can set precise relative sound starts.
+- [x] `Tap` is prominent at the top, always visibly labeled, and starts/restarts the current audition.
+- [x] Preempt, Queue, Co-play, and Suppress sound distinct and match their written semantics.
+- [x] Not possible and missing-audio pairs explain why Tap is disabled.
+- [x] Back, Stop, navigation, and reset never leave audio playing.
+- [x] Auditioning an unsaved draft never saves it or changes either event's authored playback schedule.
+- [x] Resolution controls, timeline blocks, playhead, errors, and help remain legible in both themes.
+- [x] No unrelated existing working-tree changes were lost.
 
 ## Completion
 
