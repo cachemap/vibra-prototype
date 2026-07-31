@@ -139,7 +139,7 @@ export function MatrixGrid({
                   gridTemplateColumns: `${matrixRowHeaderWidth} repeat(${columns.length}, minmax(119px, 1fr))`
                 }}
               >
-                <div className="sticky left-0 top-0 z-30 h-10 border border-gray-200 bg-gray-100 shadow-[1px_0_0_#E9EAEB]" />
+                <div className="sticky left-0 top-0 z-30 h-10 border border-gray-200 bg-gray-100 shadow-[1px_0_0_rgb(var(--gray-200))]" />
                 {columns.map((column) => (
                   <button
                     className={`sticky top-0 z-20 flex h-10 items-center justify-center border border-gray-200 px-2 text-center text-xs font-semibold ${
@@ -159,7 +159,7 @@ export function MatrixGrid({
                 {rows.map((row) => (
                   <Fragment key={row.eventId}>
                     <button
-                      className={`sticky left-0 z-10 h-10 border border-gray-200 px-2 text-left text-xs font-semibold shadow-[1px_0_0_#E9EAEB] ${
+                      className={`sticky left-0 z-10 h-10 border border-gray-200 px-2 text-left text-xs font-semibold shadow-[1px_0_0_rgb(var(--gray-200))] ${
                         selectedPlayingEventId === row.eventId
                           ? "bg-gray-200 text-gray-700"
                           : "bg-gray-100 text-gray-600"

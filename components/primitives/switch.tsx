@@ -30,16 +30,16 @@ export function Switch({ checked, className, disabled, id, label, ...props }: Sw
         aria-hidden="true"
         className={cx(
           // Track
-          "relative h-[22px] w-10 shrink-0 rounded-full border border-gray-300 bg-gray-200 shadow-[inset_0_1px_2px_rgba(24,29,39,0.08)]",
+          "relative h-[22px] w-10 shrink-0 rounded-full border border-gray-300 bg-gray-200 shadow-[inset_0_1px_2px_rgb(var(--shadow-control)_/_0.08)]",
           "transition-[background-color,border-color,box-shadow] duration-200 ease-out",
           "peer-hover:border-gray-400 peer-hover:bg-gray-300",
           // Thumb
-          "after:absolute after:left-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-white",
-          "after:shadow-[0_1px_2px_rgba(24,29,39,0.16),0_1px_3px_rgba(24,29,39,0.10)]",
+          "after:absolute after:left-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-gray-25",
+          "after:shadow-[0_1px_2px_rgb(var(--shadow-control)_/_0.16),0_1px_3px_rgb(var(--shadow-control)_/_0.10)]",
           "after:transition-transform after:duration-200 after:[transition-timing-function:cubic-bezier(0.34,1.4,0.64,1)]",
           "peer-active:after:scale-95",
           // Checked
-          "peer-checked:border-purple-600 peer-checked:bg-purple-500 peer-checked:shadow-[inset_0_1px_2px_rgba(89,37,220,0.24)]",
+          "peer-checked:border-purple-600 peer-checked:bg-purple-500 peer-checked:shadow-[inset_0_1px_2px_rgb(var(--shadow-accent)_/_0.24)]",
           "peer-checked:peer-hover:border-purple-700 peer-checked:peer-hover:bg-purple-600",
           "peer-checked:after:translate-x-[18px]",
           // Disabled

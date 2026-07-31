@@ -18,6 +18,7 @@ export { Select } from "./select";
 export { CardGrid, SelectableCard } from "./selectable-card";
 export { Switch } from "./switch";
 export { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from "./table";
+export { ThemeModeToggle } from "./theme-mode-toggle";
 export { Tabs, type TabItem } from "./tabs";
 export { TextInput } from "./text-input";
 export { Timeline, type TimelineBlock, type TimelineLane } from "./timeline";

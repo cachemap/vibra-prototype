@@ -31,26 +31,26 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Update the layout constants in `docs/plan/DESIGN_SYSTEM.md`.
 - [x] Add or update an ADR for the shared header/layout ownership decision if needed.
 
-## 2. Theme foundation
+## 2. Theme foundation [x]
 
-- [ ] Add `next-themes`.
-- [ ] Convert Tailwind `gray-*` and `purple-*` values to alpha-capable CSS-variable colors.
-- [ ] Define the complete light palette in `:root`.
-- [ ] Define the complete dark palette in `[data-theme="dark"]`.
-- [ ] Set the corresponding native `color-scheme`.
-- [ ] Preserve sufficient contrast for primary buttons, body text, muted text, dividers, controls, and focus rings.
-- [ ] Wrap the app with `ThemeProvider` in `app/providers.tsx`.
-- [ ] Configure `attribute="data-theme"`, `defaultTheme="system"`, `enableSystem`, and transition suppression.
-- [ ] Add `suppressHydrationWarning` to the root `<html>`.
-- [ ] Create an accessible Light/System/Dark segmented toggle.
-- [ ] Give each option an accessible label and pressed state.
-- [ ] Prevent a hydration mismatch and toolbar layout shift before mount.
-- [ ] Audit hard-coded white, black, hex, RGB, and shadow values under `app/`, `components/`, and `features/`.
-- [ ] Replace mode-sensitive raw shadow/divider colors with theme variables.
-- [ ] Verify native inputs, menus, dialogs, scrollbars, and audio controls in both themes.
-- [ ] Verify system-mode changes apply without reload.
-- [ ] Verify an explicit Light or Dark choice ignores later system changes.
-- [ ] Verify the preference survives reload.
+- [x] Add `next-themes`.
+- [x] Convert Tailwind `gray-*` and `purple-*` values to alpha-capable CSS-variable colors.
+- [x] Define the complete light palette in `:root`.
+- [x] Define the complete dark palette in `[data-theme="dark"]`.
+- [x] Set the corresponding native `color-scheme`.
+- [x] Preserve sufficient contrast for primary buttons, body text, muted text, dividers, controls, and focus rings.
+- [x] Wrap the app with `ThemeProvider` in `app/providers.tsx`.
+- [x] Configure `attribute="data-theme"`, `defaultTheme="system"`, `enableSystem`, and transition suppression.
+- [x] Add `suppressHydrationWarning` to the root `<html>`.
+- [x] Create an accessible Light/System/Dark segmented toggle.
+- [x] Give each option an accessible label and pressed state.
+- [x] Prevent a hydration mismatch and toolbar layout shift before mount.
+- [x] Audit hard-coded white, black, hex, RGB, and shadow values under `app/`, `components/`, and `features/`.
+- [x] Replace mode-sensitive raw shadow/divider colors with theme variables.
+- [x] Verify native inputs, menus, dialogs, scrollbars, and audio controls in both themes.
+- [x] Verify system-mode changes apply without reload.
+- [x] Verify an explicit Light or Dark choice ignores later system changes.
+- [x] Verify the preference survives reload.
 
 ## 3. Global toolbar
 

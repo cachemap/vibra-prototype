@@ -44,7 +44,10 @@ function SelectionBubble({ disabled = false, label, onToggle, state }: Selection
       role="checkbox"
       style={
         state === "partial"
-          ? { backgroundImage: "linear-gradient(90deg, #7A5AF8 50%, #FDFDFD 50%)" }
+          ? {
+              backgroundImage:
+                "linear-gradient(90deg, rgb(var(--purple-500)) 50%, rgb(var(--gray-25)) 50%)"
+            }
           : undefined
       }
       title={label}

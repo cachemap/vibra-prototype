@@ -7,8 +7,45 @@
   --workspace-sidebar-width: 320px;
   --page-gutter-x: 16px;
   --page-gutter-y: 20px;
-  color: #414651;
-  background: #fdfdfd;
+  --gray-25: 253 253 253;
+  --gray-50: 250 250 250;
+  --gray-100: 245 245 245;
+  --gray-200: 233 234 235;
+  --gray-300: 213 215 218;
+  --gray-400: 164 167 174;
+  --gray-500: 113 118 128;
+  --gray-600: 83 88 98;
+  --gray-700: 65 70 81;
+  --gray-800: 37 43 55;
+  --gray-900: 24 29 39;
+  --purple-500: 122 90 248;
+  --purple-600: 105 56 239;
+  --purple-700: 89 37 220;
+  --shadow-control: 24 29 39;
+  --shadow-accent: 89 37 220;
+  color-scheme: light;
+  color: rgb(var(--gray-700));
+  background: rgb(var(--gray-25));
+}
+
+[data-theme="dark"] {
+  --gray-25: 24 29 39;
+  --gray-50: 37 43 55;
+  --gray-100: 65 70 81;
+  --gray-200: 83 88 98;
+  --gray-300: 113 118 128;
+  --gray-400: 164 167 174;
+  --gray-500: 213 215 218;
+  --gray-600: 233 234 235;
+  --gray-700: 245 245 245;
+  --gray-800: 250 250 250;
+  --gray-900: 253 253 253;
+  --purple-500: 160 130 255;
+  --purple-600: 140 102 255;
+  --purple-700: 196 181 253;
+  --shadow-control: 0 0 0;
+  --shadow-accent: 0 0 0;
+  color-scheme: dark;
 }
 
 * {
@@ -18,7 +55,7 @@
 body {
   min-height: 100vh;
   margin: 0;
-  background: #fdfdfd;
+  background: rgb(var(--gray-25));
 }
 
 a {
