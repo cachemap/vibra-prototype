@@ -192,6 +192,41 @@ describe("MatrixResolutionEditor", () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
+  it("keeps rule controls stackable while preserving a wide, scrollable timeline on narrow screens", () => {
+    render(
+      <AudioPreviewProvider><MatrixResolutionEditor
+        behavior="Preempt"
+        eventById={new Map(events.map((event) => [event.id, event]))}
+        onBack={vi.fn()}
+        onBehaviorChange={vi.fn()}
+        onClearEntry={vi.fn()}
+        onPostInterruptionRecoveryChange={vi.fn()}
+        onSaveEntry={vi.fn()}
+        onSystemInterruptionRecoveryChange={vi.fn()}
+        onTargetEventIdChange={vi.fn()}
+        postInterruptionRecovery="Stay stopped"
+        selectedEntry={selectedEntry}
+        selectedIncomingEventId={incomingEventId}
+        selectedPlayingEventId={playingEventId}
+        systemInterruptionRecovery="Stay stopped"
+        targetEventId={playingEventId}
+        workspace={previewWorkspace}
+      /></AudioPreviewProvider>
+    );
+
+    const behavior = screen.getByLabelText("Behavior");
+    const controlGrid = behavior.closest("div");
+    const timeline = screen.getByLabelText(/Collision preview timeline/i);
+    const scroller = timeline.closest(".overflow-x-auto");
+
+    expect(controlGrid?.className).toContain("lg:grid-cols-2");
+    expect(screen.getByRole("group", { name: "Target" }).className).toContain("grid-cols-2");
+    expect(scroller).not.toBeNull();
+    expect(scroller?.firstElementChild?.className).toContain("min-w-[620px]");
+    expect(screen.getByRole("button", { name: "Tap to preview collision" }).className).toContain("h-12");
+    expect(behavior.className).toContain("h-11");
+  });
+
   it("gives editor actions distinct names and a visible keyboard focus treatment", () => {
     render(
       <AudioPreviewProvider><MatrixResolutionEditor
