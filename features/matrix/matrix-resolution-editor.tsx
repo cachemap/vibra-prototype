@@ -2,6 +2,7 @@
 
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/primitives";
+import type { DeviceWorkspaceAggregate } from "@/data/repositories/project-repository";
 import type {
   CollisionMatrixEntry,
   Event,
@@ -28,6 +29,7 @@ export type MatrixResolutionEditorProps = {
   selectedPlayingEventId: EventId | null;
   systemInterruptionRecovery: InterruptionRecovery | null;
   targetEventId: string;
+  workspace: DeviceWorkspaceAggregate | undefined;
 };
 
 export function MatrixResolutionEditor({ onBack, ...panelProps }: MatrixResolutionEditorProps) {
@@ -43,6 +45,7 @@ export function MatrixResolutionEditor({ onBack, ...panelProps }: MatrixResoluti
         eventById={panelProps.eventById}
         incomingEventId={panelProps.selectedIncomingEventId}
         playingEventId={panelProps.selectedPlayingEventId}
+        workspace={panelProps.workspace}
       />
       <MatrixResolutionPanel {...panelProps} />
     </section>

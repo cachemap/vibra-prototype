@@ -252,6 +252,7 @@ export function MatrixTab({
           postInterruptionRecovery={matrixPostInterruptionRecovery}
           systemInterruptionRecovery={matrixSystemInterruptionRecovery}
           targetEventId={matrixTargetEventId}
+          workspace={deviceWorkspaceQuery.data}
           />
         ) : null}
 

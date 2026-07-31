@@ -211,15 +211,15 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Default applicable system recovery to Stay stopped.
 - [x] If database version 3 has already shipped, create a new migration version instead of mutating it.
 
-### Sound selection and audition timing
+### Sound selection and audition timing [~]
 
-- [ ] Locate the selected event aggregates and their enabled playback rows from `DeviceWorkspaceAggregate`.
-- [ ] Derive previewable audio independently for Playing and Incoming.
-- [ ] Default each lane to its earliest enabled audio playback.
-- [ ] Add a lane-level sound selector when an event has more than one previewable audio choice.
-- [ ] Keep event names primary and asset names secondary in each lane.
-- [ ] Explain and disable Tap when either side has no enabled previewable audio.
-- [ ] Treat haptic-only assets as visible but not audio-previewable.
+- [x] Locate the selected event aggregates and their enabled playback rows from `DeviceWorkspaceAggregate`.
+- [x] Derive previewable audio independently for Playing and Incoming.
+- [x] Default each lane to its earliest enabled audio playback.
+- [x] Add a lane-level sound selector when an event has more than one previewable audio choice.
+- [x] Keep event names primary and asset names secondary in each lane.
+- [x] Explain and disable Tap when either side has no enabled previewable audio.
+- [x] Treat haptic-only assets as visible but not audio-previewable.
 - [ ] Store sound selection and collision offsets only in editor-local audition state.
 - [ ] Default Playing to `0ms` and Incoming to a visibly separated offset such as `150ms`.
 - [ ] Allow each sound block to move horizontally with a handle.

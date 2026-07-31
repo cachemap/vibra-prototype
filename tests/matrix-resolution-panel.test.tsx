@@ -8,6 +8,7 @@ import {
   type Event,
   type EventId
 } from "@/domain";
+import type { DeviceWorkspaceAggregate } from "@/data/repositories/project-repository";
 import { MatrixResolutionPanel } from "@/features/matrix/matrix-resolution-panel";
 import { MatrixResolutionEditor } from "@/features/matrix/matrix-resolution-editor";
 
@@ -33,6 +34,50 @@ const selectedEntry: CollisionMatrixEntry = {
     systemInterruptionRecovery: "Stay stopped"
   }
 };
+
+const previewWorkspace = {
+  collections: [
+    {
+      events: [
+        {
+          event: events[0],
+          eventTriggers: [
+            {
+              eventId: playingEventId,
+              id: asEntityId("trigger_pay_now"),
+              isEnabled: true,
+              label: null,
+              playbacks: [
+                { assetId: asEntityId("asset_payment_pop"), eventTriggerId: asEntityId("trigger_pay_now"), id: asEntityId("playback_payment_pop"), startOffset: 0 },
+                { assetId: asEntityId("asset_payment_chime"), eventTriggerId: asEntityId("trigger_pay_now"), id: asEntityId("playback_payment_chime"), startOffset: 0.2 }
+              ],
+              triggerId: asEntityId("trigger_on_press")
+            }
+          ]
+        },
+        {
+          event: events[1],
+          eventTriggers: [
+            {
+              eventId: incomingEventId,
+              id: asEntityId("trigger_card_declined"),
+              isEnabled: true,
+              label: null,
+              playbacks: [{ assetId: asEntityId("asset_error_tone"), eventTriggerId: asEntityId("trigger_card_declined"), id: asEntityId("playback_error_tone"), startOffset: 0 }],
+              triggerId: asEntityId("trigger_on_press")
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  device: { isEnabled: true },
+  playbackAssets: [
+    { id: asEntityId("asset_payment_pop"), mediaKind: "audio", name: "Payment Pop", playbackUrl: "/payment-pop.wav" },
+    { id: asEntityId("asset_payment_chime"), mediaKind: "audio", name: "Payment Chime", playbackUrl: "/payment-chime.wav" },
+    { id: asEntityId("asset_error_tone"), mediaKind: "audio", name: "Error Tone", playbackUrl: "/error-tone.wav" }
+  ]
+} as unknown as DeviceWorkspaceAggregate;
 
 function renderPanel(behavior: "Preempt" | "Co-play" = "Preempt") {
   const onTargetEventIdChange = vi.fn();
@@ -122,6 +167,7 @@ describe("MatrixResolutionEditor", () => {
         selectedPlayingEventId={playingEventId}
         systemInterruptionRecovery="Stay stopped"
         targetEventId={playingEventId}
+        workspace={previewWorkspace}
       />
     );
 
@@ -132,6 +178,14 @@ describe("MatrixResolutionEditor", () => {
     expect(screen.getByRole("button", { name: "Stop collision preview" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Clear collision rule" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Save collision rule" })).not.toBeNull();
+    const playingSound = screen.getByLabelText("Playing sound") as HTMLSelectElement;
+    expect(playingSound.value).toBe("trigger_pay_now:playback_payment_pop");
+    expect(screen.getByText("Error Tone")).not.toBeNull();
+
+    fireEvent.change(playingSound, {
+      target: { value: "trigger_pay_now:playback_payment_chime" }
+    });
+    expect(playingSound.value).toBe("trigger_pay_now:playback_payment_chime");
 
     fireEvent.click(screen.getByRole("button", { name: "Back to Matrix" }));
     expect(onBack).toHaveBeenCalledOnce();
