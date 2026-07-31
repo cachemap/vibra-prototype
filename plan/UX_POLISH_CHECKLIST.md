@@ -264,7 +264,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Add resolution behavior-definition and validation tests for every behavior.
 - [x] Add legacy resolution migration tests.
 - [x] Add preview-source and offset derivation tests.
-- [ ] Add collision scheduler tests for Preempt, Resume, Queue, Co-play, Suppress, cancellation, and errors.
+- [x] Add collision scheduler tests for Preempt, Resume, Queue, Co-play, Suppress, cancellation, and errors.
 - [ ] Add responsive resolution-editor component coverage.
 - [ ] Add Tap disabled/enabled, restart, Stop, and cleanup coverage.
 - [ ] Add pointer and keyboard collision-timeline alignment coverage.

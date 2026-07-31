@@ -35,3 +35,9 @@
 - Closed the preview-source and offset-derivation verification item. Focused model tests now cover deterministic earliest-audio selection, disabled/haptic/unavailable-source filtering, independent Playing/Incoming source projection, authored-offset immutability, and unknown/unloaded lanes.
 - Verification passed: `pnpm exec vitest run tests/collision-preview-model.test.ts` (3 tests), `pnpm lint` (two pre-existing warnings only), and `pnpm typecheck`.
 - Next: collision scheduler behavior coverage for Preempt, Resume, Queue, Co-play, Suppress, cancellation, and errors.
+
+## UX Polish verification: collision scheduler
+
+- Closed the collision scheduler verification item with direct Web Audio scheduling tests for Co-play offsets, Suppress omission, Queue delay, Preempt + Resume source recreation, request failures, and the existing cancellation path.
+- Verification passed: `pnpm exec vitest run tests/collision-preview-scheduler.test.ts` (11 tests), `pnpm typecheck`, and `pnpm lint` (two pre-existing warnings only).
+- Next: responsive resolution-editor component coverage.

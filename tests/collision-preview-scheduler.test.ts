@@ -11,6 +11,47 @@ const lanes = {
 
 const durations = { incoming: 1, playing: 2 };
 
+type SourceSpy = {
+  buffer: { duration: number } | null;
+  connect: ReturnType<typeof vi.fn>;
+  start: ReturnType<typeof vi.fn>;
+  stop: ReturnType<typeof vi.fn>;
+};
+
+function schedulerWithDecodedBuffers() {
+  const sources: SourceSpy[] = [];
+  const onError = vi.fn();
+  const onProgress = vi.fn();
+  const decodeAudioData = vi.fn(async (data: ArrayBuffer) => ({
+    duration: new Uint8Array(data)[0]
+  }));
+  const scheduler = new CollisionPreviewScheduler({
+    createAudioContext: () => ({
+      createBufferSource: () => {
+        const source: SourceSpy = {
+          buffer: null,
+          connect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn()
+        };
+        sources.push(source);
+        return source;
+      },
+      currentTime: 10,
+      decodeAudioData,
+      destination: {} as AudioNode,
+      resume: vi.fn().mockResolvedValue(undefined)
+    }),
+    fetchAudio: vi.fn(async (url: string) => ({
+      arrayBuffer: async () => new Uint8Array([url === lanes.playing.playbackUrl ? 2 : 1]).buffer
+    })),
+    onError,
+    onProgress
+  });
+
+  return { onError, onProgress, scheduler, sources };
+}
+
 describe("collisionPreviewPlan", () => {
   it("aligns Co-play sources to the shared editor offsets", () => {
     expect(
@@ -81,6 +122,101 @@ describe("collisionPreviewPlan", () => {
 });
 
 describe("CollisionPreviewScheduler lifecycle", () => {
+  it("schedules Co-play lanes at their authored offsets on one audio clock", async () => {
+    const { scheduler, sources } = schedulerWithDecodedBuffers();
+
+    await scheduler.play({
+      behavior: "Co-play",
+      lanes,
+      postInterruptionRecovery: null,
+      scheduleKey: "collision-preview:co-play",
+      targetLane: null
+    });
+
+    expect(sources).toHaveLength(2);
+    expect(sources[0].start).toHaveBeenCalledWith(10.03, 0, undefined);
+    expect(sources[1].start).toHaveBeenCalledWith(10.18, 0, undefined);
+  });
+
+  it("omits the suppressed target from scheduled sources", async () => {
+    const { scheduler, sources } = schedulerWithDecodedBuffers();
+
+    await scheduler.play({
+      behavior: "Suppress",
+      lanes,
+      postInterruptionRecovery: null,
+      scheduleKey: "collision-preview:suppress",
+      targetLane: "incoming"
+    });
+
+    expect(sources).toHaveLength(1);
+    expect(sources[0].buffer).toEqual({ duration: 2 });
+    expect(sources[0].start).toHaveBeenCalledWith(10.03, 0, undefined);
+  });
+
+  it("queues the target after the other lane completes", async () => {
+    const { scheduler, sources } = schedulerWithDecodedBuffers();
+
+    await scheduler.play({
+      behavior: "Queue",
+      lanes,
+      postInterruptionRecovery: null,
+      scheduleKey: "collision-preview:queue",
+      targetLane: "incoming"
+    });
+
+    expect(sources).toHaveLength(2);
+    expect(sources[0].start).toHaveBeenCalledWith(10.03, 0, undefined);
+    expect(sources[1].start).toHaveBeenCalledWith(12.03, 0, undefined);
+  });
+
+  it("preempts the target and resumes its remaining audio after the interrupting lane", async () => {
+    const { scheduler, sources } = schedulerWithDecodedBuffers();
+
+    await scheduler.play({
+      behavior: "Preempt",
+      lanes,
+      postInterruptionRecovery: "Resume",
+      scheduleKey: "collision-preview:preempt-resume",
+      targetLane: "playing"
+    });
+
+    expect(sources).toHaveLength(3);
+    expect(sources[0].start).toHaveBeenCalledWith(10.03, 0, 0.15);
+    expect(sources[1].start).toHaveBeenCalledWith(10.18, 0, undefined);
+    expect(sources[2].start).toHaveBeenCalledWith(11.18, 0.15, undefined);
+  });
+
+  it("reports decode and fetch failures without leaving a scheduled preview active", async () => {
+    const onError = vi.fn();
+    const onProgress = vi.fn();
+    const scheduler = new CollisionPreviewScheduler({
+      createAudioContext: () => ({
+        createBufferSource: vi.fn(),
+        currentTime: 0,
+        decodeAudioData: vi.fn(),
+        destination: {} as AudioNode,
+        resume: vi.fn().mockResolvedValue(undefined)
+      }),
+      fetchAudio: vi.fn().mockRejectedValue(new Error("Audio request failed.")),
+      onError,
+      onProgress
+    });
+
+    await scheduler.play({
+      behavior: "Co-play",
+      lanes,
+      postInterruptionRecovery: null,
+      scheduleKey: "collision-preview:error",
+      targetLane: null
+    });
+
+    expect(onError).toHaveBeenCalledWith(
+      "Collision preview could not play. The file may be missing, unsupported, or blocked by the browser."
+    );
+    expect(onProgress).toHaveBeenLastCalledWith("collision-preview:error", null);
+  });
+
   it("aborts stale buffer work and never starts sources after cancellation", async () => {
     const pendingRequests: Array<{
       resolve: (response: { arrayBuffer: () => Promise<ArrayBuffer> }) => void;
