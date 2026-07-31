@@ -290,6 +290,8 @@ test("deletes collections and events from the workspace", async ({ page }) => {
   await collectionDialog.getByRole("button", { name: "Create collection" }).click();
 
   await expect(page.getByText("Collections are scoped to iPhone 16 Pro.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open actions for Delete Flow" })).toHaveCount(0);
   await page.getByRole("button", { name: "Add event" }).first().click();
   let eventDialog = page.getByRole("dialog", { name: "Create Event" });
   await eventDialog.getByLabel("Name").fill("Temporary Toast");
@@ -305,7 +307,7 @@ test("deletes collections and events from the workspace", async ({ page }) => {
   await page.getByRole("menuitem", { name: "Delete event" }).click();
   let deleteDialog = page.getByRole("dialog", { name: "Delete event?" });
   await deleteDialog.getByRole("button", { name: "Delete event" }).click();
-  await expect(page.getByRole("status")).toContainText("Deleted event Temporary Toast.");
+  await expect(page.getByText("Deleted event Temporary Toast.", { exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Temporary Toast", exact: true })).toHaveCount(0);
 
   await page.getByRole("button", { name: "Delete", exact: true }).click();
@@ -322,7 +324,7 @@ test("deletes collections and events from the workspace", async ({ page }) => {
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   deleteDialog = page.getByRole("dialog", { name: "Delete collection?" });
   await deleteDialog.getByRole("button", { name: "Delete collection" }).click();
-  await expect(page.getByRole("status")).toContainText("Deleted collection Delete Flow.");
+  await expect(page.getByText("Deleted collection Delete Flow.", { exact: true })).toBeVisible();
   await expect(page.getByTestId("collection-list")).not.toContainText("Delete Flow");
 
   await page.getByRole("button", { name: "Add event" }).first().click();
@@ -338,7 +340,7 @@ test("deletes collections and events from the workspace", async ({ page }) => {
   await deleteDialog.getByRole("button", { name: "Delete event" }).click();
 
   await expect(page).toHaveURL(/\/projects\/project_checkout-system/);
-  await expect(page.getByRole("status")).toContainText("Deleted event Detail Delete.");
+  await expect(page.getByText("Deleted event Detail Delete.", { exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Detail Delete", exact: true })).toHaveCount(0);
 });
 
