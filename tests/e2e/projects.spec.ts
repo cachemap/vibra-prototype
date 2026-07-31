@@ -1,7 +1,35 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import path from "node:path";
 
 const fixturePath = (filename: string) => path.join(process.cwd(), "tests/e2e/fixtures", filename);
+
+const persistedPlaybackOffsets = (page: Page, playbackIds: readonly string[]) =>
+  page.evaluate(async (ids) => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open("vibra-prototype");
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+
+    try {
+      const transaction = database.transaction("triggerPlaybacks", "readonly");
+      const store = transaction.objectStore("triggerPlaybacks");
+      const records = await Promise.all(
+        ids.map(
+          (id) =>
+            new Promise<{ startOffset?: number } | undefined>((resolve, reject) => {
+              const request = store.get(id);
+              request.onerror = () => reject(request.error);
+              request.onsuccess = () => resolve(request.result as { startOffset?: number } | undefined);
+            })
+        )
+      );
+
+      return records.map((record) => record?.startOffset ?? null);
+    } finally {
+      database.close();
+    }
+  }, [...playbackIds]);
 
 test("persists theme preferences and follows system changes", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light" });
@@ -755,6 +783,44 @@ test("renders the focused resolution editor at wide and narrow viewports", async
     animations: "disabled",
     caret: "hide"
   });
+});
+
+test("keeps collision audition offsets out of authored event playback schedules", async ({ page }) => {
+  await page.goto("/projects");
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.goto("/projects/project_checkout-system");
+  await page.getByRole("tab", { name: "Matrix" }).click();
+  await page
+    .getByTestId("collision-matrix-grid")
+    .getByRole("button", { name: "Suppress: Pay Now when Card Declined arrives" })
+    .click();
+
+  const editor = page.getByRole("region", { name: "Collision Matrix resolution editor" });
+  await editor.getByLabel("Playing offset in milliseconds").fill("420");
+  await editor.getByLabel("Incoming offset in milliseconds").fill("670");
+  await expect(editor.getByLabel(/Collision preview timeline, Playing starts at 420 milliseconds and Incoming starts at 670 milliseconds/)).toBeVisible();
+
+  await editor.getByRole("button", { name: "Save collision rule" }).click();
+  await expect.poll(() =>
+    persistedPlaybackOffsets(page, [
+      "playback_pay-now-release-audio",
+      "playback_card-declined-warning"
+    ])
+  ).toEqual([0, 0]);
+
+  await page.reload();
+  await page.getByRole("tab", { name: "Matrix" }).click();
+  await expect(
+    page.getByTestId("collision-matrix-grid").getByRole("button", {
+      name: "Suppress: Pay Now when Card Declined arrives"
+    })
+  ).toBeVisible();
+  await expect(
+    persistedPlaybackOffsets(page, [
+      "playback_pay-now-release-audio",
+      "playback_card-declined-warning"
+    ])
+  ).resolves.toEqual([0, 0]);
 });
 
 test("keeps Collision Matrix hover feedback motionless when reduced motion is preferred", async ({ page }) => {

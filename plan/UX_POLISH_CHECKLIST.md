@@ -275,7 +275,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Add sidebar width assertions at desktop.
 - [x] Add reduced-motion Matrix coverage.
 - [x] Add wide and 375px visual snapshots for the focused resolution editor.
-- [ ] Add E2E coverage proving audition offsets do not mutate event playback offsets.
+- [x] Add E2E coverage proving audition offsets do not mutate event playback offsets.
 - [ ] Add E2E coverage proving Back to Matrix stops active collision audio.
 - [x] Run `pnpm typecheck`.
 - [x] Run `pnpm lint`.

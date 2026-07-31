@@ -24,3 +24,9 @@
 - The test hides the Next.js development portal before capture so the dev-only indicator cannot contaminate product snapshots.
 - Verification: `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'focused resolution editor at wide and narrow' --update-snapshots` passed (1 test).
 - Next UX Polish checklist item: add E2E coverage proving audition offsets do not mutate event playback offsets.
+
+## Follow-up
+
+- Completed the E2E guard that moves both Collision Matrix audition lanes, saves the rule, and verifies the authored Pay Now and Card Declined trigger-playback offsets remain `0` in IndexedDB before and after reload.
+- Verification: `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'keeps collision audition offsets out of authored event playback schedules'` passed (1 test); `pnpm typecheck` passed; `pnpm lint` passed with the two pre-existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- Next UX Polish checklist item: add E2E coverage proving Back to Matrix stops active collision audio.
