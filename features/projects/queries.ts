@@ -31,6 +31,7 @@ export {
   useDeleteEventMutation,
   useDeleteEventTriggerMutation,
   useDeleteTriggerPlaybackMutation,
+  useReorderCollectionEventsMutation,
   useUpdateCollectionMutation,
   useUpdateDeviceMutation,
   useUpdateEventMutation,

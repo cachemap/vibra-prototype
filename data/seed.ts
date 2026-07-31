@@ -387,31 +387,36 @@ export const buildDemoSeedData = (): DemoSeedData => {
       id: id<EventId>("event_ios-pay-now"),
       collectionId: id<CollectionId>("collection_ios-checkout-actions"),
       name: "Pay Now",
-      eventType: "Button"
+      eventType: "Button",
+      sortOrder: 0
     },
     {
       id: id<EventId>("event_ios-save-card"),
       collectionId: id<CollectionId>("collection_ios-checkout-actions"),
       name: "Save Card",
-      eventType: "Toggle"
+      eventType: "Toggle",
+      sortOrder: 1
     },
     {
       id: id<EventId>("event_ios-card-declined"),
       collectionId: id<CollectionId>("collection_ios-system-messaging"),
       name: "Card Declined",
-      eventType: "Banner"
+      eventType: "Banner",
+      sortOrder: 0
     },
     {
       id: id<EventId>("event_ios-payment-complete"),
       collectionId: id<CollectionId>("collection_ios-system-messaging"),
       name: "Payment Complete",
-      eventType: "Toast"
+      eventType: "Toast",
+      sortOrder: 1
     },
     {
       id: id<EventId>("event_android-pay-now"),
       collectionId: id<CollectionId>("collection_android-checkout-actions"),
       name: "Pay Now",
-      eventType: "Button"
+      eventType: "Button",
+      sortOrder: 0
     }
   ];
 

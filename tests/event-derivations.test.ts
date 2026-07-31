@@ -41,7 +41,8 @@ const collection: DeviceCollectionAggregate = {
         id: asEntityId("event-1"),
         collectionId: asEntityId("collection-1"),
         eventType: "Button",
-        name: "Primary CTA"
+        name: "Primary CTA",
+        sortOrder: 0
       },
       eventTriggers: [
         {

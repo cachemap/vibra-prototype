@@ -41,7 +41,8 @@ const selectedEvent = {
     collectionId: asEntityId<CollectionId>("collection-checkout"),
     eventType: "Button",
     id: asEntityId<EventId>("event-pay-now"),
-    name: "Pay Now"
+    name: "Pay Now",
+    sortOrder: 0
   },
   eventTriggers: [
     {

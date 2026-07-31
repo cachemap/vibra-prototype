@@ -137,7 +137,8 @@ const event = (eventId: string, collectionId = "collection_1"): Event => ({
   id: id<EventId>(eventId),
   collectionId: id<CollectionId>(collectionId),
   name: eventId,
-  eventType: "Button"
+  eventType: "Button",
+  sortOrder: 0
 });
 
 const eventTrigger = (

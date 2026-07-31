@@ -106,6 +106,14 @@ describe("demo seed data", () => {
     expect(new Set(seedData.events.map((event) => event.eventType))).toEqual(
       new Set(["Button", "Toggle", "Banner", "Toast"])
     );
+    for (const collection of seedData.collections) {
+      const sortOrders = seedData.events
+        .filter((event) => event.collectionId === collection.id)
+        .map((event) => event.sortOrder)
+        .sort((first, second) => first - second);
+
+      expect(sortOrders).toEqual(sortOrders.map((_, index) => index));
+    }
     expect(seedData.eventTriggers.some((trigger) => trigger.isEnabled === false)).toBe(true);
     expect(new Set(seedData.assets.map((asset) => asset.mediaKind))).toEqual(new Set(mediaKinds));
     expect(seedData.assetBlobs).toHaveLength(seedData.assets.length);

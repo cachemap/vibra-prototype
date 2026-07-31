@@ -10,6 +10,8 @@ import {
   type CreateEventInput,
   type CreateEventTriggerInput,
   type CreateTriggerPlaybackInput,
+  type DeviceWorkspaceAggregate,
+  type ReorderCollectionEventsInput,
   type UpdateCollectionInput,
   type UpdateDeviceInput,
   type UpdateEventInput,
@@ -26,6 +28,7 @@ import {
   invalidateProjectWorkspaces,
   invalidateShareLinks
 } from "./invalidation";
+import { projectQueryKeys } from "./query-keys";
 
 const projectRepository = createProjectRepository(db);
 
@@ -119,6 +122,60 @@ export const useCreateEventMutation = () => {
     mutationFn: (input: CreateEventInput) => projectRepository.createEvent(input).then(unwrapQueryResult),
     onSuccess: () => {
       void invalidateProjectWorkspaces(queryClient);
+      void invalidateDeviceWorkspaces(queryClient);
+      void invalidateCollisionMatrices(queryClient);
+    }
+  });
+};
+
+export const useReorderCollectionEventsMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: ReorderCollectionEventsInput) =>
+      projectRepository.reorderCollectionEvents(input).then(unwrapQueryResult),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: projectQueryKeys.deviceWorkspaces() });
+
+      const snapshots = queryClient.getQueriesData<DeviceWorkspaceAggregate>({
+        queryKey: projectQueryKeys.deviceWorkspaces()
+      });
+      const orderByEventId = new Map(input.orderedEventIds.map((eventId, index) => [eventId, index]));
+
+      for (const [queryKey] of snapshots) {
+        queryClient.setQueryData<DeviceWorkspaceAggregate | undefined>(queryKey, (workspace) => {
+          if (!workspace?.collections.some((collection) => collection.collection.id === input.collectionId)) {
+            return workspace;
+          }
+
+          return {
+            ...workspace,
+            collections: workspace.collections.map((collection) =>
+              collection.collection.id === input.collectionId
+                ? {
+                    ...collection,
+                    events: [...collection.events].sort(
+                      (first, second) =>
+                        (orderByEventId.get(first.event.id) ?? first.event.sortOrder) -
+                          (orderByEventId.get(second.event.id) ?? second.event.sortOrder) ||
+                        first.event.name.localeCompare(second.event.name) ||
+                        first.event.id.localeCompare(second.event.id)
+                    )
+                  }
+                : collection
+            )
+          };
+        });
+      }
+
+      return { snapshots };
+    },
+    onError: (_error, _input, context) => {
+      for (const [queryKey, snapshot] of context?.snapshots ?? []) {
+        queryClient.setQueryData(queryKey, snapshot);
+      }
+    },
+    onSettled: () => {
       void invalidateDeviceWorkspaces(queryClient);
       void invalidateCollisionMatrices(queryClient);
     }

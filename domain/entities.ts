@@ -98,6 +98,7 @@ export interface Event {
   collectionId: CollectionId;
   name: string;
   eventType: EventType;
+  sortOrder: number;
 }
 
 export interface Trigger {

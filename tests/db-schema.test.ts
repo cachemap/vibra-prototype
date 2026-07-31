@@ -1,6 +1,16 @@
+import "fake-indexeddb/auto";
+
+import Dexie from "dexie";
 import { describe, expect, it } from "vitest";
 
-import { createVibraDatabase, vibraStores } from "../data/db";
+import {
+  createVibraDatabase,
+  VIBRA_DATABASE_VERSION,
+  vibraStores,
+  vibraStoresV1,
+  vibraStoresV2
+} from "../data/db";
+import { asEntityId, type CollisionMatrixEntryId } from "../domain";
 
 describe("Vibra IndexedDB schema", () => {
   it("defines every planned Phase 3 store", () => {
@@ -9,6 +19,7 @@ describe("Vibra IndexedDB schema", () => {
     expect(database.tables.map((table) => table.name).sort()).toEqual(
       Object.keys(vibraStores).sort()
     );
+    expect(database.verno).toBe(VIBRA_DATABASE_VERSION);
 
     database.close();
   });
@@ -25,6 +36,7 @@ describe("Vibra IndexedDB schema", () => {
     expect(database.collisionMatrixEntries.schema.indexes.map((index) => index.src)).toContain(
       "[matrixId+playingEventId+incomingEventId]"
     );
+    expect(database.events.schema.indexes.map((index) => index.src)).toContain("[collectionId+sortOrder]");
     expect(database.projectAssetLibraryImports.schema.primKey.src).toBe(
       "[projectId+assetLibraryId]"
     );
@@ -34,6 +46,95 @@ describe("Vibra IndexedDB schema", () => {
     );
 
     database.close();
+  });
+
+  it("migrates v2 events into the existing visible order", async () => {
+    const databaseName = `vibra-v2-order-migration-${crypto.randomUUID()}`;
+    const legacyDatabase = new Dexie(databaseName);
+    legacyDatabase.version(2).stores(vibraStoresV2);
+    await legacyDatabase.open();
+
+    await legacyDatabase.table("events").bulkAdd([
+      {
+        id: "event_beta",
+        collectionId: "collection_a",
+        name: "Beta",
+        eventType: "Button"
+      },
+      {
+        id: "event_alpha",
+        collectionId: "collection_a",
+        name: "Alpha",
+        eventType: "Toast"
+      },
+      {
+        id: "event_android",
+        collectionId: "collection_b",
+        name: "Android",
+        eventType: "Button"
+      }
+    ]);
+    await legacyDatabase.table("collisionMatrixEntries").add({
+      id: "matrix_entry_queue",
+      matrixId: "matrix_1",
+      playingEventId: "event_beta",
+      incomingEventId: "event_alpha",
+      resolutionBehavior: {
+        behaviorName: "Queue",
+        targetEventId: null
+      }
+    });
+    legacyDatabase.close();
+
+    const upgradedDatabase = createVibraDatabase(databaseName);
+    await upgradedDatabase.open();
+
+    const migratedEvents = (await upgradedDatabase.events.toArray()).sort(
+      (first, second) =>
+        first.collectionId.localeCompare(second.collectionId) || first.sortOrder - second.sortOrder
+    );
+
+    expect(migratedEvents.map((event) => [event.id, event.sortOrder])).toEqual([
+      ["event_alpha", 0],
+      ["event_beta", 1],
+      ["event_android", 0]
+    ]);
+    await expect(
+      upgradedDatabase.collisionMatrixEntries.get(
+        asEntityId<CollisionMatrixEntryId>("matrix_entry_queue")
+      )
+    ).resolves.toMatchObject({
+      resolutionBehavior: {
+        behaviorName: "Queue",
+        targetEventId: "event_alpha"
+      }
+    });
+
+    upgradedDatabase.close();
+    await upgradedDatabase.delete();
+  });
+
+  it("opens empty v1 and v2 databases through all upgrades", async () => {
+    for (const legacyVersion of [1, 2] as const) {
+      const databaseName = `vibra-v${legacyVersion}-upgrade-${crypto.randomUUID()}`;
+      const legacyDatabase = new Dexie(databaseName);
+      legacyDatabase
+        .version(legacyVersion)
+        .stores(legacyVersion === 1 ? vibraStoresV1 : vibraStoresV2);
+      await legacyDatabase.open();
+      legacyDatabase.close();
+
+      const upgradedDatabase = createVibraDatabase(databaseName);
+      await upgradedDatabase.open();
+
+      expect(upgradedDatabase.verno).toBe(VIBRA_DATABASE_VERSION);
+      expect(upgradedDatabase.events.schema.indexes.map((index) => index.src)).toContain(
+        "[collectionId+sortOrder]"
+      );
+
+      upgradedDatabase.close();
+      await upgradedDatabase.delete();
+    }
   });
 
   it("keeps sharing links addressable by URL token and target kind", () => {

@@ -82,50 +82,50 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 # SIDE QUEST
 - [ ] Playback is broken on the Assets tab view for sounds that have been uploaded
 
-## 5. Persistent event order
+## 5. Persistent event order [~]
 
-### Domain and schema
+### Domain and schema [x]
 
-- [ ] Add `sortOrder: number` to `Event`.
-- [ ] Add a non-negative integer validator to `eventSchema`.
-- [ ] Add a reorder command/input type with `collectionId` and `orderedEventIds`.
-- [ ] Update every Event fixture/factory to include `sortOrder`.
-- [ ] Give seed events unique contiguous positions within each collection.
+- [x] Add `sortOrder: number` to `Event`.
+- [x] Add a non-negative integer validator to `eventSchema`.
+- [x] Add a reorder command/input type with `collectionId` and `orderedEventIds`.
+- [x] Update every Event fixture/factory to include `sortOrder`.
+- [x] Give seed events unique contiguous positions within each collection.
 
-### IndexedDB
+### IndexedDB [x]
 
-- [ ] Increment `VIBRA_DATABASE_VERSION` to `3`.
-- [ ] Add `[collectionId+sortOrder]` to the events store indexes.
-- [ ] Add a v3 upgrade that groups legacy events by collection.
-- [ ] Sort legacy siblings by name and then ID.
-- [ ] Write contiguous positions beginning at `0`.
-- [ ] Normalize legacy collision-resolution objects in the same upgrade transaction.
-- [ ] Add a migration test starting from a version-2 database.
-- [ ] Verify v1/v2 databases still open successfully through all upgrades.
-- [ ] Verify a fresh database uses the v3 schema.
+- [x] Increment `VIBRA_DATABASE_VERSION` to `3`.
+- [x] Add `[collectionId+sortOrder]` to the events store indexes.
+- [x] Add a v3 upgrade that groups legacy events by collection.
+- [x] Sort legacy siblings by name and then ID.
+- [x] Write contiguous positions beginning at `0`.
+- [x] Normalize legacy collision-resolution objects in the same upgrade transaction.
+- [x] Add a migration test starting from a version-2 database.
+- [x] Verify v1/v2 databases still open successfully through all upgrades.
+- [x] Verify a fresh database uses the v3 schema.
 
-### Repository
+### Repository [x]
 
-- [ ] Sort loaded collection events by `sortOrder`, with stable tie-breakers.
-- [ ] Append newly created events after the current maximum order.
-- [ ] Implement `reorderCollectionEvents`.
-- [ ] Validate that ordered IDs are unique.
-- [ ] Validate that ordered IDs exactly match the collection’s current events.
-- [ ] Reject cross-collection and unknown IDs with a typed error.
-- [ ] Persist all changed positions in one Dexie transaction.
-- [ ] Normalize positions to contiguous integers.
-- [ ] Add repository tests for successful reorder and reload.
-- [ ] Add repository tests for duplicates, omissions, unknown IDs, and cross-collection IDs.
-- [ ] Verify event delete and reset behavior with ordered events.
-- [ ] Check Matrix filters and event lookups for accidental name sorting.
+- [x] Sort loaded collection events by `sortOrder`, with stable tie-breakers.
+- [x] Append newly created events after the current maximum order.
+- [x] Implement `reorderCollectionEvents`.
+- [x] Validate that ordered IDs are unique.
+- [x] Validate that ordered IDs exactly match the collection’s current events.
+- [x] Reject cross-collection and unknown IDs with a typed error.
+- [x] Persist all changed positions in one Dexie transaction.
+- [x] Normalize positions to contiguous integers.
+- [x] Add repository tests for successful reorder and reload.
+- [x] Add repository tests for duplicates, omissions, unknown IDs, and cross-collection IDs.
+- [x] Verify event delete and reset behavior with ordered events.
+- [x] Check Matrix filters and event lookups for accidental name sorting.
 
-### Query layer
+### Query layer [~]
 
-- [ ] Add and export `useReorderCollectionEventsMutation`.
-- [ ] Optimistically reorder the affected device-workspace cache.
-- [ ] Snapshot and roll back the cache on error.
-- [ ] Invalidate the device workspace after settle/success.
-- [ ] Invalidate any project/matrix aggregates that expose event order.
+- [x] Add and export `useReorderCollectionEventsMutation`.
+- [x] Optimistically reorder the affected device-workspace cache.
+- [x] Snapshot and roll back the cache on error.
+- [x] Invalidate the device workspace after settle/success.
+- [x] Invalidate any project/matrix aggregates that expose event order.
 - [ ] Surface persistence errors through the existing feedback context.
 
 ## 6. Drag-and-drop rows

@@ -66,6 +66,7 @@ import {
   createCollectionCommandSchema,
   updateCollectionCommandSchema,
   createEventCommandSchema,
+  reorderCollectionEventsCommandSchema,
   updateEventCommandSchema,
   createEventTriggerCommandSchema,
   updateEventTriggerCommandSchema,
@@ -266,6 +267,11 @@ export interface CreateEventInput {
   eventType: Event["eventType"];
 }
 
+export interface ReorderCollectionEventsInput {
+  collectionId: CollectionId;
+  orderedEventIds: EventId[];
+}
+
 export interface UpdateEventInput {
   eventId: EventId;
   name?: string;
@@ -419,6 +425,7 @@ export interface ProjectRepository {
   updateCollection(input: UpdateCollectionInput): Promise<AppResult<Collection>>;
   deleteCollection(collectionId: CollectionId): Promise<AppResult<void>>;
   createEvent(input: CreateEventInput): Promise<AppResult<Event>>;
+  reorderCollectionEvents(input: ReorderCollectionEventsInput): Promise<AppResult<Event[]>>;
   updateEvent(input: UpdateEventInput): Promise<AppResult<Event>>;
   deleteEvent(eventId: EventId): Promise<AppResult<void>>;
   createEventTrigger(input: CreateEventTriggerInput): Promise<AppResult<EventTrigger>>;
@@ -565,6 +572,16 @@ const buildAssetLibraryFolderNode = (
 const sortByName = <Record extends { name: string }>(records: Record[]): Record[] =>
   records.sort((first, second) => first.name.localeCompare(second.name));
 
+const sortByEventOrder = <Record extends { name: string; id: string; sortOrder: number }>(
+  records: Record[]
+): Record[] =>
+  records.sort(
+    (first, second) =>
+      first.sortOrder - second.sortOrder ||
+      first.name.localeCompare(second.name) ||
+      first.id.localeCompare(second.id)
+  );
+
 const sortByCreatedAtThenName = <Record extends { createdAt: string; name: string }>(
   records: Record[]
 ): Record[] =>
@@ -594,11 +611,12 @@ const createDefaultProjectRecords = (
       deviceId: records.device.id,
       name: "Core interactions"
     });
-    const starterEvents = starterEventTypes.map((eventType) =>
+    const starterEvents = starterEventTypes.map((eventType, sortOrder) =>
       createEventRecord({
         collectionId: defaultCollection.id,
         name: eventType,
-        eventType
+        eventType,
+        sortOrder
       })
     );
     const platform = platformsById.get(deviceInput.platformId);
@@ -742,11 +760,12 @@ const createCollectionRecord = (input: CreateCollectionInput): Collection => ({
   name: input.name
 });
 
-const createEventRecord = (input: CreateEventInput): Event => ({
+const createEventRecord = (input: CreateEventInput & { sortOrder: number }): Event => ({
   id: createEntityId<EventId>("event"),
   collectionId: input.collectionId,
   name: input.name,
-  eventType: input.eventType
+  eventType: input.eventType,
+  sortOrder: input.sortOrder
 });
 
 const createEventTriggerRecord = (input: CreateEventTriggerInput): EventTrigger => ({
@@ -823,7 +842,7 @@ const loadCollisionMatrixAggregate = async (
   const collections = sortByName(
     rawCollections.map((collection) => parseRecord(collectionSchema, collection) as Collection)
   );
-  const events = sortByName(
+  const events = sortByEventOrder(
     (
       await Promise.all(
         collections.map((collection) =>
@@ -2303,7 +2322,7 @@ export const createProjectRepository = (
           async (collection) => {
             const rawEvents = await database.events.where("collectionId").equals(collection.id).toArray();
             const events = await Promise.all(
-              sortByName(rawEvents.map((event) => parseRecord(eventSchema, event) as Event)).map(async (event) => {
+              sortByEventOrder(rawEvents.map((event) => parseRecord(eventSchema, event) as Event)).map(async (event) => {
                 const rawEventTriggers = await database.eventTriggers.where("eventId").equals(event.id).toArray();
                 const eventTriggers = await Promise.all(
                   rawEventTriggers.map(async (eventTrigger) => {
@@ -2422,12 +2441,98 @@ export const createProjectRepository = (
         throw new NotFoundError("Collection could not be found.", { entity: "Collection" });
       }
 
-      const record = createEventRecord(createInput);
-      const event = parseRecord(eventSchema, record) as Event;
+      let event: Event | null = null;
 
-      await database.events.add(event);
+      await database.transaction("rw", database.events, async () => {
+        const siblings = (
+          await database.events.where("collectionId").equals(createInput.collectionId).toArray()
+        ).map((record) => parseRecord(eventSchema, record) as Event);
+        const nextSortOrder =
+          siblings.length === 0 ? 0 : Math.max(...siblings.map((sibling) => sibling.sortOrder)) + 1;
+        const record = createEventRecord({
+          ...createInput,
+          sortOrder: nextSortOrder
+        });
+        event = parseRecord(eventSchema, record) as Event;
+
+        await database.events.add(event);
+      });
+
+      if (!event) {
+        throw new PersistenceError("Event could not be created.", { entity: "Event" });
+      }
 
       return event;
+    }),
+  reorderCollectionEvents: (input) =>
+    toAppResult(async () => {
+      const command = parseCommand(reorderCollectionEventsCommandSchema, input);
+      const reorderInput: ReorderCollectionEventsInput = {
+        collectionId: asEntityId<CollectionId>(command.collectionId),
+        orderedEventIds: command.orderedEventIds.map((eventId) => asEntityId<EventId>(eventId))
+      };
+      const uniqueOrderedEventIds = new Set(reorderInput.orderedEventIds);
+
+      if (uniqueOrderedEventIds.size !== reorderInput.orderedEventIds.length) {
+        throw new ConstraintError("Event order cannot contain duplicate events.", {
+          constraint: "event-order-unique"
+        });
+      }
+
+      const collection = await database.collections.get(reorderInput.collectionId);
+
+      if (!collection) {
+        throw new NotFoundError("Collection could not be found.", { entity: "Collection" });
+      }
+
+      const currentEvents = (
+        await database.events.where("collectionId").equals(reorderInput.collectionId).toArray()
+      ).map((record) => parseRecord(eventSchema, record) as Event);
+      const currentEventIds = new Set(currentEvents.map((event) => event.id));
+
+      if (currentEvents.length !== reorderInput.orderedEventIds.length) {
+        throw new ConstraintError("Event order must include every event in the collection exactly once.", {
+          constraint: "event-order-exact-permutation"
+        });
+      }
+
+      const orderedRecords = await database.events.bulkGet(reorderInput.orderedEventIds);
+      const reorderedEvents: Event[] = [];
+
+      for (const [index, rawEvent] of orderedRecords.entries()) {
+        const eventId = reorderInput.orderedEventIds[index];
+
+        if (!rawEvent) {
+          throw new ConstraintError("Event order includes an unknown event.", {
+            constraint: "event-order-unknown-event"
+          });
+        }
+
+        if (rawEvent.collectionId !== reorderInput.collectionId) {
+          throw new ConstraintError("Event order cannot include events from another collection.", {
+            constraint: "event-order-cross-collection"
+          });
+        }
+
+        if (!currentEventIds.has(eventId)) {
+          throw new ConstraintError("Event order must match the collection's current events.", {
+            constraint: "event-order-exact-permutation"
+          });
+        }
+
+        reorderedEvents.push(
+          parseRecord(eventSchema, {
+            ...rawEvent,
+            sortOrder: index
+          }) as Event
+        );
+      }
+
+      await database.transaction("rw", database.events, async () => {
+        await database.events.bulkPut(reorderedEvents);
+      });
+
+      return reorderedEvents;
     }),
   updateEvent: (input) =>
     toAppResult(async () => {

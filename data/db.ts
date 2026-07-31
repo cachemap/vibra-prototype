@@ -1,5 +1,6 @@
 import Dexie, { type Table } from "dexie";
 
+import { resolutionBehaviorNames } from "../domain/enums";
 import type {
   Asset,
   AssetBlob,
@@ -43,7 +44,7 @@ import type {
 } from "../domain/ids";
 
 export const VIBRA_DATABASE_NAME = "vibra-prototype";
-export const VIBRA_DATABASE_VERSION = 2;
+export const VIBRA_DATABASE_VERSION = 3;
 
 export const vibraStoresV1 = {
   users: "id",
@@ -69,10 +70,107 @@ export const vibraStoresV1 = {
     "id, target.kind, target.projectId, target.eventId, target.collisionMatrixEntryId, createdByUserId, url"
 } as const;
 
-export const vibraStores = {
+export const vibraStoresV2 = {
   ...vibraStoresV1,
   assetBlobs: "assetId, contentType, storedAt"
 } as const;
+
+export const vibraStores = {
+  ...vibraStoresV2,
+  events: "id, collectionId, eventType, name, [collectionId+sortOrder]"
+} as const;
+
+type LegacyEventRecord = Omit<Event, "sortOrder"> & { sortOrder?: number };
+type LegacyCollisionMatrixEntryRecord = Omit<CollisionMatrixEntry, "resolutionBehavior"> & {
+  resolutionBehavior?: Partial<CollisionMatrixEntry["resolutionBehavior"]> | null;
+};
+
+const sortLegacyEventsForMigration = (events: LegacyEventRecord[]) =>
+  events.sort(
+    (first, second) =>
+      first.name.localeCompare(second.name) || first.id.localeCompare(second.id)
+  );
+
+const migrateEventSortOrders = async (eventsTable: Table<LegacyEventRecord, EventId>) => {
+  const events = await eventsTable.toArray();
+  const eventsByCollection = new Map<CollectionId, LegacyEventRecord[]>();
+
+  for (const event of events) {
+    const siblings = eventsByCollection.get(event.collectionId) ?? [];
+    siblings.push(event);
+    eventsByCollection.set(event.collectionId, siblings);
+  }
+
+  const migratedEvents = [...eventsByCollection.values()].flatMap((siblings) =>
+    sortLegacyEventsForMigration(siblings).map((event, sortOrder) => ({
+      ...event,
+      sortOrder
+    }))
+  );
+
+  if (migratedEvents.length > 0) {
+    await eventsTable.bulkPut(migratedEvents);
+  }
+};
+
+const normalizeLegacyResolutionBehavior = (
+  entry: LegacyCollisionMatrixEntryRecord
+): CollisionMatrixEntry => {
+  const behaviorName = resolutionBehaviorNames.includes(
+    entry.resolutionBehavior?.behaviorName as CollisionMatrixEntry["resolutionBehavior"]["behaviorName"]
+  )
+    ? (entry.resolutionBehavior?.behaviorName as CollisionMatrixEntry["resolutionBehavior"]["behaviorName"])
+    : "Preempt";
+  const legacyTargetEventId = entry.resolutionBehavior?.targetEventId ?? null;
+
+  if (behaviorName === "Co-play" || behaviorName === "Not possible") {
+    return {
+      ...entry,
+      resolutionBehavior: {
+        behaviorName,
+        targetEventId: null
+      }
+    };
+  }
+
+  if (behaviorName === "Queue") {
+    return {
+      ...entry,
+      resolutionBehavior: {
+        behaviorName,
+        targetEventId: legacyTargetEventId ?? entry.incomingEventId
+      }
+    };
+  }
+
+  if (behaviorName === "Suppress") {
+    return {
+      ...entry,
+      resolutionBehavior: {
+        behaviorName,
+        targetEventId: legacyTargetEventId ?? entry.incomingEventId
+      }
+    };
+  }
+
+  return {
+    ...entry,
+    resolutionBehavior: {
+      behaviorName,
+      targetEventId: legacyTargetEventId ?? entry.playingEventId
+    }
+  };
+};
+
+const migrateLegacyCollisionResolutionBehaviors = async (
+  entriesTable: Table<LegacyCollisionMatrixEntryRecord, CollisionMatrixEntryId>
+) => {
+  const entries = await entriesTable.toArray();
+
+  if (entries.length > 0) {
+    await entriesTable.bulkPut(entries.map(normalizeLegacyResolutionBehavior));
+  }
+};
 
 export class VibraDatabase extends Dexie {
   users!: Table<User, UserId>;
@@ -101,7 +199,20 @@ export class VibraDatabase extends Dexie {
     super(name);
 
     this.version(1).stores(vibraStoresV1);
-    this.version(2).stores(vibraStores);
+    this.version(2).stores(vibraStoresV2);
+    this.version(3)
+      .stores(vibraStores)
+      .upgrade(async (transaction) => {
+        await migrateEventSortOrders(
+          transaction.table("events") as Table<LegacyEventRecord, EventId>
+        );
+        await migrateLegacyCollisionResolutionBehaviors(
+          transaction.table("collisionMatrixEntries") as Table<
+            LegacyCollisionMatrixEntryRecord,
+            CollisionMatrixEntryId
+          >
+        );
+      });
   }
 }
 

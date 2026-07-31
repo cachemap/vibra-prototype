@@ -48,3 +48,19 @@
 ## Next
 
 - Implement UX Polish checklist group 5: persisted event ordering (domain field, v3 IndexedDB migration, repository/query mutation, then drag-and-drop UI in group 6).
+
+## Persistent event ordering foundation
+
+- Completed the UX Polish group 5 persistence foundation: `Event.sortOrder`, schema validation, seed positions, IndexedDB v3 migration/index, repository append/reorder semantics, and exported optimistic query mutation.
+- The v3 migration preserves legacy visible event order by sorting siblings by name then id, assigns contiguous positions, and normalizes legacy collision behavior targets for the upcoming focused resolution editor work.
+- Added ADR 0054 for the persisted ordering decision.
+
+## Verification
+
+- `pnpm typecheck` passed.
+- `pnpm test -- tests/db-schema.test.ts tests/domain-validation-errors.test.ts tests/seed-reset.test.ts tests/project-repository.test.ts tests/domain-rules.test.ts tests/event-derivations.test.ts tests/event-timeline.test.tsx` passed: 131 tests.
+- `pnpm lint` passed with existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+
+## Next
+
+- Finish the remaining UX Polish group 5 query-layer feedback integration while implementing group 6 drag-and-drop rows: add dnd-kit, render row handles, call `useReorderCollectionEventsMutation`, and surface reorder errors through the existing feedback context.

@@ -8,6 +8,7 @@ import {
   createProjectCommandSchema,
   createTriggerPlaybackCommandSchema,
   errApp,
+  eventSchema,
   generateSharingLinkCommandSchema,
   NotFoundError,
   PersistenceError,
@@ -66,6 +67,26 @@ describe("domain command validation", () => {
         eventTriggerId: "event_trigger_1",
         assetId: "asset_1",
         startOffset: -0.1
+      }).success
+    ).toBe(false);
+
+    expect(
+      v.safeParse(eventSchema, {
+        id: "event_1",
+        collectionId: "collection_1",
+        name: "Primary CTA",
+        eventType: "Button",
+        sortOrder: -1
+      }).success
+    ).toBe(false);
+
+    expect(
+      v.safeParse(eventSchema, {
+        id: "event_1",
+        collectionId: "collection_1",
+        name: "Primary CTA",
+        eventType: "Button",
+        sortOrder: 0.5
       }).success
     ).toBe(false);
   });

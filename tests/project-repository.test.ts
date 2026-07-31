@@ -11,6 +11,7 @@ import {
   type AssetId,
   type AssetLibraryFolderId,
   type AssetLibraryId,
+  type CollectionId,
   type CollisionMatrixEntryId,
   type CollisionMatrixId,
   type DeviceId,
@@ -440,15 +441,149 @@ describe("project repository", () => {
     expect(updatedEventResult.value).toMatchObject({
       collectionId: updatedCollectionResult.value.id,
       name: "Recovery Code Resent",
-      eventType: "Banner"
+      eventType: "Banner",
+      sortOrder: 0
     });
     await expect(database.collections.get(collectionResult.value.id)).resolves.toMatchObject({
       name: "Account Recovery Alerts"
     });
     await expect(database.events.get(eventResult.value.id)).resolves.toMatchObject({
       name: "Recovery Code Resent",
-      eventType: "Banner"
+      eventType: "Banner",
+      sortOrder: 0
     });
+  });
+
+  it("appends newly created events after existing collection order", async () => {
+    const repository = await createSeededRepository();
+
+    const eventResult = await repository.createEvent({
+      collectionId: asEntityId("collection_ios-checkout-actions"),
+      name: "Apple Pay",
+      eventType: "Button"
+    });
+
+    expect(eventResult.isOk()).toBe(true);
+    if (eventResult.isErr()) {
+      return;
+    }
+    expect(eventResult.value.sortOrder).toBe(2);
+
+    const workspaceResult = await repository.loadDeviceWorkspace(
+      asEntityId<DeviceId>("device_checkout-ios-16-pro")
+    );
+    expect(workspaceResult.isOk()).toBe(true);
+    if (workspaceResult.isErr()) {
+      return;
+    }
+
+    const checkoutEvents = workspaceResult.value.collections.find(
+      (collection) => collection.collection.id === "collection_ios-checkout-actions"
+    )?.events;
+    expect(checkoutEvents?.map((event) => event.event.name)).toEqual(["Pay Now", "Save Card", "Apple Pay"]);
+  });
+
+  it("reorders collection events with contiguous persisted positions", async () => {
+    const repository = await createSeededRepository();
+    const collectionId = asEntityId<CollectionId>("collection_ios-checkout-actions");
+
+    const reorderResult = await repository.reorderCollectionEvents({
+      collectionId,
+      orderedEventIds: [
+        asEntityId<EventId>("event_ios-save-card"),
+        asEntityId<EventId>("event_ios-pay-now")
+      ]
+    });
+
+    expect(reorderResult.isOk()).toBe(true);
+    if (reorderResult.isErr() || !database) {
+      return;
+    }
+
+    expect(reorderResult.value.map((event) => [event.id, event.sortOrder])).toEqual([
+      ["event_ios-save-card", 0],
+      ["event_ios-pay-now", 1]
+    ]);
+    await expect(database.events.get(asEntityId<EventId>("event_ios-save-card"))).resolves.toMatchObject({
+      sortOrder: 0
+    });
+    await expect(database.events.get(asEntityId<EventId>("event_ios-pay-now"))).resolves.toMatchObject({
+      sortOrder: 1
+    });
+
+    const workspaceResult = await repository.loadDeviceWorkspace(
+      asEntityId<DeviceId>("device_checkout-ios-16-pro")
+    );
+    expect(workspaceResult.isOk()).toBe(true);
+    if (workspaceResult.isErr()) {
+      return;
+    }
+
+    const checkoutEvents = workspaceResult.value.collections.find(
+      (collection) => collection.collection.id === collectionId
+    )?.events;
+    expect(checkoutEvents?.map((event) => event.event.id)).toEqual([
+      "event_ios-save-card",
+      "event_ios-pay-now"
+    ]);
+  });
+
+  it("rejects invalid event reorder inputs", async () => {
+    const repository = await createSeededRepository();
+    const collectionId = asEntityId<CollectionId>("collection_ios-checkout-actions");
+
+    const duplicateResult = await repository.reorderCollectionEvents({
+      collectionId,
+      orderedEventIds: [
+        asEntityId<EventId>("event_ios-pay-now"),
+        asEntityId<EventId>("event_ios-pay-now")
+      ]
+    });
+    expect(duplicateResult.isErr()).toBe(true);
+    if (duplicateResult.isOk()) {
+      return;
+    }
+    expect(duplicateResult.error.kind).toBe("constraint");
+    expect(duplicateResult.error.details?.constraint).toBe("event-order-unique");
+
+    const omittedResult = await repository.reorderCollectionEvents({
+      collectionId,
+      orderedEventIds: [asEntityId<EventId>("event_ios-pay-now")]
+    });
+    expect(omittedResult.isErr()).toBe(true);
+    if (omittedResult.isOk()) {
+      return;
+    }
+    expect(omittedResult.error.kind).toBe("constraint");
+    expect(omittedResult.error.details?.constraint).toBe("event-order-exact-permutation");
+
+    const unknownResult = await repository.reorderCollectionEvents({
+      collectionId,
+      orderedEventIds: [
+        asEntityId<EventId>("event_ios-pay-now"),
+        asEntityId<EventId>("event_missing")
+      ]
+    });
+    expect(unknownResult.isErr()).toBe(true);
+    if (unknownResult.isOk()) {
+      return;
+    }
+    expect(unknownResult.error.kind).toBe("constraint");
+    expect(unknownResult.error.details?.constraint).toBe("event-order-unknown-event");
+
+    const crossCollectionResult = await repository.reorderCollectionEvents({
+      collectionId,
+      orderedEventIds: [
+        asEntityId<EventId>("event_ios-pay-now"),
+        asEntityId<EventId>("event_ios-card-declined")
+      ]
+    });
+    expect(crossCollectionResult.isErr()).toBe(true);
+    if (crossCollectionResult.isOk()) {
+      return;
+    }
+    expect(crossCollectionResult.error.kind).toBe("constraint");
+    expect(crossCollectionResult.error.details?.constraint).toBe("event-order-cross-collection");
   });
 
   it("creates, updates, and deletes event interactions and playbacks", async () => {

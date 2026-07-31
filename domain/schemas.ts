@@ -15,6 +15,7 @@ const nameSchema = v.pipe(v.string(), v.nonEmpty());
 const optionalNameSchema = v.optional(nameSchema);
 const optionalNullableStringSchema = v.optional(v.nullable(v.string()));
 const nonNegativeNumberSchema = v.pipe(v.number(), v.minValue(0));
+const nonNegativeIntegerSchema = v.pipe(v.number(), v.integer(), v.minValue(0));
 
 export const platformNameSchema = v.picklist(platformNames);
 export const triggerNameSchema = v.picklist(triggerNames);
@@ -100,7 +101,8 @@ export const eventSchema = v.strictObject({
   id: idSchema,
   collectionId: idSchema,
   name: nameSchema,
-  eventType: eventTypeSchema
+  eventType: eventTypeSchema,
+  sortOrder: nonNegativeIntegerSchema
 });
 
 export const triggerSchema = v.strictObject({
@@ -231,6 +233,11 @@ export const createEventCommandSchema = v.strictObject({
   collectionId: idSchema,
   name: nameSchema,
   eventType: eventTypeSchema
+});
+
+export const reorderCollectionEventsCommandSchema = v.strictObject({
+  collectionId: idSchema,
+  orderedEventIds: v.array(idSchema)
 });
 
 export const updateEventCommandSchema = v.strictObject({
