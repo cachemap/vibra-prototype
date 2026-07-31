@@ -128,9 +128,9 @@ export function MatrixResolutionPanel({
     : false;
 
   return (
-    <div className="grid gap-3 border-y border-gray-300 bg-gray-50 px-3 py-3">
-      <div>
-        <h4 className="text-sm font-semibold text-gray-700">Resolution Behavior</h4>
+    <div className="grid gap-4">
+      <div className="grid gap-1">
+        <h3 className="text-sm font-semibold text-gray-700">Interruption behavior</h3>
         <p className="text-xs text-gray-500">
           {selectedPlayingEventId && selectedIncomingEventId
             ? `${eventById.get(selectedPlayingEventId)?.name ?? "Playing event"} when ${
@@ -140,27 +140,9 @@ export function MatrixResolutionPanel({
         </p>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-[1fr_1fr]">
-        <div className="grid gap-1 border-l border-gray-300 bg-gray-25 px-3 py-2">
-          <span className="text-xs font-medium text-gray-500">Playing</span>
-          <span className="truncate text-sm font-semibold text-gray-700">
-            {selectedPlayingEventId
-              ? (eventById.get(selectedPlayingEventId)?.name ?? "Playing event")
-              : "No row selected"}
-          </span>
-        </div>
-        <div className="grid gap-1 border-l border-gray-300 bg-gray-25 px-3 py-2">
-          <span className="text-xs font-medium text-gray-500">Incoming</span>
-          <span className="truncate text-sm font-semibold text-gray-700">
-            {selectedIncomingEventId
-              ? (eventById.get(selectedIncomingEventId)?.name ?? "Incoming event")
-              : "No column selected"}
-          </span>
-        </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Select
+          className="h-11"
           id="matrix-behavior"
           label="Behavior"
           onChange={(event) => onBehaviorChange(event.currentTarget.value as ResolutionBehaviorName)}
@@ -189,29 +171,12 @@ export function MatrixResolutionPanel({
             value={targetEventId || null}
           />
         ) : (
-          <div aria-live="polite" className="grid content-end pb-1 text-xs text-gray-500">
+          <div aria-live="polite" className="grid content-end text-xs text-gray-500">
             This behavior does not target either event.
           </div>
         )}
-        <div className="flex items-end gap-2">
-          <Button
-            disabled={!selectedEntry}
-            leftIcon={<Trash2 className="size-4" />}
-            onClick={onClearEntry}
-            variant="destructive"
-          >
-            Clear rule
-          </Button>
-          <Button
-            disabled={!ruleIsValid}
-            onClick={onSaveEntry}
-            variant="primary"
-          >
-            Save rule
-          </Button>
-        </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {definition.postInterruptionRecovery === "required" ? (
           <SegmentedControl
             description="Choose whether the interrupted event resumes after the interruption or remains stopped."
@@ -237,6 +202,21 @@ export function MatrixResolutionPanel({
         <CircleHelp aria-hidden="true" className="size-4 text-gray-500" />
         {behaviorCopy[behavior]} {definition.help}
       </p>
+      <div className="flex flex-wrap justify-end gap-2 border-t border-gray-200 pt-4">
+        <Button
+          aria-label="Clear collision rule"
+          className="h-11"
+          disabled={!selectedEntry}
+          leftIcon={<Trash2 className="size-4" />}
+          onClick={onClearEntry}
+          variant="destructive"
+        >
+          Clear rule
+        </Button>
+        <Button aria-label="Save collision rule" className="h-11" disabled={!ruleIsValid} onClick={onSaveEntry} variant="primary">
+          Save rule
+        </Button>
+      </div>
     </div>
   );
 }

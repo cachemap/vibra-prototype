@@ -9,6 +9,7 @@ import {
   type EventId
 } from "@/domain";
 import { MatrixResolutionPanel } from "@/features/matrix/matrix-resolution-panel";
+import { MatrixResolutionEditor } from "@/features/matrix/matrix-resolution-editor";
 
 const matrixId = asEntityId<CollisionMatrixId>("matrix_checkout");
 const collectionId = asEntityId<CollectionId>("collection_checkout");
@@ -97,5 +98,42 @@ describe("MatrixResolutionPanel adaptive controls", () => {
     expect(screen.queryByRole("group", { name: "Target" })).toBeNull();
     expect(screen.queryByRole("group", { name: "Post interruption" })).toBeNull();
     expect(screen.getByRole("group", { name: "System interruption" })).not.toBeNull();
+  });
+});
+
+describe("MatrixResolutionEditor", () => {
+  it("keeps the selected pair, accessible editor actions, and a scrollable shared timeline together", () => {
+    const onBack = vi.fn();
+
+    render(
+      <MatrixResolutionEditor
+        behavior="Preempt"
+        eventById={new Map(events.map((event) => [event.id, event]))}
+        onBack={onBack}
+        onBehaviorChange={vi.fn()}
+        onClearEntry={vi.fn()}
+        onPostInterruptionRecoveryChange={vi.fn()}
+        onSaveEntry={vi.fn()}
+        onSystemInterruptionRecoveryChange={vi.fn()}
+        onTargetEventIdChange={vi.fn()}
+        postInterruptionRecovery="Stay stopped"
+        selectedEntry={selectedEntry}
+        selectedIncomingEventId={incomingEventId}
+        selectedPlayingEventId={playingEventId}
+        systemInterruptionRecovery="Stay stopped"
+        targetEventId={playingEventId}
+      />
+    );
+
+    expect(screen.getByRole("region", { name: "Collision Matrix resolution editor" })).not.toBeNull();
+    expect(screen.getByRole("heading", { name: /Pay now.*Card declined/i })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Tap to preview collision" })).not.toBeNull();
+    expect(screen.getByLabelText(/Collision preview timeline/i)).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Stop collision preview" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Clear collision rule" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Save collision rule" })).not.toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Back to Matrix" }));
+    expect(onBack).toHaveBeenCalledOnce();
   });
 });

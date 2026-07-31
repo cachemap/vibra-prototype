@@ -169,20 +169,20 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 
 ## 8. Resolution behavior editor and collision preview
 
-### Focused editor layout
+### Focused editor layout [~]
 
-- [ ] Make selecting a matrix cell open a focused resolution editor within the Matrix tab.
-- [ ] Add `Back to Matrix` and restore the prior matrix selection/scroll context on return.
-- [ ] Split `matrix-resolution-panel.tsx` into editor, adaptive fields, playback preview, and timeline responsibilities.
-- [ ] Put the prominent primary `Tap` button at the top of the preview stage.
-- [ ] Keep `Tap` as the persistent visible label while exposing a more descriptive accessible name.
-- [ ] Show Playing event × Incoming event identity between the Tap stage and timeline.
-- [ ] Render a shared-ruler two-lane timeline for Playing and Incoming.
-- [ ] Put rule controls and Clear/Save actions below the preview.
-- [ ] Match the desktop reference hierarchy without copying irrelevant device-preview chrome.
-- [ ] Match the narrow reference with full-width stacked controls and readable section spacing.
-- [ ] Keep the timeline horizontally scrollable at narrow widths instead of crushing labels/blocks.
-- [ ] Keep all touch targets at least 44px and avoid horizontal page overflow at 375px.
+- [x] Make selecting a matrix cell open a focused resolution editor within the Matrix tab.
+- [x] Add `Back to Matrix` and restore the prior matrix selection/scroll context on return.
+- [x] Split `matrix-resolution-panel.tsx` into editor, adaptive fields, playback preview, and timeline responsibilities.
+- [x] Put the prominent primary `Tap` button at the top of the preview stage.
+- [x] Keep `Tap` as the persistent visible label while exposing a more descriptive accessible name.
+- [x] Show Playing event × Incoming event identity between the Tap stage and timeline.
+- [x] Render a shared-ruler two-lane timeline for Playing and Incoming.
+- [x] Put rule controls and Clear/Save actions below the preview.
+- [x] Match the desktop reference hierarchy without copying irrelevant device-preview chrome.
+- [x] Match the narrow reference with full-width stacked controls and readable section spacing.
+- [x] Keep the timeline horizontally scrollable at narrow widths instead of crushing labels/blocks.
+- [x] Keep all touch targets at least 44px and avoid horizontal page overflow at 375px.
 - [ ] Verify Back, Clear, Save, Tap, and Stop have distinct accessible names and focus states.
 
 ### Adaptive rule data and controls [x]

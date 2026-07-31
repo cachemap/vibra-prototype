@@ -1,6 +1,7 @@
 "use client";
 
 import { asEntityId, normalizeResolutionBehavior, type EventId } from "@/domain";
+import { useState } from "react";
 import {
   useDeselectCollisionMatrixColumnMutation,
   useDeselectCollisionMatrixRowMutation,
@@ -11,7 +12,7 @@ import {
 } from "@/features/projects/queries";
 import { useFeedbackActions } from "@/features/feedback/feedback-context";
 import { MatrixGrid, matrixEntryKeyFor } from "./matrix-grid";
-import { MatrixResolutionPanel } from "./matrix-resolution-panel";
+import { MatrixResolutionEditor } from "./matrix-resolution-editor";
 import { MatrixToolbar } from "./matrix-toolbar";
 import type { MatrixAxis } from "./matrix-axis-filter";
 import type { MatrixFilterAnchor } from "./matrix-axis-filter-anchor";
@@ -40,6 +41,7 @@ export function MatrixTab({
   setSelectedIncomingEventId,
   setSelectedPlayingEventId
 }: MatrixTabProps) {
+  const [isEditingResolution, setIsEditingResolution] = useState(false);
   const deviceWorkspaceQuery = useDeviceWorkspaceQuery(deviceId);
   const { clearFeedback, runWithFeedback } = useFeedbackActions();
   const selectMatrixRow = useSelectCollisionMatrixRowMutation();
@@ -154,6 +156,7 @@ export function MatrixTab({
     setMatrixTargetEventId(behavior.targetEventId ?? "");
     setMatrixPostInterruptionRecovery(behavior.postInterruptionRecovery);
     setMatrixSystemInterruptionRecovery(behavior.systemInterruptionRecovery);
+    setIsEditingResolution(true);
   };
 
   const handleSaveMatrixEntry = async () => {
@@ -214,9 +217,11 @@ export function MatrixTab({
       />
 
       <div className="grid min-w-0 gap-4">
-        <MatrixResolutionPanel
+        {isEditingResolution ? (
+          <MatrixResolutionEditor
           behavior={matrixBehavior}
           eventById={matrixEventById}
+          onBack={() => setIsEditingResolution(false)}
           onPostInterruptionRecoveryChange={setMatrixPostInterruptionRecovery}
           onBehaviorChange={(nextBehavior) => {
             if (!selectedPlayingEventId || !selectedIncomingEventId) {
@@ -247,9 +252,11 @@ export function MatrixTab({
           postInterruptionRecovery={matrixPostInterruptionRecovery}
           systemInterruptionRecovery={matrixSystemInterruptionRecovery}
           targetEventId={matrixTargetEventId}
-        />
+          />
+        ) : null}
 
-        <MatrixGrid
+        <div className={isEditingResolution ? "hidden" : undefined}>
+          <MatrixGrid
           collections={matrixFilterCollections}
           columns={deviceWorkspaceQuery.data?.matrixColumns ?? []}
           entries={deviceWorkspaceQuery.data?.matrixEntries ?? []}
@@ -271,7 +278,8 @@ export function MatrixTab({
           rows={deviceWorkspaceQuery.data?.matrixRows ?? []}
           selectedIncomingEventId={selectedIncomingEventId}
           selectedPlayingEventId={selectedPlayingEventId}
-        />
+          />
+        </div>
       </div>
     </div>
   );
