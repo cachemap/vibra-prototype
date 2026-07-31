@@ -270,7 +270,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Add pointer and keyboard collision-timeline alignment coverage.
 - [x] Add collection direct-delete-button coverage.
 - [x] Add drag pointer and keyboard E2E coverage.
-- [ ] Add theme persistence and system-change E2E coverage.
+- [x] Add theme persistence and system-change E2E coverage.
 - [ ] Add coordinate-alignment assertions for page headers.
 - [ ] Add sidebar width assertions at desktop.
 - [ ] Add reduced-motion Matrix coverage.

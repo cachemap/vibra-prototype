@@ -40,3 +40,9 @@
 - Verified the existing drag-reorder E2E covers pointer dragging, keyboard reordering, and reload persistence for both changes.
 - Verification: `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'reorders collection events with pointer and keyboard controls'` passed (1 test).
 - Next UX Polish checklist item: add theme persistence and system-change E2E coverage.
+
+## Follow-up
+
+- Completed theme persistence and system-change E2E coverage. The browser test verifies the stored Dark preference survives reload, then verifies System follows light-to-dark and dark-to-light `prefers-color-scheme` changes while retaining the selected system preference.
+- Verification: `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'persists theme preferences and follows system changes'` passed (1 test).
+- Next UX Polish checklist item: add coordinate-alignment assertions for page headers.

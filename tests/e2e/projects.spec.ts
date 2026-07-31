@@ -3,6 +3,41 @@ import path from "node:path";
 
 const fixturePath = (filename: string) => path.join(process.cwd(), "tests/e2e/fixtures", filename);
 
+test("persists theme preferences and follows system changes", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/projects");
+
+  const documentRoot = page.locator("html");
+  const themePreference = page.getByRole("group", { name: "Theme preference" });
+
+  await expect(documentRoot).toHaveAttribute("data-theme", "light");
+  await themePreference.getByRole("button", { name: "Use dark theme" }).click();
+  await expect(documentRoot).toHaveAttribute("data-theme", "dark");
+  await expect(themePreference.getByRole("button", { name: "Use dark theme" })).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+
+  await page.reload();
+  await expect(documentRoot).toHaveAttribute("data-theme", "dark");
+  await expect(themePreference.getByRole("button", { name: "Use dark theme" })).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+
+  await themePreference.getByRole("button", { name: "Use system theme" }).click();
+  await expect(documentRoot).toHaveAttribute("data-theme", "light");
+  await expect(themePreference.getByRole("button", { name: "Use system theme" })).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(documentRoot).toHaveAttribute("data-theme", "dark");
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(documentRoot).toHaveAttribute("data-theme", "light");
+});
+
 test("loads seeded data in a fresh browser and resets from the global shell", async ({ page }) => {
   await page.goto("/projects");
 
