@@ -37,6 +37,14 @@ type AudioPreviewActions = {
 
 const AudioPreviewStateContext = createContext<AudioPreviewState | null>(null);
 const AudioPreviewActionsContext = createContext<AudioPreviewActions | null>(null);
+const stopAudioPreviewEvent = "vibra:stop-audio-preview";
+
+/** Lets shell-level destructive actions stop route-scoped preview providers before data changes. */
+export function stopAllAudioPreviews() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(stopAudioPreviewEvent));
+  }
+}
 
 export function AudioPreviewProvider({ children }: { children: ReactNode }) {
   const preview = useAudioPreviewPlayer();
@@ -45,6 +53,12 @@ export function AudioPreviewProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     previewRef.current = preview;
   }, [preview]);
+
+  useEffect(() => {
+    const stopPreview = () => previewRef.current.stop();
+    window.addEventListener(stopAudioPreviewEvent, stopPreview);
+    return () => window.removeEventListener(stopAudioPreviewEvent, stopPreview);
+  }, []);
 
   const state = useMemo<AudioPreviewState>(
     () => ({

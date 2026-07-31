@@ -248,10 +248,10 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Add a synchronized playhead.
 - [x] Add a compact Stop control for long playback while keeping Tap visibly labeled.
 - [x] Route collision preview through the provider so only one app preview is active at a time.
-- [ ] Stop and clean up preview on restart, Stop, Back, pair change, unmount, reset, and asset deletion.
-- [ ] Cancel all source nodes, animation frames, decoded-buffer work, and stale state updates.
+- [x] Stop and clean up preview on restart, Stop, Back, pair change, unmount, reset, and asset deletion.
+- [x] Cancel all source nodes, animation frames, decoded-buffer work, and stale state updates.
 - [x] Surface fetch, decode, unsupported file, and autoplay errors without shifting the editor layout.
-- [ ] Honor disabled devices and disabled event triggers.
+- [x] Honor disabled devices and disabled event triggers.
 - [ ] Verify uploaded blob URLs remain valid for playback and are not leaked or persisted.
 - [ ] Verify Tap and timeline motion respect reduced-motion settings.
 

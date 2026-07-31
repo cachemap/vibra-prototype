@@ -153,6 +153,9 @@ export function useLibraryController(selection: LibrarySelection) {
 
     await runWithFeedback({
       work: async () => {
+        // Libraries and folders can cascade to the audio currently being previewed.
+        stop();
+
         if (deleteTarget.kind === "library") {
           const fallbackLibrary = (selection.librariesQuery.data?.libraries ?? []).find(
             (summary) => summary.library.id !== deleteTarget.libraryId
@@ -185,7 +188,6 @@ export function useLibraryController(selection: LibrarySelection) {
           return `Deleted folder ${deleteTarget.name}.`;
         }
 
-        stop();
         await deleteAsset.mutateAsync(deleteTarget.assetId);
         setDeleteTarget(null);
         return `Deleted asset ${deleteTarget.name}.`;

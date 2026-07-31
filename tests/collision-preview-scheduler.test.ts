@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { collisionPreviewPlan } from "@/features/projects/collision-preview-scheduler";
+import { describe, expect, it, vi } from "vitest";
+import {
+  CollisionPreviewScheduler,
+  collisionPreviewPlan
+} from "@/features/projects/collision-preview-scheduler";
 
 const lanes = {
   incoming: { offsetMilliseconds: 150, playbackUrl: "/incoming.wav" },
@@ -74,5 +77,62 @@ describe("collisionPreviewPlan", () => {
         durations
       )
     ).toThrow("cannot be previewed");
+  });
+});
+
+describe("CollisionPreviewScheduler lifecycle", () => {
+  it("aborts stale buffer work and never starts sources after cancellation", async () => {
+    const pendingRequests: Array<{
+      resolve: (response: { arrayBuffer: () => Promise<ArrayBuffer> }) => void;
+      signal: AbortSignal | undefined;
+    }> = [];
+    const source = {
+      buffer: null,
+      connect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn()
+    };
+    const decodeAudioData = vi.fn().mockResolvedValue({ duration: 1 });
+    const onProgress = vi.fn();
+    const scheduler = new CollisionPreviewScheduler({
+      createAudioContext: () => ({
+        createBufferSource: () => source,
+        currentTime: 0,
+        decodeAudioData,
+        destination: {} as AudioNode,
+        resume: vi.fn().mockResolvedValue(undefined)
+      }),
+      fetchAudio: (_url, options) =>
+        new Promise((resolve) => {
+          pendingRequests.push({ resolve, signal: options?.signal });
+        }),
+      onError: vi.fn(),
+      onProgress
+    });
+
+    const play = scheduler.play({
+      behavior: "Co-play",
+      lanes,
+      postInterruptionRecovery: null,
+      scheduleKey: "collision-preview:test",
+      targetLane: null
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(pendingRequests).toHaveLength(2);
+
+    scheduler.stop();
+
+    expect(pendingRequests.map((request) => request.signal?.aborted)).toEqual([true, true]);
+    expect(onProgress).toHaveBeenLastCalledWith("collision-preview:test", null);
+
+    pendingRequests.forEach((request) =>
+      request.resolve({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) })
+    );
+    await play;
+
+    expect(decodeAudioData).not.toHaveBeenCalled();
+    expect(source.start).not.toHaveBeenCalled();
   });
 });

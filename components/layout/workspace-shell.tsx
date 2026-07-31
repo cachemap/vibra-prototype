@@ -9,6 +9,7 @@ import type { ReactNode } from "react";
 
 import { Button, ThemeModeToggle } from "@/components/primitives";
 import { resetDemoData } from "@/data/reset";
+import { stopAllAudioPreviews } from "@/features/projects/audio-preview-context";
 
 type WorkspaceSection = "projects" | "libraries" | null;
 
@@ -42,6 +43,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
 
   const handleReset = async () => {
     setIsResetting(true);
+    stopAllAudioPreviews();
 
     try {
       await resetDemoData();

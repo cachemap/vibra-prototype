@@ -62,6 +62,9 @@ export function WorkspaceDeleteConfirm() {
   const handleConfirmDelete = async () => {
     await runWithFeedback({
       work: async () => {
+        // Any target can cascade to an asset or invalidate the selected collision pair.
+        audioPreview.stop();
+
         if (deleteTarget.kind === "project") {
           await deleteProject.mutateAsync(deleteTarget.id);
           setDeleteTarget(null);
@@ -108,7 +111,6 @@ export function WorkspaceDeleteConfirm() {
         }
 
         if (deleteTarget.kind === "asset") {
-          audioPreview.stop();
           await deleteAsset.mutateAsync(deleteTarget.id);
           setDeleteTarget(null);
           return `Deleted asset ${deleteTarget.name}.`;

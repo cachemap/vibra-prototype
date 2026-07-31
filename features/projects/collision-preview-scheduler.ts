@@ -111,6 +111,7 @@ type AudioBufferSourceLike = {
   stop: () => void;
 };
 type AudioContextLike = {
+  close?: () => Promise<void>;
   currentTime: number;
   destination: AudioNode;
   createBufferSource: () => AudioBufferSourceLike;
@@ -122,7 +123,10 @@ export type CollisionPreviewRequest = CollisionPreviewScheduleInput & { schedule
 
 type CollisionPreviewSchedulerOptions = {
   createAudioContext?: () => AudioContextLike;
-  fetchAudio?: (url: string) => Promise<{ arrayBuffer: () => Promise<ArrayBuffer> }>;
+  fetchAudio?: (
+    url: string,
+    options?: { signal?: AbortSignal }
+  ) => Promise<{ arrayBuffer: () => Promise<ArrayBuffer> }>;
   onError: (message: string) => void;
   onProgress: (scheduleKey: string, seconds: number | null) => void;
 };
@@ -136,6 +140,7 @@ export class CollisionPreviewScheduler {
   private audioContext: AudioContextLike | null = null;
   private buffers = new Map<string, Promise<AudioBufferLike>>();
   private frameId: number | null = null;
+  private pendingBufferAbortControllers = new Map<string, AbortController>();
   private requestVersion = 0;
   private scheduleKey: string | null = null;
 
@@ -151,8 +156,8 @@ export class CollisionPreviewScheduler {
       const context = this.context();
       await context.resume();
       const [playing, incoming] = await Promise.all([
-        this.bufferFor(request.lanes.playing.playbackUrl),
-        this.bufferFor(request.lanes.incoming.playbackUrl)
+        this.bufferFor(request.lanes.playing.playbackUrl, version),
+        this.bufferFor(request.lanes.incoming.playbackUrl, version)
       ]);
 
       if (version !== this.requestVersion) {
@@ -189,6 +194,12 @@ export class CollisionPreviewScheduler {
 
   stop() {
     this.requestVersion += 1;
+    this.pendingBufferAbortControllers.forEach((controller, playbackUrl) => {
+      controller.abort();
+      this.buffers.delete(playbackUrl);
+    });
+    this.pendingBufferAbortControllers.clear();
+
     this.activeSources.forEach((source) => {
       try {
         source.stop();
@@ -218,34 +229,64 @@ export class CollisionPreviewScheduler {
   dispose() {
     this.stop();
     this.buffers.clear();
+    void this.audioContext?.close?.().catch(() => {
+      // Browser cleanup is best-effort; a closed context has no preview state to recover.
+    });
+    this.audioContext = null;
   }
 
-  private bufferFor(playbackUrl: string) {
+  private bufferFor(playbackUrl: string, requestVersion: number) {
     const cached = this.buffers.get(playbackUrl);
 
     if (cached) {
       return cached;
     }
 
-    const buffer = this.options
-      .fetchAudio?.(playbackUrl)
-      .then((response) => response.arrayBuffer())
-      .then((data) => this.context().decodeAudioData(data)) ??
-      fetch(playbackUrl)
-        .then((response) => {
-          if (!response.ok) {
+    const controller = new AbortController();
+    const response = this.options.fetchAudio
+      ? this.options.fetchAudio(playbackUrl, { signal: controller.signal })
+      : fetch(playbackUrl, { signal: controller.signal }).then((result) => {
+          if (!result.ok) {
             throw new Error("Audio request failed.");
           }
-          return response.arrayBuffer();
-        })
-        .then((data) => this.context().decodeAudioData(data));
+          return result;
+        });
+    const buffer = response
+      .then((response) => response.arrayBuffer())
+      .then((data) => {
+        if (requestVersion !== this.requestVersion) {
+          throw new Error("Collision preview request was cancelled.");
+        }
+        return this.context().decodeAudioData(data);
+      });
 
     this.buffers.set(playbackUrl, buffer);
+    this.pendingBufferAbortControllers.set(playbackUrl, controller);
+    void buffer.then(
+      () => {
+        if (this.pendingBufferAbortControllers.get(playbackUrl) === controller) {
+          this.pendingBufferAbortControllers.delete(playbackUrl);
+        }
+      },
+      () => {
+        if (this.pendingBufferAbortControllers.get(playbackUrl) === controller) {
+          this.pendingBufferAbortControllers.delete(playbackUrl);
+        }
+        if (this.buffers.get(playbackUrl) === buffer) {
+          this.buffers.delete(playbackUrl);
+        }
+      }
+    );
     return buffer;
   }
 
   private context(): AudioContextLike {
     if (!this.audioContext) {
+      if (this.options.createAudioContext) {
+        this.audioContext = this.options.createAudioContext();
+        return this.audioContext;
+      }
+
       const AudioContextConstructor =
         window.AudioContext ??
         (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -253,7 +294,7 @@ export class CollisionPreviewScheduler {
       if (!AudioContextConstructor) {
         throw new Error("Web Audio is unavailable.");
       }
-      this.audioContext = this.options.createAudioContext?.() ?? new AudioContextConstructor();
+      this.audioContext = new AudioContextConstructor();
     }
 
     return this.audioContext;
