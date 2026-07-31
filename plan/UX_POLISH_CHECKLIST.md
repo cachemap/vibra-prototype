@@ -185,7 +185,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [ ] Keep all touch targets at least 44px and avoid horizontal page overflow at 375px.
 - [ ] Verify Back, Clear, Save, Tap, and Stop have distinct accessible names and focus states.
 
-### Adaptive rule data and controls [~]
+### Adaptive rule data and controls [x]
 
 - [x] Add an `InterruptionRecovery` vocabulary with `Resume` and `Stay stopped`.
 - [x] Add nullable post-interruption and system-interruption recovery fields to `ResolutionBehavior`.
@@ -195,10 +195,10 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Require post-interruption recovery only for Preempt.
 - [x] Require system-interruption recovery for every previewable behavior.
 - [x] Clear/forbid all recovery values for Not possible.
-- [ ] Render Target as a Playing/Incoming segmented control only when applicable.
-- [ ] Render Post interruption as a Resume/Stay stopped segmented control only when applicable.
-- [ ] Render System interruption as a Resume/Stay stopped segmented control only when applicable.
-- [ ] Add accessible help buttons and programmatic descriptions for unfamiliar terms.
+- [x] Render Target as a Playing/Incoming segmented control only when applicable.
+- [x] Render Post interruption as a Resume/Stay stopped segmented control only when applicable.
+- [x] Render System interruption as a Resume/Stay stopped segmented control only when applicable.
+- [x] Add accessible help buttons and programmatic descriptions for unfamiliar terms.
 - [x] Clear stale draft values immediately when switching to a behavior where a field is inapplicable.
 - [x] Keep Save disabled until the visible behavior-specific draft is valid.
 - [x] Update seed rules and every resolution fixture/factory.

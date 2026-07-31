@@ -47,3 +47,21 @@
 ## Next
 
 - Complete the remaining adaptive control work: accessible help buttons and Playing/Incoming plus Resume/Stay stopped segmented controls. Then build the focused editor layout and collision preview timeline.
+
+## Changed (continued)
+
+- Completed UX Polish checklist group 8's adaptive rule controls.
+- Replaced the Matrix Target select with a Playing/Incoming segmented control and rendered recovery values as Resume/Stay stopped segmented controls only when the selected behavior requires them.
+- Added help buttons and linked screen-reader descriptions for Target, Post interruption, and System interruption; the grouped controls expose their selected state with `aria-pressed`.
+- Added focused component coverage for applicable/inapplicable controls, callbacks, labels, and descriptions.
+
+## Verification
+
+- `pnpm exec vitest run tests/matrix-resolution-panel.test.tsx` passed: 2 tests.
+- `pnpm typecheck` passed.
+- `pnpm lint` passed with the two existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'configures a collision matrix entry' --timeout=60000` passed. The default 30-second timeout is too tight because this project config deliberately applies a one-second Playwright `slowMo` to every action.
+
+## Next
+
+- Implement the focused Matrix resolution editor layout with Back to Matrix, keeping the matrix selection and scroll position stable. Then add the collision preview timeline and audio scheduling slice.

@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleHelp, Trash2 } from "lucide-react";
-import { Button, Select } from "@/components/primitives";
+import { Button, Select, Tooltip } from "@/components/primitives";
 import {
   canUseResolutionBehavior,
   interruptionRecoveries,
@@ -31,6 +31,71 @@ type MatrixResolutionPanelProps = {
   systemInterruptionRecovery: InterruptionRecovery | null;
   targetEventId: string;
 };
+
+type SegmentedControlProps<T extends string> = {
+  description: string;
+  id: string;
+  label: string;
+  onChange: (value: T) => void;
+  options: readonly { label: string; value: T }[];
+  value: T | null;
+};
+
+function SegmentedControl<T extends string>({
+  description,
+  id,
+  label,
+  onChange,
+  options,
+  value
+}: SegmentedControlProps<T>) {
+  const labelId = `${id}-label`;
+  const descriptionId = `${id}-description`;
+
+  return (
+    <div className="grid gap-1.5">
+      <div className="flex items-center gap-1">
+        <span className="text-sm font-medium text-gray-700" id={labelId}>
+          {label}
+        </span>
+        <Tooltip content={description}>
+          <button
+            aria-describedby={descriptionId}
+            aria-label={`Learn about ${label}`}
+            className="inline-flex size-5 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40"
+            type="button"
+          >
+            <CircleHelp aria-hidden="true" className="size-4" />
+          </button>
+        </Tooltip>
+      </div>
+      <p className="sr-only" id={descriptionId}>
+        {description}
+      </p>
+      <div aria-describedby={descriptionId} aria-labelledby={labelId} className="grid grid-cols-2 rounded-lg border border-gray-300 bg-gray-25 p-0.5" role="group">
+        {options.map((option) => {
+          const selected = value === option.value;
+
+          return (
+            <button
+              aria-pressed={selected}
+              className={`min-h-11 rounded-md px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ${
+                selected
+                  ? "bg-gray-700 text-gray-25 shadow-sm"
+                  : "text-gray-700 hover:bg-gray-100 active:bg-gray-200"
+              }`}
+              key={option.value}
+              onClick={() => onChange(option.value)}
+              type="button"
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function MatrixResolutionPanel({
   behavior,
@@ -94,7 +159,7 @@ export function MatrixResolutionPanel({
         </div>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         <Select
           id="matrix-behavior"
           label="Behavior"
@@ -107,26 +172,27 @@ export function MatrixResolutionPanel({
             </option>
           ))}
         </Select>
-        {definition.target === "required" ? <Select
-          id="matrix-target"
-          label="Target"
-          onChange={(event) => onTargetEventIdChange(event.currentTarget.value)}
-          value={targetEventId}
-        >
-          <option value="">No target</option>
-          {selectedPlayingEventId ? (
-            <option value={selectedPlayingEventId}>
-              Playing / {eventById.get(selectedPlayingEventId)?.name}
-            </option>
-          ) : null}
-          {selectedIncomingEventId ? (
-            <option value={selectedIncomingEventId}>
-              Incoming / {eventById.get(selectedIncomingEventId)?.name}
-            </option>
-          ) : null}
-        </Select> : <div aria-live="polite" className="grid content-end pb-1 text-xs text-gray-500">
-          This behavior does not target either event.
-        </div>}
+        {definition.target === "required" ? (
+          <SegmentedControl
+            description="Choose which event this rule affects: the event already playing or the event that arrives next."
+            id="matrix-target"
+            label="Target"
+            onChange={onTargetEventIdChange}
+            options={[
+              selectedPlayingEventId
+                ? { label: "Playing", value: selectedPlayingEventId }
+                : null,
+              selectedIncomingEventId
+                ? { label: "Incoming", value: selectedIncomingEventId }
+                : null
+            ].filter((option): option is { label: string; value: EventId } => option !== null)}
+            value={targetEventId || null}
+          />
+        ) : (
+          <div aria-live="polite" className="grid content-end pb-1 text-xs text-gray-500">
+            This behavior does not target either event.
+          </div>
+        )}
         <div className="flex items-end gap-2">
           <Button
             disabled={!selectedEntry}
@@ -145,34 +211,26 @@ export function MatrixResolutionPanel({
           </Button>
         </div>
       </div>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         {definition.postInterruptionRecovery === "required" ? (
-          <Select
+          <SegmentedControl
+            description="Choose whether the interrupted event resumes after the interruption or remains stopped."
             id="matrix-post-interruption-recovery"
-            label="Post interruption recovery"
-            onChange={(event) =>
-              onPostInterruptionRecoveryChange(event.currentTarget.value as InterruptionRecovery)
-            }
-            value={postInterruptionRecovery ?? ""}
-          >
-            {interruptionRecoveries.map((recovery) => (
-              <option key={recovery} value={recovery}>{recovery}</option>
-            ))}
-          </Select>
+            label="Post interruption"
+            onChange={onPostInterruptionRecoveryChange}
+            options={interruptionRecoveries.map((recovery) => ({ label: recovery, value: recovery }))}
+            value={postInterruptionRecovery}
+          />
         ) : null}
         {definition.systemInterruptionRecovery === "required" ? (
-          <Select
+          <SegmentedControl
+            description="Choose whether this event resumes after the operating system interrupts playback or remains stopped."
             id="matrix-system-interruption-recovery"
-            label="System interruption recovery"
-            onChange={(event) =>
-              onSystemInterruptionRecoveryChange(event.currentTarget.value as InterruptionRecovery)
-            }
-            value={systemInterruptionRecovery ?? ""}
-          >
-            {interruptionRecoveries.map((recovery) => (
-              <option key={recovery} value={recovery}>{recovery}</option>
-            ))}
-          </Select>
+            label="System interruption"
+            onChange={onSystemInterruptionRecoveryChange}
+            options={interruptionRecoveries.map((recovery) => ({ label: recovery, value: recovery }))}
+            value={systemInterruptionRecovery}
+          />
         ) : null}
       </div>
       <p className="flex items-center gap-1 text-sm text-gray-600">
