@@ -314,7 +314,7 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 
 ## Completion
 
-- [ ] Update screenshots and compare with the baseline set.
-- [ ] Update documentation/ADR references.
-- [ ] Confirm all Definition of Done items in the implementation plan.
-- [ ] Record any intentionally deferred mobile reordering, nested-sidebar, or haptic-preview work.
+- [x] Update screenshots and compare with the baseline set.
+- [x] Update documentation/ADR references.
+- [x] Confirm all Definition of Done items in the implementation plan.
+- [x] Record any intentionally deferred mobile reordering, nested-sidebar, or haptic-preview work.

@@ -498,6 +498,34 @@ Check contrast, clipping, focus rings, toolbar wrapping, sticky matrix borders, 
 - Preview audio and playhead state always stop on restart, Back, navigation, reset, pair change, and unmount.
 - `pnpm typecheck`, `pnpm lint`, `pnpm test`, and `pnpm test:e2e` pass.
 
+## Completion Record
+
+The UX Polish work is implemented and reviewed against the baseline captures. The
+focused Matrix editor screenshots are maintained as committed Playwright snapshots
+at 1440px and 375px; compared with the baseline compact resolution panel, the
+delivered editor adds a dedicated audition stage, shared two-lane ruler, adaptive
+rule controls, and a mobile stacked layout while retaining the Matrix route and
+selection context.
+
+The implementation decisions are recorded in ADRs
+[`0051`](../docs/adr/0051-shared-page-geometry.md) through
+[`0062`](../docs/adr/0062-reduced-motion-matrix-hover-override.md): shared page
+geometry, variable-backed theme palettes, route-derived navigation, persisted
+event order, recovery migration, the focused editor, local source/timing state,
+Web Audio scheduling, preview cleanup, uploaded object-URL cleanup, and the
+reduced-motion hover override.
+
+The Definition of Done is satisfied by the completed checklist, its focused
+browser/component coverage, and the final full verification run. The following
+remain intentional scope boundaries rather than incomplete work:
+
+- Mobile cards display persisted event order, but mobile drag reordering is not
+  implemented.
+- The nested project asset-library rail remains 268px; only the two top-level
+  rails use the shared 320px token.
+- Browser haptic preview remains visual-only; haptic-only event pairs clearly
+  explain why their audio audition is unavailable.
+
 ## Out of Scope
 
 - Reordering collections or devices.
