@@ -65,6 +65,19 @@ function snappedOffset(milliseconds: number) {
   return Math.max(0, Math.round(milliseconds / offsetSnapMilliseconds) * offsetSnapMilliseconds);
 }
 
+export function previewOffsetAfterPointerDrag(
+  currentOffset: number,
+  deltaX: number,
+  canvasWidth: number,
+  timelineDuration: number
+) {
+  if (canvasWidth <= 0 || deltaX === 0) {
+    return currentOffset;
+  }
+
+  return snappedOffset(currentOffset + (deltaX / canvasWidth) * timelineDuration);
+}
+
 function selectedSourceFor(
   sources: readonly CollisionPreviewSource[],
   selectedSourceKey: string | null
@@ -237,7 +250,7 @@ export function CollisionPreviewTimeline({
       return;
     }
 
-    setOffset(lane, previewOffsets[lane] + (event.delta.x / canvasWidth) * timelineDuration, true);
+    setOffset(lane, previewOffsetAfterPointerDrag(previewOffsets[lane], event.delta.x, canvasWidth, timelineDuration));
   };
 
   const renderLane = (laneName: LaneName, label: string) => {

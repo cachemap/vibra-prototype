@@ -11,6 +11,7 @@ import {
 import type { DeviceWorkspaceAggregate } from "@/data/repositories/project-repository";
 import { MatrixResolutionPanel } from "@/features/matrix/matrix-resolution-panel";
 import { MatrixResolutionEditor } from "@/features/matrix/matrix-resolution-editor";
+import { previewOffsetAfterPointerDrag } from "@/features/matrix/collision-preview-timeline";
 import { AudioPreviewProvider } from "@/features/projects/audio-preview-context";
 
 const matrixId = asEntityId<CollisionMatrixId>("matrix_checkout");
@@ -383,6 +384,43 @@ describe("MatrixResolutionEditor", () => {
         event.eventTriggers.flatMap((trigger) => trigger.playbacks.map((playback) => playback.startOffset))
       )
     ).toEqual(authoredOffsets);
+  });
+
+  it("keeps pointer and keyboard timeline moves aligned to the shared millisecond ruler", () => {
+    render(
+      <AudioPreviewProvider><MatrixResolutionEditor
+        behavior="Preempt"
+        eventById={new Map(events.map((event) => [event.id, event]))}
+        onBack={vi.fn()}
+        onBehaviorChange={vi.fn()}
+        onClearEntry={vi.fn()}
+        onPostInterruptionRecoveryChange={vi.fn()}
+        onSaveEntry={vi.fn()}
+        onSystemInterruptionRecoveryChange={vi.fn()}
+        onTargetEventIdChange={vi.fn()}
+        postInterruptionRecovery="Stay stopped"
+        selectedEntry={selectedEntry}
+        selectedIncomingEventId={incomingEventId}
+        selectedPlayingEventId={playingEventId}
+        systemInterruptionRecovery="Stay stopped"
+        targetEventId={playingEventId}
+        workspace={previewWorkspace}
+      /></AudioPreviewProvider>
+    );
+
+    const incomingOffset = screen.getByLabelText("Incoming offset in milliseconds") as HTMLInputElement;
+    const playingOffset = screen.getByLabelText("Playing offset in milliseconds") as HTMLInputElement;
+    const incomingHandle = screen.getByRole("button", { name: "Move Incoming sound" });
+
+    expect(incomingOffset.value).toBe("150");
+    expect(playingOffset.value).toBe("0");
+    expect(previewOffsetAfterPointerDrag(150, 120, 600, 600)).toBe(270);
+    expect(previewOffsetAfterPointerDrag(150, -200, 600, 600)).toBe(0);
+
+    fireEvent.keyDown(incomingHandle, { key: "ArrowLeft" });
+    expect(incomingOffset.value).toBe("140");
+    expect(screen.getByLabelText(/Incoming starts at 140 milliseconds/)).not.toBeNull();
+    expect(screen.getByLabelText(/Playing starts at 0 milliseconds/)).not.toBeNull();
   });
 
   it("marks the collision timeline for reduced motion while preserving its controls", async () => {
