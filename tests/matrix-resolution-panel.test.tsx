@@ -80,6 +80,47 @@ const previewWorkspace = {
   ]
 } as unknown as DeviceWorkspaceAggregate;
 
+type PreviewSourceSpy = {
+  buffer: AudioBuffer | null;
+  connect: ReturnType<typeof vi.fn>;
+  start: ReturnType<typeof vi.fn>;
+  stop: ReturnType<typeof vi.fn>;
+};
+
+function installCollisionPreviewAudioMocks() {
+  const sources: PreviewSourceSpy[] = [];
+
+  class AudioContextMock {
+    currentTime = 0;
+    destination = {} as AudioNode;
+    createBufferSource = vi.fn(() => {
+      const source: PreviewSourceSpy = {
+        buffer: null,
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn()
+      };
+      sources.push(source);
+      return source;
+    });
+    decodeAudioData = vi.fn().mockResolvedValue({ duration: 1 });
+    resume = vi.fn().mockResolvedValue(undefined);
+  }
+
+  vi.stubGlobal("AudioContext", AudioContextMock);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({
+      arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
+      ok: true
+    })
+  );
+  vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
+  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+
+  return sources;
+}
+
 function renderPanel(behavior: "Preempt" | "Co-play" = "Preempt") {
   const onTargetEventIdChange = vi.fn();
   const onPostInterruptionRecoveryChange = vi.fn();
@@ -148,6 +189,33 @@ describe("MatrixResolutionPanel adaptive controls", () => {
 });
 
 describe("MatrixResolutionEditor", () => {
+  it("disables Tap with an explanation when either event has no previewable audio", () => {
+    render(
+      <AudioPreviewProvider><MatrixResolutionEditor
+        behavior="Preempt"
+        eventById={new Map(events.map((event) => [event.id, event]))}
+        onBack={vi.fn()}
+        onBehaviorChange={vi.fn()}
+        onClearEntry={vi.fn()}
+        onPostInterruptionRecoveryChange={vi.fn()}
+        onSaveEntry={vi.fn()}
+        onSystemInterruptionRecoveryChange={vi.fn()}
+        onTargetEventIdChange={vi.fn()}
+        postInterruptionRecovery="Stay stopped"
+        selectedEntry={selectedEntry}
+        selectedIncomingEventId={incomingEventId}
+        selectedPlayingEventId={playingEventId}
+        systemInterruptionRecovery="Stay stopped"
+        targetEventId={playingEventId}
+        workspace={{ ...previewWorkspace, playbackAssets: [] }}
+      /></AudioPreviewProvider>
+    );
+
+    expect((screen.getByRole("button", { name: "Tap to preview collision" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getAllByText(/Playing has no enabled previewable audio playback/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Incoming has no enabled previewable audio playback/).length).toBeGreaterThan(0);
+  });
+
   it("keeps the selected pair, accessible editor actions, and a scrollable shared timeline together", () => {
     const onBack = vi.fn();
 
@@ -352,6 +420,51 @@ describe("MatrixResolutionEditor", () => {
     expect((screen.getByRole("button", { name: "Tap to preview collision" }) as HTMLButtonElement).disabled).toBe(false);
     expect((screen.getByRole("button", { name: "Move Playing sound" }) as HTMLButtonElement).disabled).toBe(false);
 
+    vi.unstubAllGlobals();
+  });
+
+  it("starts, restarts, stops, and cleans up the collision preview", async () => {
+    const sources = installCollisionPreviewAudioMocks();
+    const { unmount } = render(
+      <AudioPreviewProvider><MatrixResolutionEditor
+        behavior="Preempt"
+        eventById={new Map(events.map((event) => [event.id, event]))}
+        onBack={vi.fn()}
+        onBehaviorChange={vi.fn()}
+        onClearEntry={vi.fn()}
+        onPostInterruptionRecoveryChange={vi.fn()}
+        onSaveEntry={vi.fn()}
+        onSystemInterruptionRecoveryChange={vi.fn()}
+        onTargetEventIdChange={vi.fn()}
+        postInterruptionRecovery="Stay stopped"
+        selectedEntry={selectedEntry}
+        selectedIncomingEventId={incomingEventId}
+        selectedPlayingEventId={playingEventId}
+        systemInterruptionRecovery="Stay stopped"
+        targetEventId={playingEventId}
+        workspace={previewWorkspace}
+      /></AudioPreviewProvider>
+    );
+
+    const tap = screen.getByRole("button", { name: "Tap to preview collision" });
+    const stop = screen.getByRole("button", { name: "Stop collision preview" });
+
+    fireEvent.click(tap);
+    await waitFor(() => expect(sources).toHaveLength(2));
+    await waitFor(() => expect((stop as HTMLButtonElement).disabled).toBe(false));
+
+    fireEvent.click(tap);
+    await waitFor(() => expect(sources).toHaveLength(4));
+    expect(sources.slice(0, 2).every((source) => source.stop.mock.calls.length === 1)).toBe(true);
+
+    fireEvent.click(stop);
+    await waitFor(() => expect((stop as HTMLButtonElement).disabled).toBe(true));
+    expect(sources.slice(2).every((source) => source.stop.mock.calls.length === 1)).toBe(true);
+
+    fireEvent.click(tap);
+    await waitFor(() => expect(sources).toHaveLength(6));
+    unmount();
+    expect(sources.slice(4).every((source) => source.stop.mock.calls.length === 1)).toBe(true);
     vi.unstubAllGlobals();
   });
 });

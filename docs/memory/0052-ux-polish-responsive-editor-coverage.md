@@ -14,4 +14,10 @@
 
 ## Next
 
-- Add Tap disabled/enabled, restart, Stop, and cleanup coverage.
+- Add pointer and keyboard collision-timeline alignment coverage.
+
+## Follow-up
+
+- Completed Tap disabled/enabled, restart, Stop, and cleanup coverage in the focused resolution-editor test.
+- Added a missing-audio assertion and Web Audio spies that verify Tap starts, restarts by stopping prior sources, Stop clears the active preview, and provider unmount stops remaining sources.
+- Verification: `pnpm exec vitest run tests/matrix-resolution-panel.test.tsx` (9 tests), `pnpm typecheck`, and `pnpm lint` passed. Lint retains the two pre-existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
