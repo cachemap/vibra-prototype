@@ -21,6 +21,12 @@ import type { MatrixAxis, MatrixFilterCollection } from "./matrix-axis-filter";
 
 const matrixRowHeaderWidth = "168px";
 
+const interactiveCellHoverClass =
+  "group relative z-0 motion-safe:transition-[transform,box-shadow,background-color,border-color] motion-safe:duration-150 motion-safe:ease-out motion-reduce:transition-[background-color,border-color,box-shadow] [@media(hover:hover)]:hover:z-10 [@media(hover:hover)]:hover:-translate-y-px [@media(hover:hover)]:hover:scale-[1.015] [@media(hover:hover)]:hover:border-gray-300 [@media(hover:hover)]:hover:shadow-[0_2px_5px_rgb(var(--gray-700)/0.14)] [@media(hover:hover)]:hover:ring-1 [@media(hover:hover)]:hover:ring-inset [@media(hover:hover)]:hover:ring-gray-300 motion-reduce:transform-none";
+
+const behaviorPillHoverClass =
+  "motion-safe:transition-[transform,background-color,border-color] motion-safe:duration-150 motion-safe:ease-out motion-reduce:transition-[background-color,border-color] [@media(hover:hover)]:group-hover:scale-[1.02] [@media(hover:hover)]:group-hover:-translate-y-px motion-reduce:transform-none";
+
 export const matrixEntryKeyFor = (playingEventId: EventId, incomingEventId: EventId) =>
   `${playingEventId}:${incomingEventId}`;
 
@@ -195,7 +201,7 @@ export function MatrixGrid({
                                   eventById.get(column.eventId)?.name ?? "incoming event"
                                 } arrives`
                           }
-                          className={`flex h-10 w-full items-center justify-center border border-gray-200 px-1.5 text-xs font-medium tabular-nums ${
+                          className={`flex h-10 w-full items-center justify-center border border-gray-200 px-1.5 text-xs font-medium tabular-nums ${interactiveCellHoverClass} ${
                             highlighted ? "bg-gray-200" : "bg-gray-25"
                           } ${behaviorCellClass(entry, selected)}`}
                           key={`${row.eventId}-${column.eventId}`}
@@ -204,7 +210,7 @@ export function MatrixGrid({
                         >
                           {entry && BehaviorIcon ? (
                             <span
-                              className={`inline-flex h-6 max-w-full items-center gap-1 rounded-lg border px-2 ${behaviorBubbleClass(
+                              className={`inline-flex h-6 max-w-full items-center gap-1 rounded-lg border px-2 ${behaviorPillHoverClass} ${behaviorBubbleClass(
                                 entry,
                                 selected
                               )}`}

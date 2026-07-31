@@ -153,19 +153,19 @@ Use this checklist with `UX_POLISH_IMPLEMENTATION_PLAN.md`. Keep commits phase-s
 - [x] Add component/E2E coverage for keyboard reorder.
 - [x] Reload after a reorder and confirm persistence.
 
-## 7. Collision Matrix hover UX
+## 7. Collision Matrix hover UX [x]
 
-- [ ] Add `group`/relative positioning to interactive data cells as needed.
-- [ ] Add a 120–160ms motion-safe transform and shadow/ring transition.
-- [ ] Add a subtle hover lift and scale without changing cell dimensions.
-- [ ] Add a small hover response to configured behavior pills.
-- [ ] Keep selected styling stronger than hover styling.
-- [ ] Preserve row/column cross-highlighting during hover.
-- [ ] Keep empty-cell and configured-cell accessible names unchanged.
-- [ ] Add a no-transform reduced-motion path with visible color/ring feedback.
-- [ ] Verify sticky headers and borders do not clip hovering cells.
-- [ ] Verify the effect in Light, System-light, System-dark, and Dark.
-- [ ] Verify touch interaction does not leave a misleading stuck hover state.
+- [x] Add `group`/relative positioning to interactive data cells as needed.
+- [x] Add a 120–160ms motion-safe transform and shadow/ring transition.
+- [x] Add a subtle hover lift and scale without changing cell dimensions.
+- [x] Add a small hover response to configured behavior pills.
+- [x] Keep selected styling stronger than hover styling.
+- [x] Preserve row/column cross-highlighting during hover.
+- [x] Keep empty-cell and configured-cell accessible names unchanged.
+- [x] Add a no-transform reduced-motion path with visible color/ring feedback.
+- [x] Verify sticky headers and borders do not clip hovering cells.
+- [x] Verify the effect in Light, System-light, System-dark, and Dark.
+- [x] Verify touch interaction does not leave a misleading stuck hover state.
 
 ## 8. Resolution behavior editor and collision preview
 

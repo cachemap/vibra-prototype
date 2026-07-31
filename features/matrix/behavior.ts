@@ -49,7 +49,7 @@ export const behaviorCellClass = (
   selected: boolean
 ) => {
   if (selected) {
-    return "bg-gray-200 text-gray-700";
+    return "z-20 bg-gray-200 text-gray-700 ring-2 ring-inset ring-gray-500";
   }
 
   if (!entry) {
