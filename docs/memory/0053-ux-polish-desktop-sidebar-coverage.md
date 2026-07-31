@@ -30,3 +30,9 @@
 - Completed the E2E guard that moves both Collision Matrix audition lanes, saves the rule, and verifies the authored Pay Now and Card Declined trigger-playback offsets remain `0` in IndexedDB before and after reload.
 - Verification: `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'keeps collision audition offsets out of authored event playback schedules'` passed (1 test); `pnpm typecheck` passed; `pnpm lint` passed with the two pre-existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
 - Next UX Polish checklist item: add E2E coverage proving Back to Matrix stops active collision audio.
+
+## Back-to-Matrix collision preview cleanup
+
+- Added a focused Playwright test that replaces Web Audio with a long-lived instrumented source, starts the seeded Suppress audition, returns to the Matrix, and confirms the scheduled source is stopped.
+- Verification: `pnpm exec playwright test tests/e2e/projects.spec.ts --grep 'stops active collision audio when returning to Matrix'` passed (1 test); `pnpm typecheck` passed; `pnpm lint` passed with the two pre-existing warnings in `.codex-verify/verify-event-timeline.mjs` and `components/layout/workspace-shell.tsx`.
+- Next UX Polish checklist group: complete the remaining full `pnpm test` and `pnpm test:e2e` verification, then perform the manual acceptance and completion audit.

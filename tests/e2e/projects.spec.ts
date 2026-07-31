@@ -823,6 +823,86 @@ test("keeps collision audition offsets out of authored event playback schedules"
   ).resolves.toEqual([0, 0]);
 });
 
+test("stops active collision audio when returning to Matrix", async ({ page }) => {
+  await page.addInitScript(() => {
+    type TestWindow = Window & {
+      __collisionPreviewSources: Array<{ stopCalls: number }>;
+    };
+    const testWindow = window as unknown as TestWindow;
+
+    testWindow.__collisionPreviewSources = [];
+
+    class LongCollisionPreviewAudioContext {
+      destination = {} as AudioNode;
+
+      get currentTime() {
+        return performance.now() / 1000;
+      }
+
+      close() {
+        return Promise.resolve();
+      }
+
+      createBufferSource() {
+        const source = {
+          buffer: null as AudioBuffer | null,
+          connect: () => undefined,
+          start: () => undefined,
+          stopCalls: 0,
+          stop() {
+            source.stopCalls += 1;
+          }
+        };
+
+        testWindow.__collisionPreviewSources.push(source);
+        return source;
+      }
+
+      decodeAudioData() {
+        return Promise.resolve({ duration: 10 } as AudioBuffer);
+      }
+
+      resume() {
+        return Promise.resolve();
+      }
+    }
+
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: LongCollisionPreviewAudioContext
+    });
+  });
+
+  await page.goto("/projects");
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.goto("/projects/project_checkout-system");
+  await page.getByRole("tab", { name: "Matrix" }).click();
+  await page
+    .getByTestId("collision-matrix-grid")
+    .getByRole("button", { name: "Suppress: Pay Now when Card Declined arrives" })
+    .click();
+
+  const editor = page.getByRole("region", { name: "Collision Matrix resolution editor" });
+  await editor.getByRole("button", { name: "Tap to preview collision" }).click();
+  await expect(editor.getByText(/^Previewing at /)).toBeVisible();
+  await expect.poll(() =>
+    page.evaluate(() =>
+      (window as unknown as Window & { __collisionPreviewSources: Array<{ stopCalls: number }> })
+        .__collisionPreviewSources.length
+    )
+  ).toBe(1);
+
+  await editor.getByRole("button", { name: "Back to Matrix" }).click();
+
+  await expect(editor).toHaveCount(0);
+  await expect.poll(() =>
+    page.evaluate(() =>
+      (window as unknown as Window & { __collisionPreviewSources: Array<{ stopCalls: number }> })
+        .__collisionPreviewSources.every((source) => source.stopCalls > 0)
+    )
+  ).toBe(true);
+});
+
 test("keeps Collision Matrix hover feedback motionless when reduced motion is preferred", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/projects");
