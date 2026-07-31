@@ -726,6 +726,37 @@ test("configures a collision matrix entry", async ({ page }) => {
   await expect(page.getByTestId("collision-matrix-grid")).toContainText("Queue");
 });
 
+test("renders the focused resolution editor at wide and narrow viewports", async ({ page }) => {
+  const editor = page.getByRole("region", { name: "Collision Matrix resolution editor" });
+
+  await page.setViewportSize({ height: 1100, width: 1440 });
+  await page.goto("/projects");
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.goto("/projects/project_checkout-system");
+  await page.getByRole("tab", { name: "Matrix" }).click();
+  await page
+    .getByTestId("collision-matrix-grid")
+    .getByRole("button", { name: "Suppress: Pay Now when Card Declined arrives" })
+    .click();
+
+  await expect(editor).toBeVisible();
+  await page.locator("nextjs-portal").evaluateAll((portals) => {
+    for (const portal of portals) {
+      portal.setAttribute("style", "display: none");
+    }
+  });
+  await expect(editor).toHaveScreenshot("matrix-resolution-editor-wide.png", {
+    animations: "disabled",
+    caret: "hide"
+  });
+
+  await page.setViewportSize({ height: 1100, width: 375 });
+  await expect(editor).toHaveScreenshot("matrix-resolution-editor-375.png", {
+    animations: "disabled",
+    caret: "hide"
+  });
+});
+
 test("keeps Collision Matrix hover feedback motionless when reduced motion is preferred", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/projects");
